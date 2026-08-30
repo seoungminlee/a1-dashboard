@@ -97,7 +97,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <span class="badge">A1</span>
     <h1>편의점 수익관리 대시보드</h1>
   </div>
-  <div class="hdr-r" id="last-sync">데이터 로딩 중...</div>
+  <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
+    <span id="user-name" style="font-size:12px;color:#94a3b8"></span>
+    <span id="last-sync" style="font-size:12px;color:#94a3b8"></span>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#cbd5e1;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer">로그아웃</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -257,8 +261,34 @@ let pendingFiles = [];
 let salesData = [], allMonths = [], itemMonths = [], wasteMonths = [];
 let catChart = null, profitChart = null, trendChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null;
 
+// ── 인증 ──────────────────────────────────────────────────────────
+const HUB_URL = 'https://seoungminlee.github.io/lecollective-hub/';
+
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.href = HUB_URL;
+    return false;
+  }
+  const user = session.user;
+  const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email || '';
+  document.getElementById('user-name').textContent = name;
+
+  sb.auth.onAuthStateChange((event, sess) => {
+    if (event === 'SIGNED_OUT' || !sess) window.location.href = HUB_URL;
+  });
+  return true;
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+}
+
 // ── 초기화 ────────────────────────────────────────────────────────
 window.onload = async () => {
+  const authed = await initAuth();
+  if (!authed) return;
+
   const now = new Date();
   document.getElementById('period-input').value =
     `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
