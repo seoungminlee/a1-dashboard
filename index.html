@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A1 편의점 수익관리 대시보드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px}
+
+/* 헤더 */
+.hdr{background:#1a1a2e;color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr h1{font-size:17px;font-weight:700}
+.badge{background:#4f46e5;font-size:11px;padding:3px 8px;border-radius:4px}
+.hdr-r{font-size:12px;color:#94a3b8}
+
+/* 탭 */
+.tabs{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex}
+.tab{padding:13px 18px;font-size:13px;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;font-weight:500;white-space:nowrap}
+.tab.on{color:#4f46e5;border-bottom-color:#4f46e5;font-weight:700}
+
+/* 업로드 바 */
+.upload-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.period-box{display:flex;align-items:center;gap:8px;font-size:13px}
+.period-box label{color:#64748b;font-weight:500}
+.period-box input{border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:13px}
+.drop-zone{border:2px dashed #c7d2fe;border-radius:8px;padding:10px 20px;text-align:center;color:#6366f1;font-size:13px;cursor:pointer;min-width:220px;transition:background .2s}
+.drop-zone:hover,.drop-zone.over{background:#eef2ff}
+.drop-zone input{display:none}
+.file-list{font-size:12px;color:#64748b;flex:1}
+.file-chip{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:4px;padding:3px 8px;margin:2px}
+.file-chip.ok{background:#dcfce7;color:#16a34a}
+.file-chip.skip{background:#fef9c3;color:#92400e}
+.sync-btn{margin-left:auto;background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:600}
+.sync-btn:disabled{background:#94a3b8;cursor:not-allowed}
+.sync-btn:not(:disabled):hover{background:#4338ca}
+
+/* 상태 메시지 */
+.status{padding:8px 24px;font-size:12px}
+.status.ok{color:#16a34a;background:#f0fdf4}
+.status.err{color:#dc2626;background:#fef2f2}
+.status.loading{color:#4f46e5;background:#eef2ff}
+.status.hide{display:none}
+
+/* 메인 */
+.main{padding:20px 24px}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:#fff;border-radius:10px;padding:16px 18px;border:1px solid #e2e8f0}
+.kpi-t{font-size:11px;color:#64748b;margin-bottom:6px}
+.kpi-v{font-size:22px;font-weight:700}
+.kpi-c{font-size:12px;margin-top:4px}
+.up{color:#10b981}.down{color:#ef4444}.flat{color:#94a3b8}
+
+/* 카드 */
+.card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden}
+.card-h{padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700}
+.card-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.card-b{padding:16px 18px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-wrap{height:260px;position:relative}
+
+/* 테이블 */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:11px;color:#94a3b8;padding:8px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;background:#f8fafc}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f8fafc;font-size:12px}
+.tbl tr:last-child td{border:none}
+.tbl tr:hover td{background:#f8fafc}
+.cat{font-weight:600;color:#374151}
+.bdg{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.bdg-up{background:#dcfce7;color:#16a34a}
+.bdg-dn{background:#fee2e2;color:#dc2626}
+.bdg-fl{background:#f1f5f9;color:#64748b}
+
+/* 필터 */
+.filter-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sel{border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:13px}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+.tab-content{display:none}.tab-content.on{display:block}
+
+/* 로딩 스피너 */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <span class="badge">A1</span>
+    <h1>편의점 수익관리 대시보드</h1>
+  </div>
+  <div class="hdr-r" id="last-sync">데이터 로딩 중...</div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="switchTab('sales')">매출·이익 현황</div>
+  <div class="tab" onclick="switchTab('items')">품목 분석</div>
+  <div class="tab" onclick="switchTab('waste')">폐기 현황</div>
+</div>
+
+<div class="upload-bar">
+  <div class="period-box">
+    <label>기준 연월</label>
+    <input type="month" id="period-input" />
+  </div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    📂 파일 드래그 또는 클릭 (여러 파일 동시 가능)
+    <input type="file" id="file-input" accept=".xlsx" multiple onchange="handleFiles(this.files)">
+  </div>
+  <div class="file-list" id="file-list"></div>
+  <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
+</div>
+
+<div class="status hide" id="status"></div>
+
+<!-- 탭 1: 매출이익 -->
+<div class="tab-content on main" id="tab-sales">
+  <div class="card" style="margin-bottom:16px" id="trend-month-card">
+    <div class="card-h">
+      <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">데이터가 쌓일수록 자동 확장</div></div>
+    </div>
+    <div class="card-b"><div class="chart-wrap"><canvas id="monthly-trend-chart"></canvas></div></div>
+  </div>
+  <div class="kpi-row" id="kpi-row">
+    <div class="kpi"><div class="kpi-t">총 매출</div><div class="kpi-v" id="k-amount">—</div><div class="kpi-c" id="k-amount-c"></div></div>
+    <div class="kpi"><div class="kpi-t">예상 이익</div><div class="kpi-v" id="k-profit">—</div><div class="kpi-c" id="k-profit-c"></div></div>
+    <div class="kpi"><div class="kpi-t">평균 이익율</div><div class="kpi-v" id="k-rate">—</div><div class="kpi-c" id="k-rate-c"></div></div>
+    <div class="kpi"><div class="kpi-t">전기 대비 매출</div><div class="kpi-v" id="k-diff">—</div><div class="kpi-c" id="k-diff-c"></div></div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div><div class="card-title">카테고리별 매출 TOP 8</div><div class="card-sub">대상기간 vs 비교기간</div></div></div>
+      <div class="card-b"><div class="chart-wrap"><canvas id="cat-chart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div><div class="card-title">이익율 TOP 8</div><div class="card-sub">대상기간 기준</div></div></div>
+      <div class="card-b"><div class="chart-wrap"><canvas id="profit-chart"></canvas></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h">
+      <div><div class="card-title">카테고리별 상세</div></div>
+      <div style="display:flex;gap:8px">
+        <select class="sel" id="month-sel" onchange="loadSalesData()"><option value="">전체 기간</option></select>
+        <select class="sel" id="sort-sel" onchange="renderSalesTable()">
+          <option value="amount">매출 높은순</option>
+          <option value="profit_rate">이익율 높은순</option>
+          <option value="diff_amount">증감액 높은순</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="sales-table">
+        <thead><tr>
+          <th>카테고리</th>
+          <th class="r">매출금액</th>
+          <th class="r">예상이익</th>
+          <th class="r">이익율</th>
+          <th class="r">비교기간 매출</th>
+          <th class="r">증감액</th>
+          <th class="r">증감율</th>
+        </tr></thead>
+        <tbody id="sales-tbody"><tr><td colspan="7" class="empty">데이터가 없습니다. 파일을 업로드하고 동기화하세요.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 탭 2: 품목분석 -->
+<div class="tab-content main" id="tab-items">
+  <div class="filter-row">
+    <select class="sel" id="cat-sel" onchange="loadItemData()"><option value="">카테고리 선택</option></select>
+    <select class="sel" id="item-month-sel" onchange="loadItemData()"><option value="">전체 기간</option></select>
+    <span style="font-size:12px;color:#94a3b8" id="item-count"></span>
+  </div>
+  <div class="card">
+    <div class="card-h"><div class="card-title">품목별 판매 랭킹</div></div>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="items-table">
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th>품목명</th>
+          <th class="r">총 판매수량</th>
+          <th class="r">판매일수</th>
+          <th class="r">일평균</th>
+        </tr></thead>
+        <tbody id="items-tbody"><tr><td colspan="5" class="empty">카테고리를 선택하세요.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" id="item-trend-card" style="display:none">
+    <div class="card-h"><div class="card-title" id="item-trend-title">일별 판매 추이</div></div>
+    <div class="card-b"><div class="chart-wrap"><canvas id="trend-chart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- 탭 3: 폐기현황 -->
+<div class="tab-content main" id="tab-waste">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-t">총 폐기금액</div><div class="kpi-v" id="w-total">—</div></div>
+    <div class="kpi"><div class="kpi-t">폐기 건수</div><div class="kpi-v" id="w-count">—</div></div>
+    <div class="kpi"><div class="kpi-t">점내용도 금액</div><div class="kpi-v" id="w-internal">—</div></div>
+    <div class="kpi"><div class="kpi-t">폐기 비중</div><div class="kpi-v" id="w-ratio">—</div></div>
+  </div>
+  <div class="filter-row">
+    <select class="sel" id="waste-month-sel" onchange="loadWasteData()"><option value="">전체 기간</option></select>
+    <select class="sel" id="waste-type-sel" onchange="loadWasteData()">
+      <option value="">전체</option>
+      <option value="폐기">폐기만</option>
+      <option value="점내용도">점내용도만</option>
+    </select>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><div class="card-title">소분류별 폐기금액</div></div>
+    <div class="card-b"><div style="height:220px;position:relative"><canvas id="waste-cat-chart"></canvas></div></div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div class="card-title">폐기 상위 품목</div></div>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="waste-table">
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th>소분류</th>
+            <th>품목명</th>
+            <th class="r">수량</th>
+            <th class="r">금액</th>
+            <th class="r">구분</th>
+          </tr></thead>
+          <tbody id="waste-tbody"><tr><td colspan="5" class="empty">데이터가 없습니다.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-title">주차별 폐기 추이</div></div>
+      <div class="card-b"><div class="chart-wrap"><canvas id="waste-chart"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://lwcutgofpdtzcbyjszhc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Y3V0Z29mcGR0emNieWpzemhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg0ODAsImV4cCI6MjA5NzcxNDQ4MH0.g2eGcEiO8Ix0Cul9wqnNghbn5snCeqjwD9LiD_-mK6I';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── 상태 ─────────────────────────────────────────────────────────
+let pendingFiles = [];
+let salesData = [], allMonths = [], itemMonths = [], wasteMonths = [];
+let catChart = null, profitChart = null, trendChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null;
+
+// ── 초기화 ────────────────────────────────────────────────────────
+window.onload = async () => {
+  const now = new Date();
+  document.getElementById('period-input').value =
+    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  setupDrop();
+  await loadMonthlyTrend();
+  await loadSalesData();
+  await loadCatOptions();
+  await loadWasteMonthOptions();
+  updateLastSync();
+};
+
+// ── 탭 전환 ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('on', ['sales','items','waste'][i]===tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+}
+
+// ── 파일 드롭 ────────────────────────────────────────────────────
+function setupDrop() {
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over')});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    handleFiles(e.dataTransfer.files);
+  });
+}
+
+function extractYearMonthFromFilename(name) {
+  // YYYY-MM / YYYY.MM / YYYY_MM
+  const m1 = name.match(/(\d{4})[-._](0[1-9]|1[0-2])/);
+  if (m1) return `${m1[1]}-${m1[2]}`;
+  // YYYYMM (6자리 연속)
+  const m2 = name.match(/(\d{4})(0[1-9]|1[0-2])(?!\d)/);
+  if (m2) return `${m2[1]}-${m2[2]}`;
+  return null;
+}
+
+function handleFiles(files) {
+  pendingFiles = [...files];
+  const fl = document.getElementById('file-list');
+  fl.innerHTML = pendingFiles.map(f=>`<span class="file-chip">📄 ${f.name}</span>`).join('');
+
+  // 파일명에서 연월 자동 감지
+  let detected = null;
+  for (const f of pendingFiles) {
+    detected = extractYearMonthFromFilename(f.name);
+    if (detected) break;
+  }
+  const pi = document.getElementById('period-input');
+  if (detected) {
+    pi.value = detected;
+    pi.style.borderColor = '#10b981';
+    setStatus(`📅 파일명에서 ${detected} 자동 감지`, 'ok');
+  } else {
+    pi.style.borderColor = '#f59e0b';
+    setStatus('기준 연월을 직접 선택하세요 (파일명에 날짜가 없습니다)', 'err');
+  }
+
+  document.getElementById('sync-btn').disabled = pendingFiles.length === 0;
+}
+
+// ── 상태 메시지 ───────────────────────────────────────────────────
+function setStatus(msg, cls='ok') {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = 'status '+cls;
+}
+
+// ── 파일 타입 감지 ────────────────────────────────────────────────
+function detectType(wb) {
+  const sheets = wb.SheetNames.join(' ');
+  if (sheets.includes('분류별이익현황')) return 'category_sales';
+  if (sheets.includes('시계열')) return 'item_daily';
+  if (sheets.includes('분류별내역')) return 'waste_detail';
+  if (sheets.includes('전표목록') || sheets.includes('상품목록')) return 'waste';
+  return null;
+}
+
+// ── 분류별이익현황 파싱 ───────────────────────────────────────────
+function parseCategorySales(wb, yearMonth) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+  // 금액 단위 자동 감지: 첫 데이터행(rows[6])에서 수량>0이면 단가 계산
+  // 단가 < 100 → 천원 단위로 판단 → ×1000 보정
+  let unitMult = 1;
+  const firstData = rows[6];
+  if (firstData && (firstData[2]||0) > 0 && (firstData[3]||0) > 0) {
+    const avgPrice = firstData[3] / firstData[2];
+    if (avgPrice < 100) unitMult = 1000; // 천원 단위 파일
+  }
+
+  const records = [];
+  for (let i = 5; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[1] || r[1]==='합계') continue;
+    const name = String(r[1]).trim();
+    const composition = r[6] || 0;
+    // 최상위 카테고리만 저장 (하위 품목·소카테고리 제외)
+    if (name.includes(')')) continue;
+    if (composition > 20) continue;
+    records.push({
+      year_month: yearMonth,
+      category: name,
+      quantity: r[2]||0,
+      amount:       Math.round((r[3]||0) * unitMult),
+      profit:       Math.round((r[4]||0) * unitMult),
+      profit_rate:  r[5]||0,
+      composition,
+      comp_quantity:   r[7]||0,
+      comp_amount:     Math.round((r[8]||0) * unitMult),
+      comp_profit:     Math.round((r[9]||0) * unitMult),
+      comp_profit_rate: r[10]||0,
+      diff_quantity:   r[11]||0,
+      diff_amount:     Math.round((r[12]||0) * unitMult),
+      diff_profit:     Math.round((r[13]||0) * unitMult),
+      diff_profit_rate: r[14]||0,
+    });
+  }
+  return records;
+}
+
+// ── 시계열-일 파싱 ────────────────────────────────────────────────
+function parseItemDaily(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const headerRow = rows[3] || [];
+  const dateRow = rows[4] || [];
+  const yearMonth = headerRow[6] ? String(headerRow[6]) : null;
+  if (!yearMonth) return [];
+
+  const dates = [];
+  for (let c = 6; c < dateRow.length; c++) {
+    if (dateRow[c]) {
+      const d = String(dateRow[c]); // '05-01'
+      dates.push({col:c, date: yearMonth.substring(0,5) + d});
+    }
+  }
+
+  // 첫 번째 데이터 행이 최상위 카테고리
+  const topCat = rows[5] && rows[5][0] ? String(rows[5][0]).trim() : null;
+
+  const records = [];
+  // 최상위 카테고리·서브카테고리 행 건너뛰고 실제 품목만 저장
+  // 품목 판단: 브랜드명) 패턴 또는 상위 2개 행 이후
+  const skipRows = new Set([5, 6]); // 최상위 카테고리, 서브카테고리 행
+  for (let i = 5; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0]) continue;
+    const name = String(r[0]).trim();
+    const salesTotal = r[2]; // 매출합계 컬럼
+    // 합계행(상위 카테고리)은 스킵: 품목명에 브랜드 구분자 없고 매출합계가 큰 합산값인 경우
+    // 실용적으로: 첫 두 행(카테고리/서브카테고리)는 스킵, 나머지는 모두 저장
+    if (i <= 6) continue; // 최상위+서브 카테고리 행 skip
+
+    for (const {col, date} of dates) {
+      const qty = r[col];
+      if (qty && qty > 0) {
+        records.push({
+          year_month: yearMonth,
+          category: topCat,
+          item_name: name,
+          sale_date: date,
+          quantity: qty,
+        });
+      }
+    }
+  }
+  return records;
+}
+
+// ── 분류별내역 파싱 (신규 폐기 포맷) ────────────────────────────
+function parseWasteDetail(wb) {
+  const ws = wb.Sheets['분류별내역'] || wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const records = [];
+  for (let i = 4; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[5]) continue; // 상품명 없으면 skip
+    const cd = r[7]; // 확정일자
+    let dateStr = null;
+    if (cd instanceof Date) dateStr = cd.toISOString().substring(0,10);
+    else if (cd) dateStr = String(cd).substring(0,10);
+    records.push({
+      slip_id:        r[3] ? String(r[3]) : null,
+      category:       r[1] ? String(r[1]).trim() : null,
+      type:           r[2] ? String(r[2]).trim() : null,
+      plu_code:       r[4] ? String(r[4]) : null,
+      item_name:      r[5] ? String(r[5]).trim() : null,
+      confirmed_date: dateStr,
+      quantity:       r[8] || 0,
+      amount:         r[9] || 0,
+      reason:         r[10] ? String(r[10]).trim() : null,
+    });
+  }
+  return records;
+}
+
+// ── 폐기 파싱 (구형 전표목록/상품목록 포맷) ──────────────────────
+function parseWaste(wb) {
+  const slips = [], items = [];
+
+  // 전표목록
+  const ws1 = wb.Sheets['전표목록'] || wb.Sheets[wb.SheetNames[0]];
+  const r1 = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
+  for (let i = 4; i < r1.length; i++) {
+    const r = r1[i];
+    if (!r[4]) continue; // 전표번호 없으면 skip
+    slips.push({
+      slip_id: String(r[4]),
+      registered_at: r[1] ? new Date(r[1]).toISOString() : null,
+      confirmed_date: r[2] ? String(r[2]) : null,
+      type: r[3] ? String(r[3]).trim() : null,
+      item_count: r[5]||0,
+      amount: r[6]||0,
+    });
+  }
+
+  // 상품목록
+  const ws2 = wb.Sheets['상품목록'] || wb.Sheets[wb.SheetNames[1]];
+  if (ws2) {
+    const r2 = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null});
+    for (let i = 4; i < r2.length; i++) {
+      const r = r2[i];
+      if (!r[2]) continue; // 전표번호 없으면 skip
+      items.push({
+        slip_id: String(r[2]),
+        plu_code: r[4] ? String(r[4]) : null,
+        item_name: r[5] ? String(r[5]).trim() : null,
+        purchase_price: r[6]||0,
+        quantity: r[7]||0,
+        amount: r[8]||0,
+        type: r[1] ? String(r[1]).trim() : null,
+      });
+    }
+  }
+
+  return {slips, items};
+}
+
+// ── 동기화 ────────────────────────────────────────────────────────
+async function syncFiles() {
+  if (pendingFiles.length === 0) return;
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>처리 중...';
+  setStatus('파일 처리 중...', 'loading');
+
+  const yearMonth = document.getElementById('period-input').value;
+  const fl = document.getElementById('file-list');
+  let totalRecords = 0;
+
+  for (const file of pendingFiles) {
+    try {
+      // 중복 체크
+      const {data: hist} = await sb.from('m4_sync_history')
+        .select('id').eq('file_name', file.name).single();
+      if (hist) {
+        const chip = fl.querySelector(`span[data-name="${file.name}"]`);
+        if (chip) { chip.className='file-chip skip'; chip.textContent='⏭ '+file.name+' (이미 처리됨)'; }
+        else fl.innerHTML += `<span class="file-chip skip">⏭ ${file.name} (이미 처리됨)</span>`;
+        continue;
+      }
+
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array', cellDates:true});
+      const fileType = detectType(wb);
+
+      if (!fileType) {
+        setStatus(`${file.name}: 파일 형식을 인식할 수 없습니다.`, 'err'); continue;
+      }
+
+      let count = 0;
+
+      if (fileType === 'category_sales') {
+        if (!yearMonth) { setStatus('기준 연월을 선택하세요.','err'); continue; }
+        const records = parseCategorySales(wb, yearMonth);
+        // 해당 연월 기존 데이터 삭제 후 재삽입 (upsert 잔류 방지)
+        await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
+        for (let i=0; i<records.length; i+=50) {
+          await sb.from('m4_category_sales').insert(records.slice(i,i+50));
+        }
+        count = records.length;
+
+      } else if (fileType === 'item_daily') {
+        const records = parseItemDaily(wb);
+        for (let i=0; i<records.length; i+=100) {
+          await sb.from('m4_item_daily').upsert(records.slice(i,i+100),
+            {onConflict:'year_month,item_name,sale_date'});
+        }
+        count = records.length;
+
+      } else if (fileType === 'waste_detail') {
+        const records = parseWasteDetail(wb);
+        for (let i=0; i<records.length; i+=100)
+          await sb.from('m4_waste_items').insert(records.slice(i,i+100));
+        count = records.length;
+
+      } else if (fileType === 'waste') {
+        const {slips, items} = parseWaste(wb);
+        if (slips.length) await sb.from('m4_waste_slips').upsert(slips, {onConflict:'slip_id'});
+        for (let i=0; i<items.length; i+=100)
+          await sb.from('m4_waste_items').insert(items.slice(i,i+100));
+        count = slips.length + items.length;
+      }
+
+      // 이력 저장
+      await sb.from('m4_sync_history').insert({
+        file_name: file.name, file_type: fileType, record_count: count
+      });
+
+      totalRecords += count;
+      fl.innerHTML = fl.innerHTML.replace(
+        new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
+        `✅ ${file.name} (${count}건)`
+      );
+
+    } catch(e) {
+      console.error(e);
+      setStatus(`${file.name} 처리 오류: ${e.message}`, 'err');
+    }
+  }
+
+  btn.innerHTML = '동기화';
+  btn.disabled = false;
+  setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
+  pendingFiles = [];
+
+  // 데이터 새로고침
+  await loadMonthlyTrend();
+  await loadSalesData();
+  await loadCatOptions();
+  await loadWasteMonthOptions();
+  updateLastSync();
+}
+
+// ── 월별 추이 ─────────────────────────────────────────────────────
+async function loadMonthlyTrend() {
+  const {data, error} = await sb.from('m4_category_sales')
+    .select('year_month,amount,profit')
+    .order('year_month');
+  if (error || !data || !data.length) {
+    document.getElementById('trend-month-card').style.display = 'none';
+    return;
+  }
+  document.getElementById('trend-month-card').style.display = 'block';
+
+  // 월별 집계
+  const map = {};
+  for (const r of data) {
+    if (!map[r.year_month]) map[r.year_month] = {amount:0, profit:0};
+    map[r.year_month].amount += r.amount;
+    map[r.year_month].profit += r.profit;
+  }
+  const months = Object.keys(map).sort();
+
+  if (months.length < 2) {
+    // 1개월치밖에 없으면 차트 숨기고 안내
+    document.getElementById('trend-month-card').style.display = 'none';
+    return;
+  }
+
+  const ctx = document.getElementById('monthly-trend-chart').getContext('2d');
+  if (monthlyTrendChart) monthlyTrendChart.destroy();
+  monthlyTrendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: '매출',
+          data: months.map(m=>map[m].amount),
+          borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.08)',
+          fill: true, tension: .3, pointRadius: 5, pointHoverRadius: 7, yAxisID: 'y'
+        },
+        {
+          label: '예상이익',
+          data: months.map(m=>map[m].profit),
+          borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.06)',
+          fill: true, tension: .3, pointRadius: 5, pointHoverRadius: 7, yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}원` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => (v/10000).toFixed(0)+'만' } }
+      }
+    }
+  });
+}
+
+// ── 매출 데이터 로드 ──────────────────────────────────────────────
+async function loadSalesData() {
+  const month = document.getElementById('month-sel').value;
+  let q = sb.from('m4_category_sales').select('*').order('amount', {ascending:false});
+  if (month) q = q.eq('year_month', month);
+  const {data, error} = await q;
+  if (error) return;
+  salesData = data || [];
+
+  // 월 목록 업데이트
+  const {data: months} = await sb.from('m4_category_sales')
+    .select('year_month').order('year_month', {ascending:false});
+  if (months) {
+    const unique = [...new Set(months.map(m=>m.year_month))];
+    const sel = document.getElementById('month-sel');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">전체 기간</option>' +
+      unique.map(m=>`<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('');
+  }
+
+  renderKPI();
+  renderSalesTable();
+  renderCatChart();
+  renderProfitChart();
+}
+
+function renderKPI() {
+  if (!salesData.length) return;
+  const total = salesData.reduce((s,r)=>s+r.amount,0);
+  const profit = salesData.reduce((s,r)=>s+r.profit,0);
+  const diff = salesData.reduce((s,r)=>s+r.diff_amount,0);
+  const avgRate = salesData.reduce((s,r)=>s+r.profit_rate,0)/salesData.length;
+
+  document.getElementById('k-amount').textContent = fmt(total)+'원';
+  document.getElementById('k-profit').textContent = fmt(profit)+'원';
+  document.getElementById('k-rate').textContent = avgRate.toFixed(1)+'%';
+  document.getElementById('k-diff').textContent = (diff>=0?'+':'')+fmt(diff)+'원';
+  document.getElementById('k-diff-c').className = 'kpi-c '+(diff>=0?'up':'down');
+  document.getElementById('k-diff-c').textContent = diff>=0?'▲ 전기 대비 증가':'▼ 전기 대비 감소';
+}
+
+function renderSalesTable() {
+  const sort = document.getElementById('sort-sel').value;
+  const sorted = [...salesData].sort((a,b)=>b[sort]-a[sort]);
+  const tbody = document.getElementById('sales-tbody');
+  if (!sorted.length) {
+    tbody.innerHTML='<tr><td colspan="7" class="empty">데이터가 없습니다. 파일을 업로드하고 동기화하세요.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(r=>{
+    const pct = r.comp_amount ? ((r.diff_amount/r.comp_amount)*100).toFixed(1) : null;
+    const bdg = r.diff_amount>0?'bdg-up':r.diff_amount<0?'bdg-dn':'bdg-fl';
+    const sign = r.diff_amount>=0?'+':'';
+    return `<tr>
+      <td class="cat">${r.category}</td>
+      <td class="r">${fmt(r.amount)}</td>
+      <td class="r">${fmt(r.profit)}</td>
+      <td class="r">${r.profit_rate}%</td>
+      <td class="r">${fmt(r.comp_amount)}</td>
+      <td class="r"><span class="bdg ${bdg}">${sign}${fmt(r.diff_amount)}</span></td>
+      <td class="r">${pct!=null?`<span class="bdg ${bdg}">${sign}${pct}%</span>`:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCatChart() {
+  const top = [...salesData].sort((a,b)=>b.amount-a.amount).slice(0,8);
+  const ctx = document.getElementById('cat-chart').getContext('2d');
+  if (catChart) catChart.destroy();
+  catChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: top.map(r=>r.category),
+      datasets:[
+        {label:'대상기간', data:top.map(r=>r.amount), backgroundColor:'#4f46e5', borderRadius:4, barPercentage:.6},
+        {label:'비교기간', data:top.map(r=>r.comp_amount), backgroundColor:'#e0e7ff', borderRadius:4, barPercentage:.6},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>(v/10000).toFixed(0)+'만'}}}}
+  });
+}
+
+function renderProfitChart() {
+  const top = [...salesData].sort((a,b)=>b.profit_rate-a.profit_rate).slice(0,8);
+  const ctx = document.getElementById('profit-chart').getContext('2d');
+  if (profitChart) profitChart.destroy();
+  profitChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: top.map(r=>r.category),
+      datasets:[{label:'이익율(%)', data:top.map(r=>r.profit_rate),
+        backgroundColor:'#10b981', borderRadius:4, barPercentage:.6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:30}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>v+'%'}}}}
+  });
+}
+
+// ── 품목 분석 ────────────────────────────────────────────────────
+async function loadCatOptions() {
+  const {data} = await sb.from('m4_item_daily').select('category,year_month');
+  if (!data) return;
+  const cats = [...new Set(data.filter(d=>d.category).map(d=>d.category))].sort();
+  const months = [...new Set(data.map(d=>d.year_month))].sort().reverse();
+  const cs = document.getElementById('cat-sel');
+  cs.innerHTML = '<option value="">카테고리 선택</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+  const ms = document.getElementById('item-month-sel');
+  ms.innerHTML = '<option value="">전체 기간</option>'+months.map(m=>`<option>${m}</option>`).join('');
+}
+
+async function loadItemData() {
+  const cat = document.getElementById('cat-sel').value;
+  const month = document.getElementById('item-month-sel').value;
+  if (!cat) { document.getElementById('items-tbody').innerHTML='<tr><td colspan="5" class="empty">카테고리를 선택하세요.</td></tr>'; return; }
+
+  let q = sb.from('m4_item_daily').select('item_name,sale_date,quantity').eq('category',cat);
+  if (month) q = q.eq('year_month', month);
+  const {data} = await q;
+  if (!data || !data.length) {
+    document.getElementById('items-tbody').innerHTML='<tr><td colspan="5" class="empty">데이터가 없습니다.</td></tr>'; return;
+  }
+
+  // 집계
+  const map = {};
+  for (const r of data) {
+    if (!map[r.item_name]) map[r.item_name]={name:r.item_name,total:0,days:0};
+    map[r.item_name].total += r.quantity;
+    map[r.item_name].days += 1;
+  }
+  const ranked = Object.values(map).sort((a,b)=>b.total-a.total);
+  document.getElementById('item-count').textContent = `총 ${ranked.length}개 품목`;
+
+  document.getElementById('items-tbody').innerHTML = ranked.map((r,i)=>`<tr style="cursor:pointer" onclick="showItemTrend('${r.name.replace(/'/g,"\\'")}')">
+    <td style="color:#94a3b8;font-size:11px">${i+1}</td>
+    <td class="cat">${r.name}</td>
+    <td class="r">${r.total}개</td>
+    <td class="r">${r.days}일</td>
+    <td class="r">${(r.total/r.days).toFixed(1)}개</td>
+  </tr>`).join('');
+}
+
+async function showItemTrend(itemName) {
+  const month = document.getElementById('item-month-sel').value;
+  let q = sb.from('m4_item_daily').select('sale_date,quantity').eq('item_name',itemName).order('sale_date');
+  if (month) q = q.eq('year_month', month);
+  const {data} = await q;
+  if (!data || !data.length) return;
+
+  document.getElementById('item-trend-card').style.display='block';
+  document.getElementById('item-trend-title').textContent = itemName+' — 일별 판매 추이';
+
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: data.map(r=>r.sale_date),
+      datasets:[{label:'판매수량', data:data.map(r=>r.quantity),
+        borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,.1)',
+        fill:true, tension:.3, pointRadius:3}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10}}}}}
+  });
+}
+
+// ── 폐기 데이터 ───────────────────────────────────────────────────
+async function loadWasteMonthOptions() {
+  const {data} = await sb.from('m4_waste_items').select('confirmed_date');
+  if (!data) return;
+  const months = [...new Set(data.filter(d=>d.confirmed_date).map(d=>String(d.confirmed_date).substring(0,7)))].sort().reverse();
+  const sel = document.getElementById('waste-month-sel');
+  sel.innerHTML = '<option value="">전체 기간</option>'+months.map(m=>`<option>${m}</option>`).join('');
+  loadWasteData();
+}
+
+async function loadWasteData() {
+  const month = document.getElementById('waste-month-sel').value;
+  const type = document.getElementById('waste-type-sel').value;
+
+  let q = sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date');
+  if (type) q = q.eq('type', type);
+  if (month) q = q.like('confirmed_date', month+'%');
+  const {data: items} = await q;
+  if (!items) return;
+
+  // 집계
+  const map = {};
+  let totalW=0, totalI=0;
+  for (const r of items) {
+    const key = r.item_name||'—';
+    if (!map[key]) map[key]={name:r.item_name,category:r.category,qty:0,amt:0,type:r.type};
+    map[key].qty += r.quantity||0;
+    map[key].amt += r.amount||0;
+    if (r.type==='폐기') totalW+=r.amount||0;
+    else totalI+=r.amount||0;
+  }
+
+  const ranked = Object.values(map).sort((a,b)=>b.amt-a.amt).slice(0,30);
+
+  document.getElementById('w-total').textContent = fmt(totalW)+'원';
+  document.getElementById('w-internal').textContent = fmt(totalI)+'원';
+  document.getElementById('w-count').textContent = ranked.length+'건';
+  const ratio = totalW+totalI>0?((totalW/(totalW+totalI))*100).toFixed(1):'—';
+  document.getElementById('w-ratio').textContent = ratio+'%';
+
+  document.getElementById('waste-tbody').innerHTML = ranked.length ? ranked.map((r,i)=>`<tr>
+    <td style="color:#94a3b8;font-size:11px">${i+1}</td>
+    <td style="font-size:11px;color:#64748b">${r.category||'—'}</td>
+    <td class="cat">${r.name||'—'}</td>
+    <td class="r">${r.qty}</td>
+    <td class="r">${fmt(r.amt)}</td>
+    <td class="r"><span class="bdg ${r.type==='폐기'?'bdg-dn':'bdg-fl'}">${r.type||'—'}</span></td>
+  </tr>`).join('') : '<tr><td colspan="6" class="empty">데이터가 없습니다.</td></tr>';
+
+  renderWasteChart(items);
+  renderWasteCatChart(items);
+}
+
+function renderWasteCatChart(items) {
+  const catMap = {};
+  for (const r of items) {
+    if (!r.category) continue;
+    if (!catMap[r.category]) catMap[r.category] = 0;
+    catMap[r.category] += Number(r.amount) || 0;
+  }
+  const sorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const ctx = document.getElementById('waste-cat-chart').getContext('2d');
+  if (wasteCatChart) wasteCatChart.destroy();
+  if (!sorted.length) return;
+  wasteCatChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(e=>e[0]),
+      datasets: [{
+        label: '폐기금액',
+        data: sorted.map(e=>e[1]),
+        backgroundColor: sorted.map((_,i)=>i===0?'#ef4444':'#fca5a5'),
+        borderRadius: 4, barPercentage: .6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 30 } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => fmt(v)+'원' } }
+      }
+    }
+  });
+}
+
+function renderWasteChart(items) {
+  // 주차별 집계
+  const weekly = {};
+  for (const r of items) {
+    if (!r.confirmed_date) continue;
+    const d = new Date(r.confirmed_date);
+    const week = `${d.getFullYear()}-W${Math.ceil(d.getDate()/7)}`;
+    if (!weekly[week]) weekly[week]=0;
+    weekly[week] += r.amount||0;
+  }
+  const labels = Object.keys(weekly).sort();
+  const ctx = document.getElementById('waste-chart').getContext('2d');
+  if (wasteChart) wasteChart.destroy();
+  wasteChart = new Chart(ctx, {
+    type:'bar',
+    data:{labels, datasets:[{label:'폐기금액', data:labels.map(k=>weekly[k]),
+      backgroundColor:'#ef4444', borderRadius:4, barPercentage:.6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>fmt(v)}}}}
+  });
+}
+
+// ── 마지막 동기화 ─────────────────────────────────────────────────
+async function updateLastSync() {
+  const {data} = await sb.from('m4_sync_history').select('synced_at').order('synced_at',{ascending:false}).limit(1).single();
+  if (data) {
+    const d = new Date(data.synced_at);
+    document.getElementById('last-sync').textContent = '마지막 동기화: '+d.toLocaleDateString('ko-KR')+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  } else {
+    document.getElementById('last-sync').textContent = '동기화 기록 없음';
+  }
+}
+
+// ── 유틸 ─────────────────────────────────────────────────────────
+function fmt(n) { return (n||0).toLocaleString('ko-KR'); }
+</script>
+</body>
+</html>
