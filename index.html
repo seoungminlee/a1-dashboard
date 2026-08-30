@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self';">
 <title>A1 편의점 수익관리 대시보드</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -333,7 +334,7 @@ function extractYearMonthFromFilename(name) {
 function handleFiles(files) {
   pendingFiles = [...files];
   const fl = document.getElementById('file-list');
-  fl.innerHTML = pendingFiles.map(f=>`<span class="file-chip">📄 ${f.name}</span>`).join('');
+  fl.innerHTML = pendingFiles.map(f=>`<span class="file-chip">📄 ${esc(f.name)}</span>`).join('');
 
   // 파일명에서 연월 자동 감지
   let detected = null;
@@ -552,7 +553,7 @@ async function syncFiles() {
       if (hist) {
         const chip = fl.querySelector(`span[data-name="${file.name}"]`);
         if (chip) { chip.className='file-chip skip'; chip.textContent='⏭ '+file.name+' (이미 처리됨)'; }
-        else fl.innerHTML += `<span class="file-chip skip">⏭ ${file.name} (이미 처리됨)</span>`;
+        else fl.innerHTML += `<span class="file-chip skip">⏭ ${esc(file.name)} (이미 처리됨)</span>`;
         continue;
       }
 
@@ -743,7 +744,7 @@ function renderSalesTable() {
     const bdg = r.diff_amount>0?'bdg-up':r.diff_amount<0?'bdg-dn':'bdg-fl';
     const sign = r.diff_amount>=0?'+':'';
     return `<tr>
-      <td class="cat">${r.category}</td>
+      <td class="cat">${esc(r.category)}</td>
       <td class="r">${fmt(r.amount)}</td>
       <td class="r">${fmt(r.profit)}</td>
       <td class="r">${r.profit_rate}%</td>
@@ -799,9 +800,9 @@ async function loadCatOptions() {
   const cats = [...new Set(data.filter(d=>d.category).map(d=>d.category))].sort();
   const months = [...new Set(data.map(d=>d.year_month))].sort().reverse();
   const cs = document.getElementById('cat-sel');
-  cs.innerHTML = '<option value="">카테고리 선택</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+  cs.innerHTML = '<option value="">카테고리 선택</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
   const ms = document.getElementById('item-month-sel');
-  ms.innerHTML = '<option value="">전체 기간</option>'+months.map(m=>`<option>${m}</option>`).join('');
+  ms.innerHTML = '<option value="">전체 기간</option>'+months.map(m=>`<option>${esc(m)}</option>`).join('');
 }
 
 async function loadItemData() {
@@ -826,9 +827,9 @@ async function loadItemData() {
   const ranked = Object.values(map).sort((a,b)=>b.total-a.total);
   document.getElementById('item-count').textContent = `총 ${ranked.length}개 품목`;
 
-  document.getElementById('items-tbody').innerHTML = ranked.map((r,i)=>`<tr style="cursor:pointer" onclick="showItemTrend('${r.name.replace(/'/g,"\\'")}')">
+  document.getElementById('items-tbody').innerHTML = ranked.map((r,i)=>`<tr style="cursor:pointer" data-item="${esc(r.name)}" onclick="showItemTrend(this.dataset.item)">
     <td style="color:#94a3b8;font-size:11px">${i+1}</td>
-    <td class="cat">${r.name}</td>
+    <td class="cat">${esc(r.name)}</td>
     <td class="r">${r.total}개</td>
     <td class="r">${r.days}일</td>
     <td class="r">${(r.total/r.days).toFixed(1)}개</td>
@@ -904,11 +905,11 @@ async function loadWasteData() {
 
   document.getElementById('waste-tbody').innerHTML = ranked.length ? ranked.map((r,i)=>`<tr>
     <td style="color:#94a3b8;font-size:11px">${i+1}</td>
-    <td style="font-size:11px;color:#64748b">${r.category||'—'}</td>
-    <td class="cat">${r.name||'—'}</td>
+    <td style="font-size:11px;color:#64748b">${esc(r.category||'—')}</td>
+    <td class="cat">${esc(r.name||'—')}</td>
     <td class="r">${r.qty}</td>
     <td class="r">${fmt(r.amt)}</td>
-    <td class="r"><span class="bdg ${r.type==='폐기'?'bdg-dn':'bdg-fl'}">${r.type||'—'}</span></td>
+    <td class="r"><span class="bdg ${r.type==='폐기'?'bdg-dn':'bdg-fl'}">${esc(r.type||'—')}</span></td>
   </tr>`).join('') : '<tr><td colspan="6" class="empty">데이터가 없습니다.</td></tr>';
 
   renderWasteChart(items);
@@ -985,6 +986,7 @@ async function updateLastSync() {
 
 // ── 유틸 ─────────────────────────────────────────────────────────
 function fmt(n) { return (n||0).toLocaleString('ko-KR'); }
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 </script>
 </body>
 </html>
