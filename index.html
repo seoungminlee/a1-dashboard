@@ -86,6 +86,25 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
 .tab-content{display:none}.tab-content.on{display:block}
 
+/* 액션 카드 */
+.act-card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden;border-left:4px solid #ef4444}
+.act-card.blue{border-left-color:#4f46e5}
+.act-h{padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.act-t{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.act-sub{font-size:11px;color:#94a3b8;margin-top:2px;font-weight:400}
+.act-b{padding:6px 18px 12px}
+.act-list{list-style:none}
+.act-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc;font-size:13px}
+.act-item:last-child{border:none}
+.act-rank{width:20px;height:20px;border-radius:5px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.act-card.blue .act-rank{background:#e0e7ff;color:#4f46e5}
+.act-name{flex:1;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act-meta{font-size:11px;color:#94a3b8;flex-shrink:0}
+.act-val{font-weight:700;color:#dc2626;flex-shrink:0;font-size:13px}
+.act-card.blue .act-val{color:#4f46e5}
+.act-empty{padding:24px;text-align:center;color:#94a3b8;font-size:12px}
+.note{font-size:11px;color:#92400e;background:#fef9c3;padding:7px 12px;border-radius:6px;margin:0 18px 12px;line-height:1.5}
+
 /* 로딩 스피너 */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -181,6 +200,18 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 <!-- 탭 2: 품목분석 -->
 <div class="tab-content main" id="tab-items">
+  <div class="act-card blue" id="stockout-card">
+    <div class="act-h">
+      <div>
+        <div class="act-t">📦 결품 의심 품목</div>
+        <div class="act-sub">잘 팔리는데 판매가 끊긴 날이 있는 품목</div>
+      </div>
+      <select class="sel" id="stockout-month-sel" onchange="loadStockoutSuspects()" style="font-size:12px"><option value="">최근 월</option></select>
+    </div>
+    <div class="note">⚠️ POS에 재고·품절 데이터가 없어 <b>판매 공백일로 추정</b>한 결과입니다. 실제 품절이 아니라 단순히 안 팔린 날일 수 있으니 참고용으로만 보세요.</div>
+    <div class="act-b"><ul class="act-list" id="stockout-list"><li class="act-empty">데이터 없음</li></ul></div>
+  </div>
+
   <div class="filter-row">
     <select class="sel" id="cat-sel" onchange="loadItemData()"><option value="">카테고리 선택</option></select>
     <select class="sel" id="item-month-sel" onchange="loadItemData()"><option value="">전체 기간</option></select>
@@ -215,6 +246,17 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="kpi"><div class="kpi-t">점내용도 금액</div><div class="kpi-v" id="w-internal">—</div></div>
     <div class="kpi"><div class="kpi-t">폐기 비중</div><div class="kpi-v" id="w-ratio">—</div></div>
   </div>
+  <div class="act-card" id="recent-waste-card">
+    <div class="act-h">
+      <div>
+        <div class="act-t">🗑 최근 7일 폐기 상위</div>
+        <div class="act-sub" id="recent-waste-period">발주 조정 검토 대상</div>
+      </div>
+      <div style="text-align:right"><div class="act-sub">기간 합계</div><div style="font-size:15px;font-weight:700;color:#dc2626" id="recent-waste-total">—</div></div>
+    </div>
+    <div class="act-b"><ul class="act-list" id="recent-waste-list"><li class="act-empty">데이터 없음</li></ul></div>
+  </div>
+
   <div class="filter-row">
     <select class="sel" id="waste-month-sel" onchange="loadWasteData()"><option value="">전체 기간</option></select>
     <select class="sel" id="waste-type-sel" onchange="loadWasteData()">
@@ -261,6 +303,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let pendingFiles = [];
 let salesData = [], allMonths = [], itemMonths = [], wasteMonths = [];
 let catChart = null, profitChart = null, trendChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null;
+let CURRENT_ROLE = null;
 
 // ── 인증 ──────────────────────────────────────────────────────────
 const HUB_URL = 'https://seoungminlee.github.io/lecollective-hub/';
@@ -278,6 +321,15 @@ async function initAuth() {
   sb.auth.onAuthStateChange((event, sess) => {
     if (event === 'SIGNED_OUT' || !sess) window.location.href = HUB_URL;
   });
+
+  // 권한 확인 — 쓰기 권한 없으면 업로드 UI 숨김 (RLS와 UI 일치)
+  try {
+    const {data: role} = await sb.rpc('get_my_role');
+    CURRENT_ROLE = role || null;
+  } catch(e) { CURRENT_ROLE = null; }
+  if (!['admin','staff'].includes(CURRENT_ROLE)) {
+    document.querySelector('.upload-bar').style.display = 'none';
+  }
   return true;
 }
 
@@ -297,7 +349,9 @@ window.onload = async () => {
   await loadMonthlyTrend();
   await loadSalesData();
   await loadCatOptions();
+  await loadStockoutSuspects();
   await loadWasteMonthOptions();
+  await loadRecentWaste();
   updateLastSync();
 };
 
@@ -628,7 +682,9 @@ async function syncFiles() {
   await loadMonthlyTrend();
   await loadSalesData();
   await loadCatOptions();
+  await loadStockoutSuspects();
   await loadWasteMonthOptions();
+  await loadRecentWaste();
   updateLastSync();
 }
 
@@ -919,6 +975,119 @@ async function loadWasteData() {
 
   renderWasteChart(items);
   renderWasteCatChart(items);
+}
+
+// ── 최근 7일 폐기 상위 ────────────────────────────────────────────
+async function loadRecentWaste() {
+  // 데이터의 최신 확정일자 기준 7일 (오늘 기준이 아님 — 업로드 시점과 무관하게 동작)
+  const {data: latest} = await sb.from('m4_waste_items')
+    .select('confirmed_date').not('confirmed_date','is',null)
+    .order('confirmed_date',{ascending:false}).limit(1);
+  if (!latest || !latest.length) {
+    document.getElementById('recent-waste-card').style.display = 'none';
+    return;
+  }
+  document.getElementById('recent-waste-card').style.display = 'block';
+
+  const end = String(latest[0].confirmed_date).substring(0,10);
+  const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
+
+  const {data} = await sb.from('m4_waste_items')
+    .select('item_name,category,quantity,amount,type')
+    .eq('type','폐기')
+    .gte('confirmed_date', start).lte('confirmed_date', end);
+
+  document.getElementById('recent-waste-period').textContent = `${start} ~ ${end} · 발주 조정 검토 대상`;
+
+  if (!data || !data.length) {
+    document.getElementById('recent-waste-list').innerHTML = '<li class="act-empty">해당 기간 폐기 없음</li>';
+    document.getElementById('recent-waste-total').textContent = '0원';
+    return;
+  }
+
+  const map = {};
+  let total = 0;
+  for (const r of data) {
+    const k = r.item_name || '—';
+    if (!map[k]) map[k] = {name:r.item_name, cat:r.category, qty:0, amt:0};
+    map[k].qty += r.quantity||0;
+    map[k].amt += r.amount||0;
+    total += r.amount||0;
+  }
+  document.getElementById('recent-waste-total').textContent = fmt(total)+'원';
+
+  const top = Object.values(map).sort((a,b)=>b.amt-a.amt).slice(0,5);
+  document.getElementById('recent-waste-list').innerHTML = top.map((r,i)=>`<li class="act-item">
+    <span class="act-rank">${i+1}</span>
+    <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
+    <span class="act-meta">${esc(r.cat||'')} · ${r.qty}개</span>
+    <span class="act-val">${fmt(r.amt)}원</span>
+  </li>`).join('');
+}
+
+// ── 결품 의심 품목 (추정) ─────────────────────────────────────────
+async function loadStockoutSuspects() {
+  const sel = document.getElementById('stockout-month-sel');
+  let month = sel.value;
+
+  // 월 옵션 채우기
+  const {data: mData} = await sb.from('m4_item_daily').select('year_month');
+  if (!mData || !mData.length) {
+    document.getElementById('stockout-card').style.display = 'none';
+    return;
+  }
+  document.getElementById('stockout-card').style.display = 'block';
+  const months = [...new Set(mData.map(d=>d.year_month))].sort().reverse();
+  if (sel.options.length <= 1) {
+    sel.innerHTML = months.map((m,i)=>`<option${i===0?' selected':''}>${esc(m)}</option>`).join('');
+    month = months[0];
+  }
+  if (!month) month = months[0];
+
+  const {data} = await sb.from('m4_item_daily')
+    .select('item_name,sale_date,quantity').eq('year_month', month);
+  if (!data || !data.length) {
+    document.getElementById('stockout-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
+    return;
+  }
+
+  // 품목별 판매일/수량 집계
+  const map = {};
+  const allDates = new Set();
+  for (const r of data) {
+    allDates.add(r.sale_date);
+    if (!map[r.item_name]) map[r.item_name] = {name:r.item_name, total:0, days:new Set()};
+    map[r.item_name].total += r.quantity||0;
+    map[r.item_name].days.add(r.sale_date);
+  }
+  const totalDays = allDates.size;
+  if (totalDays < 7) {
+    document.getElementById('stockout-list').innerHTML =
+      '<li class="act-empty">판매일이 7일 미만이라 판단 불가 — 데이터를 더 올려주세요</li>';
+    return;
+  }
+
+  // 판매된 날 기준 일평균이 1개 이상이면서, 판매 공백일이 있는 품목
+  const suspects = Object.values(map).map(r=>{
+    const soldDays = r.days.size;
+    const gapDays = totalDays - soldDays;
+    const dailyAvg = r.total / soldDays;
+    return {...r, soldDays, gapDays, dailyAvg, lost: dailyAvg * gapDays};
+  }).filter(r => r.dailyAvg >= 1 && r.gapDays >= 1 && r.soldDays >= 3)
+    .sort((a,b)=>b.lost-a.lost).slice(0,5);
+
+  if (!suspects.length) {
+    document.getElementById('stockout-list').innerHTML =
+      '<li class="act-empty">결품 의심 품목 없음 — 판매 공백일이 있는 주력 품목이 없습니다</li>';
+    return;
+  }
+
+  document.getElementById('stockout-list').innerHTML = suspects.map((r,i)=>`<li class="act-item">
+    <span class="act-rank">${i+1}</span>
+    <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
+    <span class="act-meta">일평균 ${r.dailyAvg.toFixed(1)}개 · 판매 ${r.soldDays}/${totalDays}일</span>
+    <span class="act-val">공백 ${r.gapDays}일</span>
+  </li>`).join('');
 }
 
 function renderWasteCatChart(items) {
