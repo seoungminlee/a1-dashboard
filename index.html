@@ -56,7 +56,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .kpi-t{font-size:11px;color:#64748b;margin-bottom:6px}
 .kpi-v{font-size:22px;font-weight:700}
 .kpi-c{font-size:12px;margin-top:4px}
-.up{color:#10b981}.down{color:#ef4444}.flat{color:#94a3b8}
+.up{color:#10b981}.down{color:#ef4444}
 
 /* 카드 */
 .card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden}
@@ -517,7 +517,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── 상태 ─────────────────────────────────────────────────────────
 let pendingFiles = [];
-let salesData = [], allMonths = [], itemMonths = [], wasteMonths = [];
+let salesData = [];
 let catChart = null, profitChart = null, trendChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null, homeTrendChart = null;
 let CURRENT_ROLE = null;
 
@@ -718,16 +718,11 @@ function parseItemDaily(wb) {
   const topCat = rows[5] && rows[5][0] ? String(rows[5][0]).trim() : null;
 
   const records = [];
-  // 최상위 카테고리·서브카테고리 행 건너뛰고 실제 품목만 저장
-  // 품목 판단: 브랜드명) 패턴 또는 상위 2개 행 이후
-  const skipRows = new Set([5, 6]); // 최상위 카테고리, 서브카테고리 행
+  // 최상위 카테고리·서브카테고리 행(첫 두 행)은 건너뛰고 실제 품목만 저장
   for (let i = 5; i < rows.length; i++) {
     const r = rows[i];
     if (!r[0]) continue;
     const name = String(r[0]).trim();
-    const salesTotal = r[2]; // 매출합계 컬럼
-    // 합계행(상위 카테고리)은 스킵: 품목명에 브랜드 구분자 없고 매출합계가 큰 합산값인 경우
-    // 실용적으로: 첫 두 행(카테고리/서브카테고리)는 스킵, 나머지는 모두 저장
     if (i <= 6) continue; // 최상위+서브 카테고리 행 skip
 
     for (const {col, date} of dates) {
@@ -917,51 +912,31 @@ async function syncFiles() {
   updateLastSync();
 }
 
-// ── 월별 추이 ─────────────────────────────────────────────────────
-async function loadMonthlyTrend() {
-  const {data, error} = await sb.from('m4_category_sales')
-    .select('year_month,amount,profit')
-    .order('year_month');
-  if (error || !data || !data.length) {
-    document.getElementById('trend-month-card').style.display = 'none';
-    return;
-  }
-  document.getElementById('trend-month-card').style.display = 'block';
-
-  // 월별 집계
+// ── 공통 데이터 헬퍼 ────────────────────────────────────────────────
+// 월별 매출·이익 집계 (홈 요약 + 매출 탭 추이 차트 공용)
+async function fetchMonthlyTrendData() {
+  const {data} = await sb.from('m4_category_sales').select('year_month,amount,profit').order('year_month');
   const map = {};
-  for (const r of data) {
+  for (const r of (data||[])) {
     if (!map[r.year_month]) map[r.year_month] = {amount:0, profit:0};
     map[r.year_month].amount += r.amount;
     map[r.year_month].profit += r.profit;
   }
-  const months = Object.keys(map).sort();
+  return { months: Object.keys(map).sort(), map };
+}
 
-  if (months.length < 2) {
-    // 1개월치밖에 없으면 차트 숨기고 안내
-    document.getElementById('trend-month-card').style.display = 'none';
-    return;
-  }
-
-  const ctx = document.getElementById('monthly-trend-chart').getContext('2d');
-  if (monthlyTrendChart) monthlyTrendChart.destroy();
-  monthlyTrendChart = new Chart(ctx, {
+function renderTrendChart(canvasId, months, map, existingChart) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (existingChart) existingChart.destroy();
+  return new Chart(ctx, {
     type: 'line',
     data: {
       labels: months,
       datasets: [
-        {
-          label: '매출',
-          data: months.map(m=>map[m].amount),
-          borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.08)',
-          fill: true, tension: .3, pointRadius: 5, pointHoverRadius: 7, yAxisID: 'y'
-        },
-        {
-          label: '예상이익',
-          data: months.map(m=>map[m].profit),
-          borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.06)',
-          fill: true, tension: .3, pointRadius: 5, pointHoverRadius: 7, yAxisID: 'y'
-        }
+        {label:'매출', data: months.map(m=>map[m].amount), borderColor:'#4f46e5',
+         backgroundColor:'rgba(79,70,229,.08)', fill:true, tension:.3, pointRadius:5, pointHoverRadius:7},
+        {label:'예상이익', data: months.map(m=>map[m].profit), borderColor:'#10b981',
+         backgroundColor:'rgba(16,185,129,.06)', fill:true, tension:.3, pointRadius:5, pointHoverRadius:7}
       ]
     },
     options: {
@@ -976,6 +951,84 @@ async function loadMonthlyTrend() {
       }
     }
   });
+}
+
+// 최근 7일 폐기 (홈 요약 top3 + 폐기 탭 top5 공용). 데이터의 최신 확정일자
+// 기준 7일이며 오늘 날짜와 무관하게 동작합니다.
+async function fetchRecentWasteData() {
+  const {data: latest} = await sb.from('m4_waste_items')
+    .select('confirmed_date').not('confirmed_date','is',null)
+    .order('confirmed_date',{ascending:false}).limit(1);
+  if (!latest || !latest.length) return null;
+
+  const end = String(latest[0].confirmed_date).substring(0,10);
+  const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
+
+  const {data} = await sb.from('m4_waste_items')
+    .select('item_name,category,quantity,amount,type')
+    .eq('type','폐기').gte('confirmed_date', start).lte('confirmed_date', end);
+  const list = data || [];
+
+  const map = {};
+  let total = 0;
+  for (const r of list) {
+    const k = r.item_name || '—';
+    if (!map[k]) map[k] = {name:r.item_name, cat:r.category, qty:0, amt:0};
+    map[k].qty += r.quantity||0;
+    map[k].amt += r.amount||0;
+    total += r.amount||0;
+  }
+  const ranked = Object.values(map).sort((a,b)=>b.amt-a.amt);
+  return { start, end, total, ranked };
+}
+
+function renderWasteListHTML(listId, ranked, limit, showQty) {
+  const top = ranked.slice(0, limit);
+  document.getElementById(listId).innerHTML = top.length ? top.map((r,i)=>`<li class="act-item">
+    <span class="act-rank">${i+1}</span>
+    <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
+    <span class="act-meta">${esc(r.cat||'')}${showQty ? ' · '+r.qty+'개' : ''}</span>
+    <span class="act-val">${fmt(r.amt)}원</span>
+  </li>`).join('') : '<li class="act-empty">해당 기간 폐기 없음</li>';
+}
+
+// 결품 의심 품목 (홈 요약 top3 + 품목 탭 top5 공용). 최신 월 데이터 기준.
+// 조건: 판매일 7일 이상 확보 + 일평균 1개 이상 + 판매 공백일 1일 이상.
+async function fetchStockoutData(month) {
+  const {data: mData} = await sb.from('m4_item_daily').select('year_month');
+  if (!mData || !mData.length) return null;
+  const months = [...new Set(mData.map(d=>d.year_month))].sort().reverse();
+  const targetMonth = month || months[0];
+
+  const {data} = await sb.from('m4_item_daily')
+    .select('item_name,sale_date,quantity').eq('year_month', targetMonth);
+  if (!data || !data.length) return { months, targetMonth, totalDays: 0, suspects: [] };
+
+  const map = {}; const allDates = new Set();
+  for (const r of data) {
+    allDates.add(r.sale_date);
+    if (!map[r.item_name]) map[r.item_name] = {name:r.item_name, total:0, days:new Set()};
+    map[r.item_name].total += r.quantity||0;
+    map[r.item_name].days.add(r.sale_date);
+  }
+  const totalDays = allDates.size;
+  if (totalDays < 7) return { months, targetMonth, totalDays, suspects: [] };
+
+  const suspects = Object.values(map).map(r=>{
+    const soldDays = r.days.size, gapDays = totalDays-soldDays, dailyAvg = r.total/soldDays;
+    return {...r, soldDays, gapDays, dailyAvg, lost: dailyAvg*gapDays};
+  }).filter(r=>r.dailyAvg>=1 && r.gapDays>=1 && r.soldDays>=3).sort((a,b)=>b.lost-a.lost);
+
+  return { months, targetMonth, totalDays, suspects };
+}
+
+// ── 월별 추이 (매출 탭) ───────────────────────────────────────────
+async function loadMonthlyTrend() {
+  const { months, map } = await fetchMonthlyTrendData();
+  const card = document.getElementById('trend-month-card');
+  if (months.length < 2) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  monthlyTrendChart = renderTrendChart('monthly-trend-chart', months, map, monthlyTrendChart);
 }
 
 // ── 매출 데이터 로드 ──────────────────────────────────────────────
@@ -1188,8 +1241,10 @@ async function loadWasteData() {
 
   document.getElementById('w-total').textContent = fmt(totalW)+'원';
   document.getElementById('w-internal').textContent = fmt(totalI)+'원';
-  // 실제 폐기 건수 = 전체 레코드 수 (상위 30 슬라이스 아님)
-  document.getElementById('w-count').textContent = fmt(items.length)+'건';
+  // '폐기 건수'는 라벨 그대로 폐기(type==='폐기')만 셈 — 점내용도 포함한
+  // 전체 레코드 수(items.length)를 쓰면 필터가 '전체'일 때 라벨과 값이 안 맞음
+  const wasteCount = items.filter(r=>r.type==='폐기').length;
+  document.getElementById('w-count').textContent = fmt(wasteCount)+'건';
   const ratio = totalW+totalI>0?((totalW/(totalW+totalI))*100).toFixed(1):'—';
   document.getElementById('w-ratio').textContent = ratio+'%';
 
@@ -1206,242 +1261,100 @@ async function loadWasteData() {
   renderWasteCatChart(items);
 }
 
-// ── 최근 7일 폐기 상위 ────────────────────────────────────────────
+// ── 최근 7일 폐기 상위 (폐기 탭) ──────────────────────────────────
 async function loadRecentWaste() {
-  // 데이터의 최신 확정일자 기준 7일 (오늘 기준이 아님 — 업로드 시점과 무관하게 동작)
-  const {data: latest} = await sb.from('m4_waste_items')
-    .select('confirmed_date').not('confirmed_date','is',null)
-    .order('confirmed_date',{ascending:false}).limit(1);
-  if (!latest || !latest.length) {
-    document.getElementById('recent-waste-card').style.display = 'none';
-    return;
-  }
-  document.getElementById('recent-waste-card').style.display = 'block';
+  const result = await fetchRecentWasteData();
+  const card = document.getElementById('recent-waste-card');
+  if (!result) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
 
-  const end = String(latest[0].confirmed_date).substring(0,10);
-  const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
-
-  const {data} = await sb.from('m4_waste_items')
-    .select('item_name,category,quantity,amount,type')
-    .eq('type','폐기')
-    .gte('confirmed_date', start).lte('confirmed_date', end);
-
-  document.getElementById('recent-waste-period').textContent = `${start} ~ ${end} · 발주 조정 검토 대상`;
-
-  if (!data || !data.length) {
-    document.getElementById('recent-waste-list').innerHTML = '<li class="act-empty">해당 기간 폐기 없음</li>';
-    document.getElementById('recent-waste-total').textContent = '0원';
-    return;
-  }
-
-  const map = {};
-  let total = 0;
-  for (const r of data) {
-    const k = r.item_name || '—';
-    if (!map[k]) map[k] = {name:r.item_name, cat:r.category, qty:0, amt:0};
-    map[k].qty += r.quantity||0;
-    map[k].amt += r.amount||0;
-    total += r.amount||0;
-  }
-  document.getElementById('recent-waste-total').textContent = fmt(total)+'원';
-
-  const top = Object.values(map).sort((a,b)=>b.amt-a.amt).slice(0,5);
-  document.getElementById('recent-waste-list').innerHTML = top.map((r,i)=>`<li class="act-item">
-    <span class="act-rank">${i+1}</span>
-    <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
-    <span class="act-meta">${esc(r.cat||'')} · ${r.qty}개</span>
-    <span class="act-val">${fmt(r.amt)}원</span>
-  </li>`).join('');
+  document.getElementById('recent-waste-period').textContent = `${result.start} ~ ${result.end} · 발주 조정 검토 대상`;
+  document.getElementById('recent-waste-total').textContent = fmt(result.total)+'원';
+  renderWasteListHTML('recent-waste-list', result.ranked, 5, true);
 }
 
-// ── 결품 의심 품목 (추정) ─────────────────────────────────────────
+// ── 결품 의심 품목 (품목 분석 탭, 추정값) ──────────────────────────
 async function loadStockoutSuspects() {
   const sel = document.getElementById('stockout-month-sel');
-  let month = sel.value;
+  const card = document.getElementById('stockout-card');
+  const selectedMonth = sel.value;
 
-  // 월 옵션 채우기
-  const {data: mData} = await sb.from('m4_item_daily').select('year_month');
-  if (!mData || !mData.length) {
-    document.getElementById('stockout-card').style.display = 'none';
-    return;
-  }
-  document.getElementById('stockout-card').style.display = 'block';
-  const months = [...new Set(mData.map(d=>d.year_month))].sort().reverse();
+  const result = await fetchStockoutData(selectedMonth);
+  if (!result) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
   if (sel.options.length <= 1) {
-    sel.innerHTML = months.map((m,i)=>`<option${i===0?' selected':''}>${esc(m)}</option>`).join('');
-    month = months[0];
+    sel.innerHTML = result.months.map((m,i)=>`<option${m===result.targetMonth?' selected':''}>${esc(m)}</option>`).join('');
   }
-  if (!month) month = months[0];
 
-  const {data} = await sb.from('m4_item_daily')
-    .select('item_name,sale_date,quantity').eq('year_month', month);
-  if (!data || !data.length) {
-    document.getElementById('stockout-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
+  const list = document.getElementById('stockout-list');
+  if (result.totalDays === 0) {
+    list.innerHTML = '<li class="act-empty">데이터 없음</li>';
     return;
   }
-
-  // 품목별 판매일/수량 집계
-  const map = {};
-  const allDates = new Set();
-  for (const r of data) {
-    allDates.add(r.sale_date);
-    if (!map[r.item_name]) map[r.item_name] = {name:r.item_name, total:0, days:new Set()};
-    map[r.item_name].total += r.quantity||0;
-    map[r.item_name].days.add(r.sale_date);
-  }
-  const totalDays = allDates.size;
-  if (totalDays < 7) {
-    document.getElementById('stockout-list').innerHTML =
-      '<li class="act-empty">판매일이 7일 미만이라 판단 불가 — 데이터를 더 올려주세요</li>';
+  if (result.totalDays < 7) {
+    list.innerHTML = '<li class="act-empty">판매일이 7일 미만이라 판단 불가 — 데이터를 더 올려주세요</li>';
     return;
   }
-
-  // 판매된 날 기준 일평균이 1개 이상이면서, 판매 공백일이 있는 품목
-  const suspects = Object.values(map).map(r=>{
-    const soldDays = r.days.size;
-    const gapDays = totalDays - soldDays;
-    const dailyAvg = r.total / soldDays;
-    return {...r, soldDays, gapDays, dailyAvg, lost: dailyAvg * gapDays};
-  }).filter(r => r.dailyAvg >= 1 && r.gapDays >= 1 && r.soldDays >= 3)
-    .sort((a,b)=>b.lost-a.lost).slice(0,5);
-
-  if (!suspects.length) {
-    document.getElementById('stockout-list').innerHTML =
-      '<li class="act-empty">결품 의심 품목 없음 — 판매 공백일이 있는 주력 품목이 없습니다</li>';
+  const top = result.suspects.slice(0,5);
+  if (!top.length) {
+    list.innerHTML = '<li class="act-empty">결품 의심 품목 없음 — 판매 공백일이 있는 주력 품목이 없습니다</li>';
     return;
   }
-
-  document.getElementById('stockout-list').innerHTML = suspects.map((r,i)=>`<li class="act-item">
+  list.innerHTML = top.map((r,i)=>`<li class="act-item">
     <span class="act-rank">${i+1}</span>
     <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
-    <span class="act-meta">일평균 ${r.dailyAvg.toFixed(1)}개 · 판매 ${r.soldDays}/${totalDays}일</span>
+    <span class="act-meta">일평균 ${r.dailyAvg.toFixed(1)}개 · 판매 ${r.soldDays}/${result.totalDays}일</span>
     <span class="act-val">공백 ${r.gapDays}일</span>
   </li>`).join('');
 }
 
-// ── 홈 요약 ───────────────────────────────────────────────────────
+// ── 홈 요약 (매출/폐기/품목 헬퍼를 그대로 재사용, top개수와 렌더만 다름) ──
 async function loadHomeSummary() {
   // 1) 이번 달 매출 · 평균 이익율 (최신 월 기준)
-  const {data: sales} = await sb.from('m4_category_sales')
-    .select('year_month,amount,profit').order('year_month',{ascending:false});
-  if (sales && sales.length) {
-    const latestMonth = sales[0].year_month;
-    const rows = sales.filter(r=>r.year_month===latestMonth);
-    const total = rows.reduce((s,r)=>s+r.amount,0);
-    const profit = rows.reduce((s,r)=>s+r.profit,0);
-    document.getElementById('h-amount').textContent = fmt(total)+'원';
-    document.getElementById('h-rate').textContent = (total>0 ? (profit/total*100).toFixed(1) : '0.0')+'%';
+  const { months: salesMonths, map: salesMap } = await fetchMonthlyTrendData();
+  if (salesMonths.length) {
+    const latest = salesMap[salesMonths[salesMonths.length-1]];
+    document.getElementById('h-amount').textContent = fmt(latest.amount)+'원';
+    document.getElementById('h-rate').textContent = (latest.amount>0 ? (latest.profit/latest.amount*100).toFixed(1) : '0.0')+'%';
   } else {
     document.getElementById('h-amount').textContent = '—';
     document.getElementById('h-rate').textContent = '—';
   }
 
   // 2) 최근 7일 폐기금액 + 상위 3
-  const {data: latestW} = await sb.from('m4_waste_items')
-    .select('confirmed_date').not('confirmed_date','is',null)
-    .order('confirmed_date',{ascending:false}).limit(1);
-  if (latestW && latestW.length) {
-    const end = String(latestW[0].confirmed_date).substring(0,10);
-    const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
-    const {data: wdata} = await sb.from('m4_waste_items')
-      .select('item_name,category,quantity,amount,type')
-      .eq('type','폐기').gte('confirmed_date', start).lte('confirmed_date', end);
-    const list = wdata || [];
-    const wTotal = list.reduce((s,r)=>s+(r.amount||0),0);
-    document.getElementById('h-waste').textContent = fmt(wTotal)+'원';
-
-    const map = {};
-    for (const r of list) {
-      const k = r.item_name || '—';
-      if (!map[k]) map[k] = {name:r.item_name, cat:r.category, amt:0};
-      map[k].amt += r.amount||0;
-    }
-    const top = Object.values(map).sort((a,b)=>b.amt-a.amt).slice(0,3);
-    document.getElementById('home-waste-list').innerHTML = top.length ? top.map((r,i)=>`<li class="act-item">
-      <span class="act-rank">${i+1}</span>
-      <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
-      <span class="act-meta">${esc(r.cat||'')}</span>
-      <span class="act-val">${fmt(r.amt)}원</span>
-    </li>`).join('') : '<li class="act-empty">해당 기간 폐기 없음</li>';
+  const waste = await fetchRecentWasteData();
+  if (waste) {
+    document.getElementById('h-waste').textContent = fmt(waste.total)+'원';
+    renderWasteListHTML('home-waste-list', waste.ranked, 3, false);
   } else {
     document.getElementById('h-waste').textContent = '—';
     document.getElementById('home-waste-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
   }
 
   // 3) 결품 의심 품목 개수 + 상위 3 (최신 월 기준)
-  const {data: mData} = await sb.from('m4_item_daily').select('year_month');
-  if (mData && mData.length) {
-    const months = [...new Set(mData.map(d=>d.year_month))].sort().reverse();
-    const {data} = await sb.from('m4_item_daily')
-      .select('item_name,sale_date,quantity').eq('year_month', months[0]);
-    if (data && data.length) {
-      const map = {}; const allDates = new Set();
-      for (const r of data) {
-        allDates.add(r.sale_date);
-        if (!map[r.item_name]) map[r.item_name] = {name:r.item_name, total:0, days:new Set()};
-        map[r.item_name].total += r.quantity||0;
-        map[r.item_name].days.add(r.sale_date);
-      }
-      const totalDays = allDates.size;
-      if (totalDays >= 7) {
-        const suspects = Object.values(map).map(r=>{
-          const soldDays = r.days.size, gapDays = totalDays-soldDays, dailyAvg = r.total/soldDays;
-          return {...r, soldDays, gapDays, dailyAvg, lost: dailyAvg*gapDays};
-        }).filter(r=>r.dailyAvg>=1 && r.gapDays>=1 && r.soldDays>=3).sort((a,b)=>b.lost-a.lost);
-
-        document.getElementById('h-stockout').textContent = suspects.length+'개';
-        const top3 = suspects.slice(0,3);
-        document.getElementById('home-stockout-list').innerHTML = top3.length ? top3.map((r,i)=>`<li class="act-item">
-          <span class="act-rank">${i+1}</span>
-          <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
-          <span class="act-meta">공백 ${r.gapDays}일</span>
-        </li>`).join('') : '<li class="act-empty">결품 의심 품목 없음</li>';
-      } else {
-        document.getElementById('h-stockout').textContent = '—';
-        document.getElementById('home-stockout-list').innerHTML = '<li class="act-empty">판단 불가 — 데이터 부족</li>';
-      }
-    }
-  } else {
+  const stockout = await fetchStockoutData(null);
+  const hStockoutList = document.getElementById('home-stockout-list');
+  if (!stockout || stockout.totalDays < 7) {
     document.getElementById('h-stockout').textContent = '—';
-    document.getElementById('home-stockout-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
+    hStockoutList.innerHTML = '<li class="act-empty">' + (stockout && stockout.totalDays > 0 ? '판단 불가 — 데이터 부족' : '데이터 없음') + '</li>';
+  } else {
+    document.getElementById('h-stockout').textContent = stockout.suspects.length+'개';
+    const top3 = stockout.suspects.slice(0,3);
+    hStockoutList.innerHTML = top3.length ? top3.map((r,i)=>`<li class="act-item">
+      <span class="act-rank">${i+1}</span>
+      <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="act-meta">공백 ${r.gapDays}일</span>
+    </li>`).join('') : '<li class="act-empty">결품 의심 품목 없음</li>';
   }
 
   // 4) 월별 추이 미니 차트 (매출 탭과 동일 데이터, 2개월 미만이면 숨김)
-  if (sales && sales.length) {
-    const map = {};
-    for (const r of sales) {
-      if (!map[r.year_month]) map[r.year_month] = {amount:0, profit:0};
-      map[r.year_month].amount += r.amount;
-      map[r.year_month].profit += r.profit;
-    }
-    const months = Object.keys(map).sort();
-    if (months.length >= 2) {
-      document.getElementById('home-trend-card').style.display = 'block';
-      const ctx = document.getElementById('home-trend-chart').getContext('2d');
-      if (homeTrendChart) homeTrendChart.destroy();
-      homeTrendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: months,
-          datasets: [
-            {label:'매출', data: months.map(m=>map[m].amount), borderColor:'#4f46e5',
-             backgroundColor:'rgba(79,70,229,.08)', fill:true, tension:.3, pointRadius:4},
-            {label:'예상이익', data: months.map(m=>map[m].profit), borderColor:'#10b981',
-             backgroundColor:'rgba(16,185,129,.06)', fill:true, tension:.3, pointRadius:4}
-          ]
-        },
-        options: {
-          responsive:true, maintainAspectRatio:false,
-          plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
-          scales:{x:{grid:{display:false},ticks:{font:{size:11}}},
-                  y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>(v/10000).toFixed(0)+'만'}}}
-        }
-      });
-    } else {
-      document.getElementById('home-trend-card').style.display = 'none';
-    }
+  const trendCard = document.getElementById('home-trend-card');
+  if (salesMonths.length >= 2) {
+    trendCard.style.display = 'block';
+    homeTrendChart = renderTrendChart('home-trend-chart', salesMonths, salesMap, homeTrendChart);
   } else {
-    document.getElementById('home-trend-card').style.display = 'none';
+    trendCard.style.display = 'none';
   }
 }
 
