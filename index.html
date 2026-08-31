@@ -86,6 +86,32 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
 .tab-content{display:none}.tab-content.on{display:block}
 
+/* 파일 안내 배너 */
+.src-bar{display:flex;align-items:center;gap:9px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:#4c1d95}
+.src-bar b{color:#4f46e5}
+.src-tag{background:#4f46e5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.src-note{color:#7c6aa8;font-size:11px}
+
+/* 도움말 */
+.help-wrap{max-width:900px}
+.help-sec{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.help-q{padding:13px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.help-q:hover{background:#f8fafc}
+.help-q .arw{color:#94a3b8;font-size:11px;transition:transform .2s}
+.help-sec.open .help-q .arw{transform:rotate(90deg)}
+.help-a{display:none;padding:0 18px 16px;font-size:13px;line-height:1.75;color:#374151;border-top:1px solid #f1f5f9;padding-top:14px}
+.help-sec.open .help-a{display:block}
+.help-a h5{font-size:12.5px;color:#4f46e5;margin:14px 0 6px}
+.help-a h5:first-child{margin-top:0}
+.help-a ul,.help-a ol{padding-left:19px;margin:6px 0 10px}
+.help-a li{margin-bottom:5px}
+.help-a table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:12px}
+.help-a th{background:#f8fafc;border:1px solid #e2e8f0;padding:7px 9px;text-align:left;font-weight:600;color:#475569}
+.help-a td{border:1px solid #f1f5f9;padding:7px 9px;vertical-align:top}
+.help-a code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11.5px;color:#4f46e5}
+.help-warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:10px 13px;margin:10px 0;font-size:12.5px;color:#78350f;line-height:1.7}
+.help-info{background:#f5f3ff;border-left:3px solid #4f46e5;border-radius:0 7px 7px 0;padding:10px 13px;margin:10px 0;font-size:12.5px;color:#4c1d95;line-height:1.7}
+
 /* 액션 카드 */
 .act-card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden;border-left:4px solid #ef4444}
 .act-card.blue{border-left-color:#4f46e5}
@@ -128,6 +154,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="tab on" onclick="switchTab('sales')">매출·이익 현황</div>
   <div class="tab" onclick="switchTab('items')">품목 분석</div>
   <div class="tab" onclick="switchTab('waste')">폐기 현황</div>
+  <div class="tab" onclick="switchTab('help')" style="margin-left:auto;color:#94a3b8">❓ 사용 안내</div>
 </div>
 
 <div class="upload-bar">
@@ -147,6 +174,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 <!-- 탭 1: 매출이익 -->
 <div class="tab-content on main" id="tab-sales">
+  <div class="src-bar">
+    <span class="src-tag">필요 파일</span>
+    <span><b>분류별이익현황.xlsx</b> · 월별로 나눠서 받기</span>
+    <span class="src-note">— 파일명에 날짜를 넣으세요 (예: 분류별이익현황_2026-07.xlsx). 여러 달치를 한 번에 올릴 수 있습니다.</span>
+  </div>
   <div class="card" style="margin-bottom:16px" id="trend-month-card">
     <div class="card-h">
       <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">데이터가 쌓일수록 자동 확장</div></div>
@@ -200,6 +232,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 <!-- 탭 2: 품목분석 -->
 <div class="tab-content main" id="tab-items">
+  <div class="src-bar">
+    <span class="src-tag">필요 파일</span>
+    <span><b>시계열 (품목별).xlsx</b></span>
+    <span class="src-note">— 파일 안에 연월이 들어 있어 자동 인식됩니다. 기준 연월을 따로 고르지 않아도 됩니다.</span>
+  </div>
   <div class="act-card blue" id="stockout-card">
     <div class="act-h">
       <div>
@@ -240,6 +277,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 <!-- 탭 3: 폐기현황 -->
 <div class="tab-content main" id="tab-waste">
+  <div class="src-bar">
+    <span class="src-tag">필요 파일</span>
+    <span><b>분류별내역.xlsx</b> · 기간을 길게 잡아 한 파일로</span>
+    <span class="src-note">— 행마다 날짜가 있어 여러 달이 섞여 있어도 자동 분리됩니다. 매주 월요일 업로드 권장.</span>
+  </div>
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-t">총 폐기금액</div><div class="kpi-v" id="w-total">—</div></div>
     <div class="kpi"><div class="kpi-t">폐기 건수</div><div class="kpi-v" id="w-count">—</div></div>
@@ -293,6 +335,141 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
 </div>
 
+<!-- 탭 4: 사용 안내 -->
+<div class="tab-content main" id="tab-help">
+<div class="help-wrap">
+
+  <div class="help-sec open">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📌 어떤 파일을 올려야 하나요?</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <table>
+        <tr><th style="width:28%">파일</th><th style="width:22%">반영 화면</th><th>받는 방법</th></tr>
+        <tr><td><b>분류별이익현황</b></td><td>매출 · 이익 현황</td><td>파일에 날짜가 없어 <b>월별로 나눠서</b> 받아야 합니다.</td></tr>
+        <tr><td><b>분류별내역</b></td><td>폐기 현황</td><td>행마다 날짜가 있어 <b>여러 달을 한 파일</b>로 받아도 됩니다.</td></tr>
+        <tr><td><b>시계열 (품목별)</b></td><td>품목 분석</td><td>파일 안에 연월이 있어 자동 인식됩니다.</td></tr>
+      </table>
+      <h5>파일명 규칙 — 매출 파일만 해당</h5>
+      <p>매출 파일은 파일명에 연월을 넣어 저장하세요. 시스템이 파일명에서 기간을 읽습니다.</p>
+      <p><code>분류별이익현황_2026-07.xlsx</code> &nbsp; <code>분류별이익현황_2026-08.xlsx</code></p>
+      <p>이렇게 하면 <b>여러 달치를 한 번에 끌어다 놓아도 각자 제 달로 저장</b>됩니다.<br>
+      인식 형식: <code>2026-07</code> <code>2026.07</code> <code>2026_07</code> <code>202607</code></p>
+      <p class="src-note">파일명에 날짜가 없으면 화면 왼쪽 위 '기준 연월'을 직접 골라야 하며, 이 경우 한 번에 한 달치만 올릴 수 있습니다.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>⬆️ 업로드하는 방법</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <ol>
+        <li>화면 위쪽 점선 상자에 파일을 <b>끌어다 놓거나</b>, 상자를 눌러 파일을 고릅니다. 여러 개 동시 선택 가능합니다.</li>
+        <li>파일명에서 연월이 인식되면 초록색으로 표시됩니다. 안 되면 기준 연월을 직접 고릅니다.</li>
+        <li>오른쪽 <b>[동기화]</b> 버튼을 누릅니다.</li>
+        <li>처리가 끝나면 파일마다 저장된 건수가 표시됩니다.</li>
+      </ol>
+      <div class="help-info"><b>같은 파일을 여러 번 올려도 안전합니다.</b> 해당 기간의 기존 데이터를 지우고 새로 넣기 때문에 금액이 두 배가 되지 않습니다. 잘못 올렸으면 올바른 파일로 다시 올리면 됩니다.</div>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📅 언제 올려야 하나요?</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <table>
+        <tr><th style="width:22%">시점</th><th style="width:30%">파일</th><th>받는 범위</th></tr>
+        <tr><td><b>매주 월요일</b></td><td>분류별내역 (폐기)</td><td>전주 1주일</td></tr>
+        <tr><td rowspan="2"><b>매월 1일</b></td><td>분류별이익현황 (매출)</td><td>전월 1개월</td></tr>
+        <tr><td>분류별내역 (폐기)</td><td>전월 1개월 — 보정용 재업로드</td></tr>
+      </table>
+      <h5>왜 폐기는 주 단위인가</h5>
+      <p>'최근 7일 폐기 상위' 항목 때문입니다. 월 1회만 올리면 이 항목이 한 달 내내 갱신되지 않아 발주 조정에 쓸 수 없습니다.</p>
+      <h5>왜 폐기를 월 1회 또 올리나</h5>
+      <p>뒤늦게 등록되거나 수정된 건을 반영하기 위해서입니다. 주간 업로드만 하면 놓친 건이 영영 들어오지 않습니다.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📊 화면의 숫자는 무슨 뜻인가요?</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <h5>매출 · 이익 현황</h5>
+      <table>
+        <tr><th style="width:30%">지표</th><th>의미</th></tr>
+        <tr><td>총 매출</td><td>선택한 기간의 매출 합계</td></tr>
+        <tr><td>예상 이익</td><td>매출에서 원가를 뺀 금액 (POS 산출 기준)</td></tr>
+        <tr><td>평균 이익율</td><td>예상이익 ÷ 총매출. 매출 규모를 반영한 가중평균입니다.</td></tr>
+        <tr><td>전기 대비 매출</td><td>비교기간 대비 증감액</td></tr>
+      </table>
+      <p class="src-note">월별 추이 그래프는 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
+      <h5>폐기 현황</h5>
+      <table>
+        <tr><th style="width:30%">지표</th><th>의미</th></tr>
+        <tr><td>총 폐기금액</td><td>폐기로 처리된 상품 금액 합계</td></tr>
+        <tr><td>폐기 건수</td><td>폐기 · 점내용도 전체 처리 건수</td></tr>
+        <tr><td>점내용도 금액</td><td>매장 자체 사용분 (종량제봉투 등)</td></tr>
+        <tr><td>폐기 비중</td><td>전체 처리 금액 중 폐기가 차지하는 비율</td></tr>
+      </table>
+      <p class="src-note">'최근 7일 폐기 상위'의 기준일은 오늘이 아니라 <b>업로드된 데이터의 마지막 날짜</b>입니다.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>⚠️ 결품 의심 품목은 정확한가요?</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <div class="help-warn">
+        <b>추정값입니다. 확정 정보가 아닙니다.</b><br>
+        POS에서 받는 파일에 재고나 품절 정보가 없습니다. 그래서 <b>"판매 기록이 없는 날"을 근거로 추정</b>합니다. 실제 품절이 아니라 그날 단순히 안 팔린 것일 수도 있습니다. <b>반드시 현장 확인 후 판단하십시오.</b>
+      </div>
+      <h5>판단 조건</h5>
+      <ul>
+        <li>판매된 날 기준 <b>일평균 1개 이상</b> 팔리는 품목</li>
+        <li>그중 <b>판매 기록이 없는 날이 1일 이상</b> 있는 품목</li>
+        <li>손실 추정액(일평균 × 공백일수)이 큰 순으로 5개 표시</li>
+      </ul>
+      <p>목록이 비어 있다면 조건에 맞는 품목이 없거나, 품목 데이터가 부족한 경우(판매일 7일 미만)입니다.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>🔒 계정과 로그인</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <p><b>계정은 하나입니다.</b> 하자관리 시스템 등 다른 대시보드와 같은 계정을 씁니다. 통합 허브에 한 번 로그인해 두면 다른 시스템도 추가 로그인 없이 사용할 수 있습니다.</p>
+      <p>로그인이 풀렸다면 <a href="https://seoungminlee.github.io/lecollective-hub/" target="_blank" style="color:#4f46e5">통합 허브</a>에서 로그인한 뒤 이 화면으로 돌아오세요.</p>
+      <p class="src-note">계정은 관리자가 초대하는 방식으로만 발급됩니다. 직접 가입할 수 없습니다.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>❔ 자주 묻는 질문</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <h5>월별 추이 그래프가 안 보입니다</h5>
+      <p>데이터가 2개월 이상 있어야 표시됩니다. 매출 파일을 여러 달치 올리면 나타납니다.</p>
+      <h5>실수로 같은 파일을 두 번 올렸습니다</h5>
+      <p>문제없습니다. 해당 기간 데이터를 지우고 다시 넣는 방식이라 중복으로 쌓이지 않습니다.</p>
+      <h5>파일 형식을 인식할 수 없다고 나옵니다</h5>
+      <p>지원하는 파일은 분류별이익현황 · 분류별내역 · 시계열 세 가지입니다. POS에서 받은 원본 파일을 그대로 올려주세요. 파일을 열어 수정하거나 다른 이름으로 저장하면 인식이 안 될 수 있습니다.</p>
+      <h5>숫자가 이상합니다</h5>
+      <p>업로드한 파일의 기간이 맞는지, 화면 위쪽 필터가 원하는 기간으로 되어 있는지 먼저 확인하세요. 그래도 이상하면 관리자에게 문의하십시오.</p>
+    </div>
+  </div>
+
+  <div class="help-sec">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>🚧 현재 할 수 없는 것</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <p>없는 데이터를 추정으로 채우지 않는 것이 원칙입니다. 현재 한계를 밝힙니다.</p>
+      <ul>
+        <li><b>재고 · 품절 데이터가 없습니다</b> — 결품 의심은 추정이며 정확한 결품 판단이 아닙니다.</li>
+        <li><b>폐기율 기준선이 아직 없습니다</b> — 폐기율 계산은 가능하나 "정상 범위" 판단 기준은 데이터가 쌓인 뒤 정할 예정입니다.</li>
+        <li><b>주 단위 매출은 볼 수 없습니다</b> — 매출이 월 단위로 들어와 주별 매출액과 주별 폐기율은 산출되지 않습니다. 주 단위로는 폐기 금액만 확인됩니다.</li>
+        <li><b>자동으로 갱신되지 않습니다</b> — POS와 직접 연결되어 있지 않습니다. 파일을 올려야 최신화됩니다.</li>
+        <li><b>PC 기준으로 만들었습니다</b> — 모바일 화면 최적화는 되어 있지 않습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="src-note" style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0">
+    A1 편의점 수익관리 대시보드 · 문서 버전 1.0 · 문의: 관리자
+  </p>
+</div>
+</div>
+
 <script>
 // ── Config ────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://lwcutgofpdtzcbyjszhc.supabase.co';
@@ -327,8 +504,14 @@ async function initAuth() {
     const {data: role} = await sb.rpc('get_my_role');
     CURRENT_ROLE = role || null;
   } catch(e) { CURRENT_ROLE = null; }
+  const ub = document.querySelector('.upload-bar');
   if (!['admin','staff'].includes(CURRENT_ROLE)) {
-    document.querySelector('.upload-bar').style.display = 'none';
+    ub.style.display = 'none';
+    ub.dataset.allowed = '0';
+    // 업로드 권한 없으면 파일 안내 배너도 숨김
+    document.querySelectorAll('.src-bar').forEach(el=>el.style.display='none');
+  } else {
+    ub.dataset.allowed = '1';
   }
   return true;
 }
@@ -358,8 +541,11 @@ window.onload = async () => {
 // ── 탭 전환 ──────────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('on', ['sales','items','waste'][i]===tab);
+    t.classList.toggle('on', ['sales','items','waste','help'][i]===tab);
   });
+  // 사용 안내 탭에서는 업로드 바 숨김
+  const ub = document.querySelector('.upload-bar');
+  if (ub && ub.dataset.allowed === '1') ub.style.display = (tab==='help') ? 'none' : 'flex';
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
   document.getElementById('tab-'+tab).classList.add('on');
 }
