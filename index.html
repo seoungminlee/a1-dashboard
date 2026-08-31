@@ -216,7 +216,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>분류별이익현황.xlsx</b> · 월별로 나눠서 받기</span>
-    <span class="src-note">— 파일명에 날짜를 넣으세요 (예: 분류별이익현황_2026-07.xlsx). 여러 달치를 한 번에 올릴 수 있습니다.</span>
+    <span class="src-note">— POS에서 뽑을 때 반드시 <b>총매출 · 원 단위</b>로 설정하세요. 파일명에 날짜를 넣으면(예: 분류별이익현황_2026-07.xlsx) 여러 달치를 한 번에 올릴 수 있습니다.</span>
   </div>
   <div class="card" style="margin-bottom:16px" id="trend-month-card">
     <div class="card-h">
@@ -387,6 +387,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td><b>분류별내역</b></td><td>폐기 현황</td><td>행마다 날짜가 있어 <b>여러 달을 한 파일</b>로 받아도 됩니다.</td></tr>
         <tr><td><b>시계열 (품목별)</b></td><td>품목 분석</td><td>파일 안에 연월이 있어 자동 인식됩니다.</td></tr>
       </table>
+      <h5>분류별이익현황 내보내기 설정 — 반드시 지켜주세요</h5>
+      <div class="help-warn">
+        POS에서 <b>분류별이익현황</b>을 뽑을 때 매출 기준을 <b>순매출/총매출 중 선택</b>할 수 있고, 금액 단위를 <b>원/천원 중 선택</b>할 수 있습니다. 이 대시보드는 <b>총매출 · 원 단위</b>로 통일하기로 했습니다. 다른 옵션으로 뽑으면 매출 숫자가 실제와 달라집니다.
+      </div>
+      <p class="src-note">금액이 천원 단위로 올라오면 시스템이 자동으로 1000을 곱해 보정하지만, 이 경우 동기화 완료 메시지에 경고가 함께 표시됩니다. 경고가 뜨면 POS 설정을 확인해주세요.</p>
       <h5>파일명 규칙 — 매출 파일만 해당</h5>
       <p>매출 파일은 파일명에 연월을 넣어 저장하세요. 시스템이 파일명에서 기간을 읽습니다.</p>
       <p><code>분류별이익현황_2026-07.xlsx</code> &nbsp; <code>분류별이익현황_2026-08.xlsx</code></p>
@@ -431,7 +436,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <h5>매출 · 이익 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
-        <tr><td>총 매출</td><td>선택한 기간의 매출 합계</td></tr>
+        <tr><td>총 매출</td><td>선택한 기간의 <b>총매출</b> 합계 (POS에서 총매출·원 단위로 받은 값 기준)</td></tr>
         <tr><td>예상 이익</td><td>매출에서 원가를 뺀 금액 (POS 산출 기준)</td></tr>
         <tr><td>평균 이익율</td><td>예상이익 ÷ 총매출. 매출 규모를 반영한 가중평균입니다.</td></tr>
         <tr><td>전기 대비 매출</td><td>비교기간 대비 증감액</td></tr>
@@ -694,6 +699,10 @@ function parseCategorySales(wb, yearMonth) {
       diff_profit_rate: r[14]||0,
     });
   }
+  // unitMult는 안전장치입니다. 원래는 원 단위로 통일해서 받기로 했으므로
+  // 1000이 감지되면(=천원 단위 파일) POS 내보내기 설정이 잘못된 것일 수
+  // 있어 호출부(syncFiles)에서 경고를 띄울 수 있도록 같이 반환합니다.
+  records.unitMult = unitMult;
   return records;
 }
 
@@ -821,6 +830,7 @@ async function syncFiles() {
   const fallbackYearMonth = document.getElementById('period-input').value;
   const fl = document.getElementById('file-list');
   let totalRecords = 0;
+  const unitWarnings = []; // 천원 단위로 감지된 파일 (원 단위로 통일하기로 했으므로 예외 신호)
 
   for (const file of pendingFiles) {
     try {
@@ -843,6 +853,9 @@ async function syncFiles() {
           continue;
         }
         const records = parseCategorySales(wb, yearMonth);
+        // 원 단위로 통일하기로 했는데 천원 단위가 감지되면 POS 내보내기
+        // 설정 확인이 필요하다는 신호 — 값은 자동 보정하되 경고만 남김
+        if (records.unitMult === 1000) unitWarnings.push(file.name);
         // 해당 연월 기존 데이터 삭제 후 재삽입 (upsert 잔류 방지)
         await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
         for (let i=0; i<records.length; i+=50) {
@@ -898,7 +911,11 @@ async function syncFiles() {
 
   btn.innerHTML = '동기화';
   btn.disabled = false;
-  setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
+  if (unitWarnings.length) {
+    setStatus(`완료 — 총 ${totalRecords}건 저장됨 (금액은 자동 보정됐지만, ${unitWarnings.join(', ')} 파일이 천원 단위로 감지됐습니다. POS 내보내기 설정에서 금액 단위를 '원'으로 확인해주세요)`, 'err');
+  } else {
+    setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
+  }
   pendingFiles = [];
 
   // 데이터 새로고침
