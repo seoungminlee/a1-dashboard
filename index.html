@@ -541,22 +541,13 @@ async function syncFiles() {
   btn.innerHTML = '<span class="spinner"></span>처리 중...';
   setStatus('파일 처리 중...', 'loading');
 
-  const yearMonth = document.getElementById('period-input').value;
+  const fallbackYearMonth = document.getElementById('period-input').value;
   const fl = document.getElementById('file-list');
   let totalRecords = 0;
 
   for (const file of pendingFiles) {
     try {
-      // 중복 체크
-      const {data: hist} = await sb.from('m4_sync_history')
-        .select('id').eq('file_name', file.name).single();
-      if (hist) {
-        const chip = fl.querySelector(`span[data-name="${file.name}"]`);
-        if (chip) { chip.className='file-chip skip'; chip.textContent='⏭ '+file.name+' (이미 처리됨)'; }
-        else fl.innerHTML += `<span class="file-chip skip">⏭ ${esc(file.name)} (이미 처리됨)</span>`;
-        continue;
-      }
-
+      // 재업로드 허용 (DELETE 후 INSERT라 중복 없음)
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, {type:'array', cellDates:true});
       const fileType = detectType(wb);
@@ -568,7 +559,12 @@ async function syncFiles() {
       let count = 0;
 
       if (fileType === 'category_sales') {
-        if (!yearMonth) { setStatus('기준 연월을 선택하세요.','err'); continue; }
+        // 파일별로 연월 개별 추출 (파일명 우선, 없으면 입력값)
+        const yearMonth = extractYearMonthFromFilename(file.name) || fallbackYearMonth;
+        if (!yearMonth) {
+          setStatus(`${file.name}: 연월을 알 수 없습니다. 파일명에 2026-07 형식으로 넣거나 기준연월을 선택하세요.`,'err');
+          continue;
+        }
         const records = parseCategorySales(wb, yearMonth);
         // 해당 연월 기존 데이터 삭제 후 재삽입 (upsert 잔류 방지)
         await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
@@ -587,6 +583,12 @@ async function syncFiles() {
 
       } else if (fileType === 'waste_detail') {
         const records = parseWasteDetail(wb);
+        // 파일에 포함된 날짜 범위의 기존 데이터 삭제 후 재삽입 (중복 방지)
+        const dates = records.map(r=>r.confirmed_date).filter(Boolean).sort();
+        if (dates.length) {
+          await sb.from('m4_waste_items')
+            .delete().gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1]);
+        }
         for (let i=0; i<records.length; i+=100)
           await sb.from('m4_waste_items').insert(records.slice(i,i+100));
         count = records.length;
@@ -599,10 +601,11 @@ async function syncFiles() {
         count = slips.length + items.length;
       }
 
-      // 이력 저장
-      await sb.from('m4_sync_history').insert({
-        file_name: file.name, file_type: fileType, record_count: count
-      });
+      // 이력 저장 (재업로드 시 갱신)
+      await sb.from('m4_sync_history').upsert({
+        file_name: file.name, file_type: fileType, record_count: count,
+        synced_at: new Date().toISOString()
+      }, {onConflict:'file_name'});
 
       totalRecords += count;
       fl.innerHTML = fl.innerHTML.replace(
@@ -721,7 +724,8 @@ function renderKPI() {
   const total = salesData.reduce((s,r)=>s+r.amount,0);
   const profit = salesData.reduce((s,r)=>s+r.profit,0);
   const diff = salesData.reduce((s,r)=>s+r.diff_amount,0);
-  const avgRate = salesData.reduce((s,r)=>s+r.profit_rate,0)/salesData.length;
+  // 가중평균 이익율 = 총이익 / 총매출 (카테고리별 산술평균 아님)
+  const avgRate = total > 0 ? (profit/total)*100 : 0;
 
   document.getElementById('k-amount').textContent = fmt(total)+'원';
   document.getElementById('k-profit').textContent = fmt(profit)+'원';
@@ -899,7 +903,8 @@ async function loadWasteData() {
 
   document.getElementById('w-total').textContent = fmt(totalW)+'원';
   document.getElementById('w-internal').textContent = fmt(totalI)+'원';
-  document.getElementById('w-count').textContent = ranked.length+'건';
+  // 실제 폐기 건수 = 전체 레코드 수 (상위 30 슬라이스 아님)
+  document.getElementById('w-count').textContent = fmt(items.length)+'건';
   const ratio = totalW+totalI>0?((totalW/(totalW+totalI))*100).toFixed(1):'—';
   document.getElementById('w-ratio').textContent = ratio+'%';
 
