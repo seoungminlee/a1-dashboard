@@ -509,6 +509,34 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
   </div>
 
+  <div class="help-sec" id="admin-partial-delete-card" style="display:none;border-color:#fde68a">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#92400e"><span>🗑️ 관리자 전용 — 특정 월만 삭제</span><span class="arw">▶</span></div>
+    <div class="help-a">
+      <div class="help-warn">
+        선택한 월(폐기는 해당 월)의 데이터만 삭제합니다. 되돌릴 수 없으니 확인 후 실행하세요. <b>특정 파일 단위 삭제는 지원하지 않습니다</b> — 각 행이 어느 업로드 파일에서 왔는지 DB에 기록되어 있지 않아, 월(폐기는 확정일자 기준 월) 단위로만 지울 수 있습니다.
+      </div>
+      <table style="margin-top:8px">
+        <tr><th style="width:32%">데이터</th><th>삭제할 월</th><th style="width:20%"></th></tr>
+        <tr>
+          <td>매출 (분류별이익현황)</td>
+          <td><select class="sel" id="admin-sales-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
+          <td><button onclick="deletePartial('sales')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+        </tr>
+        <tr>
+          <td>품목 (시계열)</td>
+          <td><select class="sel" id="admin-item-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
+          <td><button onclick="deletePartial('item')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+        </tr>
+        <tr>
+          <td>폐기 (분류별내역)</td>
+          <td><select class="sel" id="admin-waste-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
+          <td><button onclick="deletePartial('waste')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+        </tr>
+      </table>
+      <p class="src-note" style="margin-top:10px" id="partial-delete-status"></p>
+    </div>
+  </div>
+
   <div class="help-sec" id="admin-reset-card" style="display:none;border-color:#fecaca">
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#b91c1c"><span>⚠️ 관리자 전용 — 데이터 전체 초기화</span><span class="arw">▶</span></div>
     <div class="help-a">
@@ -574,7 +602,74 @@ async function initAuth() {
   // 관리자 전용 초기화 카드 — admin 역할만 노출 (RLS write_admin 정책이 실제 차단선)
   const resetCard = document.getElementById('admin-reset-card');
   if (resetCard) resetCard.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
+  const partialCard = document.getElementById('admin-partial-delete-card');
+  if (partialCard) partialCard.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
+  if (CURRENT_ROLE === 'admin') loadAdminDeleteOptions();
   return true;
+}
+
+// ── 관리자 전용: 특정 월만 삭제 ──────────────────────────────────────
+async function loadAdminDeleteOptions() {
+  if (CURRENT_ROLE !== 'admin') return;
+  const [{data: sales}, {data: items}, {data: waste}] = await Promise.all([
+    sb.from('m4_category_sales').select('year_month'),
+    sb.from('m4_item_daily').select('year_month'),
+    sb.from('m4_waste_items').select('confirmed_date')
+  ]);
+  const salesMonths = [...new Set((sales||[]).map(r=>r.year_month))].sort().reverse();
+  const itemMonths = [...new Set((items||[]).map(r=>r.year_month))].sort().reverse();
+  const wasteMonths = [...new Set((waste||[]).filter(r=>r.confirmed_date).map(r=>String(r.confirmed_date).substring(0,7)))].sort().reverse();
+
+  const fill = (id, list) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">월 선택</option>' + list.map(m=>`<option${m===cur?' selected':''}>${m}</option>`).join('');
+  };
+  fill('admin-sales-month-sel', salesMonths);
+  fill('admin-item-month-sel', itemMonths);
+  fill('admin-waste-month-sel', wasteMonths);
+}
+
+async function deletePartial(kind) {
+  if (CURRENT_ROLE !== 'admin') return;
+  const cfg = {
+    sales: {sel:'admin-sales-month-sel', table:'m4_category_sales', col:'year_month', label:'매출(분류별이익현황)', exact:true},
+    item:  {sel:'admin-item-month-sel', table:'m4_item_daily', col:'year_month', label:'품목(시계열)', exact:true},
+    waste: {sel:'admin-waste-month-sel', table:'m4_waste_items', col:'confirmed_date', label:'폐기(분류별내역)', exact:false}
+  }[kind];
+  const month = document.getElementById(cfg.sel).value;
+  const statusEl = document.getElementById('partial-delete-status');
+  if (!month) { statusEl.textContent = '삭제할 월을 선택하세요.'; statusEl.style.color = '#b91c1c'; return; }
+
+  const ok = window.confirm(`${cfg.label} ${month} 데이터를 삭제합니다.\n되돌릴 수 없습니다. 계속합니까?`);
+  if (!ok) return;
+
+  statusEl.textContent = '삭제 중...';
+  statusEl.style.color = '#78350f';
+  try {
+    let q = sb.from(cfg.table).delete();
+    q = cfg.exact ? q.eq(cfg.col, month) : q.like(cfg.col, month+'%');
+    const { error } = await q;
+    if (error) throw error;
+
+    statusEl.textContent = `${cfg.label} ${month} 삭제 완료.`;
+    statusEl.style.color = '#15803d';
+
+    await loadAdminDeleteOptions();
+    await loadMonthlyTrend();
+    await loadSalesData();
+    await loadCatOptions();
+    await loadItemData();
+    await loadStockoutSuspects();
+    await loadWasteMonthOptions();
+    await loadRecentWaste();
+    await loadHomeSummary();
+    updateLastSync();
+  } catch(e) {
+    statusEl.textContent = `삭제 실패: ${e.message}`;
+    statusEl.style.color = '#b91c1c';
+  }
 }
 
 // ── 관리자 전용: 데이터 전체 초기화 ─────────────────────────────────
