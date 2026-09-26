@@ -683,6 +683,7 @@ async function deletePartial(kind, btn) {
     statusEl.textContent = `${cfg.label} ${month} 삭제 완료. (남은 월: ${remainingMonths.join(', ') || '없음'})`;
     statusEl.style.color = '#15803d';
 
+    clearFileChips(); // 방금 삭제한 데이터가 업로드 바에 "성공"으로 남아있지 않도록
     await refreshAllData();
   } catch(e) {
     statusEl.textContent = `삭제 실패: ${e.message}`;
@@ -729,6 +730,7 @@ async function doFullReset() {
     statusEl.style.color = '#15803d';
     input.value = '';
 
+    clearFileChips(); // 방금 삭제한 데이터가 업로드 바에 "성공"으로 남아있지 않도록
     // 화면 전체 새로고침 (0건 상태 반영)
     await refreshAllData();
   } catch (e) {
@@ -843,6 +845,20 @@ function handleFiles(files) {
 function setStatus(msg, cls='ok') {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = 'status '+cls;
+}
+
+// 업로드 바의 "✅ 파일명 (n건)" 칩은 방금 동기화한 내용을 보여주기 위한
+// 것인데, 관리자가 그 뒤에 삭제/초기화를 하면 실제 데이터는 없어졌는데도
+// 칩만 성공 표시로 남아 있어 헷갈립니다. 삭제·초기화 직후에는 반드시
+// 이걸 같이 지워서 화면과 실제 DB 상태가 어긋나지 않게 합니다.
+function clearFileChips() {
+  const fl = document.getElementById('file-list');
+  if (fl) fl.innerHTML = '';
+  pendingFiles = [];
+  const syncBtn = document.getElementById('sync-btn');
+  if (syncBtn) syncBtn.disabled = true;
+  const periodBox = document.getElementById('period-box');
+  if (periodBox) periodBox.style.display = 'none';
 }
 
 // ── 지원 시트 이름 화이트리스트 ───────────────────────────────────
