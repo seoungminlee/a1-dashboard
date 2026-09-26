@@ -539,17 +539,17 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr>
           <td>매출 (분류별이익현황)</td>
           <td><select class="sel" id="admin-sales-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
-          <td><button onclick="deletePartial('sales')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+          <td><button onclick="deletePartial('sales', this)" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
         </tr>
         <tr>
           <td>품목 (시계열)</td>
           <td><select class="sel" id="admin-item-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
-          <td><button onclick="deletePartial('item')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+          <td><button onclick="deletePartial('item', this)" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
         </tr>
         <tr>
           <td>폐기 (분류별내역)</td>
           <td><select class="sel" id="admin-waste-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
-          <td><button onclick="deletePartial('waste')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
+          <td><button onclick="deletePartial('waste', this)" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
         </tr>
       </table>
       <p class="src-note" style="margin-top:10px" id="partial-delete-status"></p>
@@ -648,7 +648,7 @@ async function loadAdminDeleteOptions() {
   fill('admin-waste-month-sel', wasteMonths);
 }
 
-async function deletePartial(kind) {
+async function deletePartial(kind, btn) {
   if (CURRENT_ROLE !== 'admin') return;
   const cfg = {
     sales: {sel:'admin-sales-month-sel', table:'m4_category_sales', col:'year_month', label:'매출(분류별이익현황)', exact:true},
@@ -662,30 +662,33 @@ async function deletePartial(kind) {
   const ok = window.confirm(`${cfg.label} ${month} 데이터를 삭제합니다.\n되돌릴 수 없습니다. 계속합니까?`);
   if (!ok) return;
 
+  if (btn) btn.disabled = true; // 연속 클릭으로 같은 요청이 중복 실행되는 것을 방지
   statusEl.textContent = '삭제 중...';
   statusEl.style.color = '#78350f';
   try {
+    // 실제로 어떤 조건으로 삭제되는지 콘솔에 남깁니다 — "다른 달까지 지워졌다"는
+    // 문제가 재발하면 여기 로그로 정확히 어떤 쿼리가 나갔는지 바로 확인 가능합니다.
+    console.log(`[A1] 부분삭제 실행: table=${cfg.table} col=${cfg.col} ${cfg.exact ? 'eq' : 'like'}=${month}`);
     let q = sb.from(cfg.table).delete();
     q = cfg.exact ? q.eq(cfg.col, month) : q.like(cfg.col, month+'%');
-    const { error } = await q;
+    const { error, count } = await q;
     if (error) throw error;
 
-    statusEl.textContent = `${cfg.label} ${month} 삭제 완료.`;
+    // 삭제 직후 실제 DB 상태를 다시 조회해서 콘솔에 남김 — 화면 표시가 아니라
+    // DB 자체에 어떤 연월이 남아있는지 직접 확인할 수 있게 합니다.
+    const { data: remaining } = await sb.from(cfg.table).select(cfg.col);
+    const remainingMonths = [...new Set((remaining||[]).map(r => String(r[cfg.col]).substring(0,7)))].sort();
+    console.log(`[A1] 삭제 후 ${cfg.table}에 남은 월:`, remainingMonths);
+
+    statusEl.textContent = `${cfg.label} ${month} 삭제 완료. (남은 월: ${remainingMonths.join(', ') || '없음'})`;
     statusEl.style.color = '#15803d';
 
-    await loadAdminDeleteOptions();
-    await loadMonthlyTrend();
-    await loadSalesData();
-    await loadCatOptions();
-    await loadItemData();
-    await loadStockoutSuspects();
-    await loadWasteMonthOptions();
-    await loadRecentWaste();
-    await loadHomeSummary();
-    updateLastSync();
+    await refreshAllData();
   } catch(e) {
     statusEl.textContent = `삭제 실패: ${e.message}`;
     statusEl.style.color = '#b91c1c';
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -727,14 +730,7 @@ async function doFullReset() {
     input.value = '';
 
     // 화면 전체 새로고침 (0건 상태 반영)
-    await loadMonthlyTrend();
-    await loadSalesData();
-    await loadCatOptions();
-    await loadStockoutSuspects();
-    await loadWasteMonthOptions();
-    await loadRecentWaste();
-    await loadHomeSummary();
-    updateLastSync();
+    await refreshAllData();
   } catch (e) {
     statusEl.textContent = `초기화 실패: ${e.message}`;
     statusEl.style.color = '#b91c1c';
@@ -747,6 +743,32 @@ async function doLogout() {
 }
 
 // ── 초기화 ────────────────────────────────────────────────────────
+// ── 공통: 전체 화면 데이터 새로고침 ─────────────────────────────────
+// 업로드 / 부분삭제 / 전체초기화 후 공통으로 호출합니다. 단계 하나가
+// 실패해도(예: 특정 쿼리 오류) 나머지는 계속 진행합니다 — 예전에는
+// 순서대로 await만 하다가 중간에 하나가 실패하면 그 뒤 탭들이 전부
+// 갱신되지 않은 채 멈춰서, 화면을 이동해도 옛날 값이 남아있고
+// 새로고침을 해야만 맞는 값이 보이는 문제가 있었습니다.
+async function refreshAllData() {
+  const steps = [
+    ['월별 추이', loadMonthlyTrend],
+    ['매출 데이터', loadSalesData],
+    ['품목 카테고리 목록', loadCatOptions],
+    ['품목 데이터', loadItemData],
+    ['결품 의심', loadStockoutSuspects],
+    ['폐기 월 목록', loadWasteMonthOptions],
+    ['최근 폐기', loadRecentWaste],
+    ['홈 요약', loadHomeSummary],
+  ];
+  for (const [label, fn] of steps) {
+    try { await fn(); } catch(e) { console.error(`[A1] 새로고침 실패 (${label}):`, e); }
+  }
+  if (CURRENT_ROLE === 'admin') {
+    try { await loadAdminDeleteOptions(); } catch(e) { console.error('[A1] 관리자 삭제 옵션 새로고침 실패:', e); }
+  }
+  updateLastSync();
+}
+
 window.onload = async () => {
   const authed = await initAuth();
   if (!authed) return;
@@ -757,14 +779,7 @@ window.onload = async () => {
   document.getElementById('period-input').value =
     `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   setupDrop();
-  await loadMonthlyTrend();
-  await loadSalesData();
-  await loadCatOptions();
-  await loadStockoutSuspects();
-  await loadWasteMonthOptions();
-  await loadRecentWaste();
-  await loadHomeSummary();
-  updateLastSync();
+  await refreshAllData();
 };
 
 // ── 탭 전환 ──────────────────────────────────────────────────────
@@ -1165,15 +1180,10 @@ async function syncFiles() {
   }
   pendingFiles = [];
 
-  // 데이터 새로고침
-  await loadMonthlyTrend();
-  await loadSalesData();
-  await loadCatOptions();
-  await loadStockoutSuspects();
-  await loadWasteMonthOptions();
-  await loadRecentWaste();
-  await loadHomeSummary();
-  updateLastSync();
+  // 데이터 새로고침 (관리자 탭의 "삭제할 월" 목록도 여기서 같이 갱신됩니다 —
+  // 예전에는 이게 빠져 있어서 업로드 직후 관리자 탭에서 방금 올린 파일이
+  // 안 보이고 새로고침을 해야만 나타나는 문제가 있었습니다)
+  await refreshAllData();
 }
 
 // ── 공통 데이터 헬퍼 ────────────────────────────────────────────────
