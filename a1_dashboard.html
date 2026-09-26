@@ -220,6 +220,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <span><b>분류별이익현황.xlsx</b> · 월별로 나눠서 받기</span>
     <span class="src-note">— POS에서 뽑을 때 반드시 <b>총매출 · 원 단위</b>로 설정하세요. 파일명에 날짜를 넣으면(예: 분류별이익현황_2026-07.xlsx) 여러 달치를 한 번에 올릴 수 있습니다.</span>
   </div>
+  <div class="filter-row">
+    <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
+    <select class="sel" id="month-sel" onchange="loadSalesData()"><option value="">전체 기간</option></select>
+    <span style="font-size:11.5px;color:#94a3b8">— 아래 KPI · 그래프 · 표 전부 이 기간 기준입니다</span>
+  </div>
   <div class="card" style="margin-bottom:16px" id="trend-month-card">
     <div class="card-h">
       <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">데이터가 쌓일수록 자동 확장</div></div>
@@ -246,7 +251,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="card-h">
       <div><div class="card-title">카테고리별 상세</div></div>
       <div style="display:flex;gap:8px">
-        <select class="sel" id="month-sel" onchange="loadSalesData()"><option value="">전체 기간</option></select>
         <select class="sel" id="sort-sel" onchange="renderSalesTable()">
           <option value="amount">매출 높은순</option>
           <option value="profit_rate">이익율 높은순</option>
@@ -1033,17 +1037,20 @@ async function syncFiles() {
         // 설정 확인이 필요하다는 신호 — 값은 자동 보정하되 경고만 남김
         if (records.unitMult === 1000) unitWarnings.push(file.name);
         // 해당 연월 기존 데이터 삭제 후 재삽입 (upsert 잔류 방지)
-        await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
+        const delRes = await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
+        if (delRes.error) throw new Error(`삭제 실패(${yearMonth}): ${delRes.error.message}`);
         for (let i=0; i<records.length; i+=50) {
-          await sb.from('m4_category_sales').insert(records.slice(i,i+50));
+          const { error } = await sb.from('m4_category_sales').insert(records.slice(i,i+50));
+          if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+50,records.length)}번째 행): ${error.message}`);
         }
         count = records.length;
 
       } else if (fileType === 'item_daily') {
         const records = parseItemDaily(wb);
         for (let i=0; i<records.length; i+=100) {
-          await sb.from('m4_item_daily').upsert(records.slice(i,i+100),
+          const { error } = await sb.from('m4_item_daily').upsert(records.slice(i,i+100),
             {onConflict:'year_month,item_name,sale_date'});
+          if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+100,records.length)}번째 행): ${error.message}`);
         }
         count = records.length;
 
@@ -1052,18 +1059,26 @@ async function syncFiles() {
         // 파일에 포함된 날짜 범위의 기존 데이터 삭제 후 재삽입 (중복 방지)
         const dates = records.map(r=>r.confirmed_date).filter(Boolean).sort();
         if (dates.length) {
-          await sb.from('m4_waste_items')
+          const delRes = await sb.from('m4_waste_items')
             .delete().gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1]);
+          if (delRes.error) throw new Error(`삭제 실패: ${delRes.error.message}`);
         }
-        for (let i=0; i<records.length; i+=100)
-          await sb.from('m4_waste_items').insert(records.slice(i,i+100));
+        for (let i=0; i<records.length; i+=100) {
+          const { error } = await sb.from('m4_waste_items').insert(records.slice(i,i+100));
+          if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+100,records.length)}번째 행): ${error.message}`);
+        }
         count = records.length;
 
       } else if (fileType === 'waste') {
         const {slips, items} = parseWaste(wb);
-        if (slips.length) await sb.from('m4_waste_slips').upsert(slips, {onConflict:'slip_id'});
-        for (let i=0; i<items.length; i+=100)
-          await sb.from('m4_waste_items').insert(items.slice(i,i+100));
+        if (slips.length) {
+          const { error } = await sb.from('m4_waste_slips').upsert(slips, {onConflict:'slip_id'});
+          if (error) throw new Error(`전표 저장 실패: ${error.message}`);
+        }
+        for (let i=0; i<items.length; i+=100) {
+          const { error } = await sb.from('m4_waste_items').insert(items.slice(i,i+100));
+          if (error) throw new Error(`품목 저장 실패(${i+1}~${Math.min(i+100,items.length)}번째 행): ${error.message}`);
+        }
         count = slips.length + items.length;
       }
 
