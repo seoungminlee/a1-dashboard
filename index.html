@@ -495,6 +495,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <p>문제없습니다. 해당 기간 데이터를 지우고 다시 넣는 방식이라 중복으로 쌓이지 않습니다.</p>
       <h5>파일 형식을 인식할 수 없다고 나옵니다</h5>
       <p>지원하는 파일은 분류별이익현황 · 분류별내역 · 시계열 세 가지입니다. POS에서 받은 원본 파일을 그대로 올려주세요. 파일을 열어 수정하거나 다른 이름으로 저장하면 인식이 안 될 수 있습니다.</p>
+      <h5>"비표준 양식"이라며 업로드가 막힙니다</h5>
+      <p>POS에서 같은 리포트라도 옵션에 따라 "비교점"(매장 간 비교), "요일비교" 같은 다른 종류로 뽑힐 수 있습니다. 이런 리포트는 컬럼 구성이 달라 그대로 저장하면 숫자가 왜곡되기 때문에 시스템이 자동으로 차단합니다. POS 리포트 옵션에서 <b>분류별이익현황(비교기간 기준) · 시계열-일 · 분류별내역</b> 표준 리포트로 다시 뽑아 올려주세요.</p>
       <h5>숫자가 이상합니다</h5>
       <p>업로드한 파일의 기간이 맞는지, 화면 위쪽 필터가 원하는 기간으로 되어 있는지 먼저 확인하세요. 그래도 이상하면 관리자에게 문의하십시오.</p>
     </div>
@@ -828,6 +830,18 @@ function setStatus(msg, cls='ok') {
   el.textContent = msg; el.className = 'status '+cls;
 }
 
+// ── 지원 시트 이름 화이트리스트 ───────────────────────────────────
+// POS는 같은 메뉴에서도 "비교점"(매장간 비교), "요일비교" 같은 다른 리포트를
+// 뽑을 수 있는데, 시트 이름에 원래 이름을 포함하고 있어 detectType()의
+// 느슨한 매칭(.includes)은 이런 변종도 정상 파일로 오인합니다. 컬럼 구조/의미가
+// 달라 조용히 잘못된 데이터가 저장될 수 있어, 정확히 이 이름일 때만 통과시킵니다.
+const EXPECTED_SHEET_NAMES = {
+  category_sales: ['분류별이익현황'],
+  item_daily: ['시계열-일'],
+  waste_detail: ['분류별내역'],
+  waste: ['전표목록'],
+};
+
 // ── 파일 타입 감지 ────────────────────────────────────────────────
 function detectType(wb) {
   const sheets = wb.SheetNames.join(' ');
@@ -1030,6 +1044,23 @@ async function syncFiles() {
         fl.innerHTML = fl.innerHTML.replace(
           new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
           `❌ ${file.name} (인식 실패)`
+        );
+        continue;
+      }
+
+      // 표준 양식이 아닌 변종 리포트(비교점, 요일비교 등) 차단 — DB에 아무것도
+      // 쓰지 않고 여기서 멈춥니다. detectType()은 느슨하게 매칭하므로 실제
+      // 시트 이름이 화이트리스트와 정확히 일치하는지 다시 확인합니다.
+      const expectedSheets = EXPECTED_SHEET_NAMES[fileType];
+      if (expectedSheets && !wb.SheetNames.some(n => expectedSheets.includes(n))) {
+        const actualName = wb.SheetNames[0];
+        const msg = `시트 이름이 "${actualName}"입니다. 이 대시보드는 "${expectedSheets.join('/')}" 표준 양식만 지원합니다 — 컬럼 구조가 달라 잘못된 값이 저장될 수 있어 업로드를 막았습니다. POS에서 표준 리포트로 다시 받아주세요.`;
+        fileErrors.push(`${file.name}: ${msg}`);
+        setStatus(`${file.name}: ${msg}`, 'err');
+        window.alert(`⛔ 업로드 차단됨\n\n파일: ${file.name}\n실제 시트명: "${actualName}"\n지원 양식: "${expectedSheets.join('/')}"\n\n컬럼 구조가 달라 잘못된 데이터가 저장될 수 있어 이 파일은 건너뛰었습니다.\nPOS에서 표준 리포트로 다시 받아 업로드해주세요.`);
+        fl.innerHTML = fl.innerHTML.replace(
+          new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
+          `⛔ ${file.name} (비표준 양식)`
         );
         continue;
       }
