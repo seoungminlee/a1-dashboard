@@ -448,6 +448,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td>전기 대비 매출</td><td>비교기간 대비 증감액</td></tr>
       </table>
       <p class="src-note">월별 추이 그래프는 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
+      <p class="src-note">매출·이익은 <b>대분류(밥류·음료·담배 등 23개) 합계</b> 기준입니다. 업로드할 때 파일 안의 합계행과 자동으로 대조하며, 한 원이라도 맞지 않으면 저장하지 않습니다. 저장에 성공하면 파일 옆에 "파일 합계와 일치 ✔"가 표시됩니다.</p>
       <h5>폐기 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
@@ -628,10 +629,10 @@ async function initAuth() {
 // ── 관리자 전용: 특정 월만 삭제 ──────────────────────────────────────
 async function loadAdminDeleteOptions() {
   if (CURRENT_ROLE !== 'admin') return;
-  const [{data: sales}, {data: items}, {data: waste}] = await Promise.all([
-    sb.from('m4_category_sales').select('year_month'),
-    sb.from('m4_item_daily').select('year_month'),
-    sb.from('m4_waste_items').select('confirmed_date')
+  const [sales, items, waste] = await Promise.all([
+    fetchAllRows(() => sb.from('m4_category_sales').select('year_month')),
+    fetchAllRows(() => sb.from('m4_item_daily').select('year_month')),
+    fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date'))
   ]);
   const salesMonths = [...new Set((sales||[]).map(r=>r.year_month))].sort().reverse();
   const itemMonths = [...new Set((items||[]).map(r=>r.year_month))].sort().reverse();
@@ -668,15 +669,16 @@ async function deletePartial(kind, btn) {
   try {
     // 실제로 어떤 조건으로 삭제되는지 콘솔에 남깁니다 — "다른 달까지 지워졌다"는
     // 문제가 재발하면 여기 로그로 정확히 어떤 쿼리가 나갔는지 바로 확인 가능합니다.
-    console.log(`[A1] 부분삭제 실행: table=${cfg.table} col=${cfg.col} ${cfg.exact ? 'eq' : 'like'}=${month}`);
+    console.log(`[A1] 부분삭제 실행: table=${cfg.table} col=${cfg.col} ${cfg.exact ? 'eq' : '월범위'}=${month}`);
     let q = sb.from(cfg.table).delete();
-    q = cfg.exact ? q.eq(cfg.col, month) : q.like(cfg.col, month+'%');
+    if (cfg.exact) q = q.eq(cfg.col, month);
+    else { const [s, e] = monthRange(month); q = q.gte(cfg.col, s).lt(cfg.col, e); }
     const { error, count } = await q;
     if (error) throw error;
 
     // 삭제 직후 실제 DB 상태를 다시 조회해서 콘솔에 남김 — 화면 표시가 아니라
     // DB 자체에 어떤 연월이 남아있는지 직접 확인할 수 있게 합니다.
-    const { data: remaining } = await sb.from(cfg.table).select(cfg.col);
+    const remaining = await fetchAllRows(() => sb.from(cfg.table).select(cfg.col));
     const remainingMonths = [...new Set((remaining||[]).map(r => String(r[cfg.col]).substring(0,7)))].sort();
     console.log(`[A1] 삭제 후 ${cfg.table}에 남은 월:`, remainingMonths);
 
@@ -883,29 +885,87 @@ function detectType(wb) {
   return null;
 }
 
+// ── 계층 복원 공통 로직 ────────────────────────────────────────────
+// POS 리포트는 대분류 → 중분류 → 소분류 → 상품 순서로 행이 이어지고,
+// 들여쓰기나 레벨 표시가 없습니다. 대신 "분류 행의 값 = 바로 아래 자식
+// 행 값의 합"이 항상 성립하므로, 이 성질로 계층을 되살립니다.
+//  - 스택 맨 위 분류가 자식으로 값이 다 채워지면(잔여 0) 닫습니다.
+//  - 스택 깊이가 곧 레벨(0=대분류, 1=중분류, 2=소분류)입니다.
+//  - isItem(r, depth)가 true면 상품(말단) 행으로 보고 스택에 넣지 않습니다.
+// 예전 방식("구성비 20% 이하면 대분류")은 중·소분류를 대분류와 함께
+// 더해서 매출을 40% 가까이 부풀렸습니다(8월: 화면 67,087,770원 vs 실제 47,971,540원).
+function buildCategoryTree(rows, startIdx, nameCol, valueCol, isItem) {
+  const stack = [], categories = [], items = [];
+  const EPS = 0.5; // 원 단위 정수 기준. 천원 단위 파일의 반올림 오차는 아래 합계 대조에서 걸러집니다.
+  for (let i = startIdx; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r[nameCol] == null || String(r[nameCol]).trim() === '') continue;
+    const name = String(r[nameCol]).trim();
+    if (name === '합계') continue;
+    const v = Number(r[valueCol]) || 0;
+    while (stack.length && stack[stack.length-1].hasChild && Math.abs(stack[stack.length-1].remaining) < EPS) stack.pop();
+    const depth = stack.length;
+    if (stack.length) { stack[stack.length-1].remaining -= v; stack[stack.length-1].hasChild = true; }
+    if (isItem(r, depth)) {
+      items.push({ row: r, name, depth, top: stack.length ? stack[0].name : null });
+    } else {
+      const node = { row: r, name, depth, remaining: v, hasChild: false };
+      stack.push(node); categories.push(node);
+    }
+  }
+  return { categories, items };
+}
+
+// 파싱 결과가 파일 자체의 합계와 맞는지 확인 — 안 맞으면 저장하지 않습니다.
+function assertTotalsMatch(label, pairs, tol) {
+  const bad = pairs.filter(([, parsed, fileTotal]) => Math.abs((Number(parsed)||0) - (Number(fileTotal)||0)) > tol);
+  if (bad.length) {
+    const detail = bad.map(([name, parsed, fileTotal]) => `${name}: 계산 ${fmt(Math.round(parsed))} ≠ 파일 합계 ${fmt(Math.round(fileTotal))}`).join(', ');
+    throw new Error(`${label} 파일의 합계와 계산 결과가 맞지 않아 저장하지 않았습니다 (${detail}). 파일을 열어 수정했거나 표준 리포트가 아닐 수 있습니다 — POS에서 원본을 다시 받아주세요.`);
+  }
+}
+
 // ── 분류별이익현황 파싱 ───────────────────────────────────────────
+// 대분류(레벨 0)만 저장합니다. 파일 합계행과 수량·금액·예상이익이 정확히
+// 일치해야만 저장되며, 하나라도 다르면 오류로 처리합니다.
 function parseCategorySales(wb, yearMonth) {
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
 
-  // 금액 단위 자동 감지: 첫 데이터행(rows[6])에서 수량>0이면 단가 계산
+  // 합계행 위치 (보통 6번째 줄)
+  const totalIdx = rows.findIndex(r => r && String(r[1]??'').trim() === '합계');
+  if (totalIdx < 0) throw new Error('합계 행을 찾을 수 없습니다. 분류별이익현황 원본 파일인지 확인해주세요.');
+  const totalRow = rows[totalIdx];
+
+  // 금액 단위 자동 감지: 첫 데이터행에서 수량>0이면 단가 계산
   // 단가 < 100 → 천원 단위로 판단 → ×1000 보정
   let unitMult = 1;
-  const firstData = rows[6];
+  const firstData = rows[totalIdx + 1];
   if (firstData && (firstData[2]||0) > 0 && (firstData[3]||0) > 0) {
     const avgPrice = firstData[3] / firstData[2];
     if (avgPrice < 100) unitMult = 1000; // 천원 단위 파일
   }
 
+  // 상품 행 = PLU코드(16번째 열)가 있는 행. 코드 열이 비어 있는 파일에 대비해
+  // 깊이 3(대/중/소분류 아래)도 상품으로 봅니다.
+  const isItem = (r, depth) => (r[15] != null && String(r[15]).trim() !== '') || depth >= 3;
+  const { categories } = buildCategoryTree(rows, totalIdx + 1, 1, 3, isItem);
+  const top = categories.filter(c => c.depth === 0);
+  if (!top.length) throw new Error('대분류 행을 찾지 못했습니다.');
+
+  const sumCol = col => top.reduce((s, c) => s + (Number(c.row[col]) || 0), 0);
+  const tol = unitMult === 1000 ? Math.max(1, Math.abs(Number(totalRow[3])||0) * 0.001) : 0.5;
+  assertTotalsMatch('분류별이익현황', [
+    ['수량', sumCol(2), totalRow[2]],
+    ['금액', sumCol(3), totalRow[3]],
+    ['예상이익', sumCol(4), totalRow[4]],
+  ], tol);
+
   const records = [];
-  for (let i = 5; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[1] || r[1]==='합계') continue;
-    const name = String(r[1]).trim();
+  for (const c of top) {
+    const r = c.row;
+    const name = c.name;
     const composition = r[6] || 0;
-    // 최상위 카테고리만 저장 (하위 품목·소카테고리 제외)
-    if (name.includes(')')) continue;
-    if (composition > 20) continue;
     records.push({
       year_month: yearMonth,
       category: name,
@@ -940,34 +1000,47 @@ function parseItemDaily(wb) {
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
   const headerRow = rows[3] || [];
   const dateRow = rows[4] || [];
-  const yearMonth = headerRow[6] ? String(headerRow[6]) : null;
-  if (!yearMonth) return [];
+  // 연월 헤더(예: '2026-05'). 셀이 날짜 형식이면 시리얼 숫자로 들어오므로 변환
+  const ymRaw = headerRow[6];
+  const yearMonth = typeof ymRaw === 'number'
+    ? (excelToYmd(ymRaw) || '').substring(0,7)
+    : (ymRaw ? String(ymRaw).trim().substring(0,7) : null);
+  if (!yearMonth || !/^\d{4}-\d{2}$/.test(yearMonth)) {
+    throw new Error('시계열 파일에서 연월(예: 2026-05)을 읽지 못했습니다. 시계열-일 원본 파일인지 확인해주세요.');
+  }
 
   const dates = [];
   for (let c = 6; c < dateRow.length; c++) {
-    if (dateRow[c]) {
-      const d = String(dateRow[c]); // '05-01'
-      dates.push({col:c, date: yearMonth.substring(0,5) + d});
-    }
+    const v = dateRow[c];
+    if (v == null || v === '') continue;
+    // '05-01' 문자열이 정상. 날짜 형식 셀이면 시리얼 숫자 → 'MM-DD'로 변환
+    const mmdd = typeof v === 'number' ? (excelToYmd(v) || '').substring(5) : String(v).trim().slice(-5);
+    if (/^\d{2}-\d{2}$/.test(mmdd)) dates.push({col:c, date: yearMonth.substring(0,5) + mmdd});
   }
 
   // 첫 번째 데이터 행이 최상위 카테고리
   const topCat = rows[5] && rows[5][0] ? String(rows[5][0]).trim() : null;
 
+  // 계층 복원: 대/중/소분류(깊이 0~2) 아래 깊이 3이 상품입니다. 예전에는
+  // 첫 두 줄만 건너뛰어서 '용기면(대)', '봉지면' 같은 소분류 소계 줄까지
+  // 품목으로 저장됐습니다(품목 합이 실제의 2배).
+  const { items, categories } = buildCategoryTree(rows, 5, 0, 2, (r, depth) => depth >= 3);
+  if (!items.length) throw new Error('시계열 파일에서 상품 행을 찾지 못했습니다. 대분류부터 펼쳐진 시계열-일 원본인지 확인해주세요.');
+  const itemSum = items.reduce((s, it) => s + (Number(it.row[2]) || 0), 0);
+  const topSum = categories.filter(c => c.depth === 0).reduce((s, c) => s + (Number(c.row[2]) || 0), 0);
+  assertTotalsMatch('시계열', [['매출 합계', itemSum, topSum]], 0.5);
+
   const records = [];
-  // 최상위 카테고리·서브카테고리 행(첫 두 행)은 건너뛰고 실제 품목만 저장
-  for (let i = 5; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[0]) continue;
-    const name = String(r[0]).trim();
-    if (i <= 6) continue; // 최상위+서브 카테고리 행 skip
+  for (const it of items) {
+    const r = it.row;
+    const name = it.name;
 
     for (const {col, date} of dates) {
       const qty = r[col];
       if (qty && qty > 0) {
         records.push({
           year_month: yearMonth,
-          category: topCat,
+          category: it.top || topCat, // 상품이 속한 대분류
           item_name: name,
           sale_date: date,
           quantity: qty,
@@ -975,7 +1048,41 @@ function parseItemDaily(wb) {
       }
     }
   }
+  // 분류 이름 목록 — 동기화 시 예전에 품목으로 잘못 저장된 소계 행을 지우는 데 사용
+  records.categoryNames = categories.map(c => c.name);
   return records;
+}
+
+// ── 엑셀 날짜 → 문자열 변환 ───────────────────────────────────────
+// 예전에는 cellDates:true로 JS Date를 받아 toISOString()으로 잘랐는데,
+// 한국 시간대에서는 UTC로 바뀌면서 날짜가 하루씩 앞당겨졌습니다
+// (실측: 7/31 → 7/30, 7/1 → 6/30). 이제는 엑셀 날짜 시리얼 숫자를 그대로
+// 받아 달력 날짜로 직접 변환하므로 시간대와 무관합니다.
+const pad2 = n => String(n).padStart(2,'0');
+function excelToYmd(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') {
+    const p = XLSX.SSF.parse_date_code(v);
+    return p ? `${p.y}-${pad2(p.m)}-${pad2(p.d)}` : null;
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+  m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  return null;
+}
+// 등록일시처럼 시각까지 있는 값 → 한국 시간 기준 ISO 문자열
+// (Safari는 '2026-07-31 23:42:04' 형식을 new Date()로 못 읽어서 직접 파싱)
+function excelToDateTimeIso(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') {
+    const p = XLSX.SSF.parse_date_code(v);
+    return p ? `${p.y}-${pad2(p.m)}-${pad2(p.d)}T${pad2(p.H)}:${pad2(p.M)}:${pad2(Math.floor(p.S))}+09:00` : null;
+  }
+  const m = String(v).trim().match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!m) return null;
+  return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}T${pad2(m[4]||0)}:${m[5]||'00'}:${m[6]||'00'}+09:00`;
 }
 
 // ── 분류별내역 파싱 (신규 폐기 포맷) ────────────────────────────
@@ -986,10 +1093,7 @@ function parseWasteDetail(wb) {
   for (let i = 4; i < rows.length; i++) {
     const r = rows[i];
     if (!r[5]) continue; // 상품명 없으면 skip
-    const cd = r[7]; // 확정일자
-    let dateStr = null;
-    if (cd instanceof Date) dateStr = cd.toISOString().substring(0,10);
-    else if (cd) dateStr = String(cd).substring(0,10);
+    const dateStr = excelToYmd(r[7]); // 확정일자
     records.push({
       slip_id:        r[3] ? String(r[3]) : null,
       category:       r[1] ? String(r[1]).trim() : null,
@@ -1017,8 +1121,8 @@ function parseWaste(wb) {
     if (!r[4]) continue; // 전표번호 없으면 skip
     slips.push({
       slip_id: String(r[4]),
-      registered_at: r[1] ? new Date(r[1]).toISOString() : null,
-      confirmed_date: r[2] ? String(r[2]) : null,
+      registered_at: excelToDateTimeIso(r[1]),
+      confirmed_date: excelToYmd(r[2]),
       type: r[3] ? String(r[3]).trim() : null,
       item_count: r[5]||0,
       amount: r[6]||0,
@@ -1065,7 +1169,8 @@ async function syncFiles() {
     try {
       // 재업로드 허용 (DELETE 후 INSERT라 중복 없음)
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, {type:'array', cellDates:true});
+      // cellDates를 쓰지 않습니다 — 날짜는 시리얼 숫자로 받아 excelToYmd()로 변환 (시간대 오류 방지)
+      const wb = XLSX.read(buf, {type:'array'});
       const fileType = detectType(wb);
 
       if (!fileType) {
@@ -1097,6 +1202,7 @@ async function syncFiles() {
       }
 
       let count = 0;
+      let verifiedNote = ''; // 파일 자체 합계와 대조를 통과했으면 칩에 표시
 
       if (fileType === 'category_sales') {
         // 파일별로 연월 개별 추출 (파일명 우선, 없으면 입력값)
@@ -1123,15 +1229,26 @@ async function syncFiles() {
           if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+50,records.length)}번째 행): ${error.message}`);
         }
         count = records.length;
+        verifiedNote = ' · 파일 합계와 일치 ✔';
 
       } else if (fileType === 'item_daily') {
         const records = parseItemDaily(wb);
+        // 예전 파서가 품목으로 잘못 넣은 분류 소계 행('용기면(대)', '봉지면' 등)을
+        // 같은 연월에서 지운 뒤 넣습니다. 대분류 단위로 통째로 지우지 않는 이유:
+        // 같은 대분류의 다른 중분류 파일을 따로 올린 경우 그 데이터까지 지워지기 때문.
+        const ym = records.length ? records[0].year_month : null;
+        const catNames = records.categoryNames || [];
+        for (let i = 0; ym && i < catNames.length; i += 40) {
+          const delRes = await sb.from('m4_item_daily').delete().eq('year_month', ym).in('item_name', catNames.slice(i, i+40));
+          if (delRes.error) throw new Error(`이전 소계 행 정리 실패(${ym}): ${delRes.error.message}`);
+        }
         for (let i=0; i<records.length; i+=100) {
           const { error } = await sb.from('m4_item_daily').upsert(records.slice(i,i+100),
             {onConflict:'year_month,item_name,sale_date'});
           if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+100,records.length)}번째 행): ${error.message}`);
         }
         count = records.length;
+        verifiedNote = ' · 파일 합계와 일치 ✔';
 
       } else if (fileType === 'waste_detail') {
         const records = parseWasteDetail(wb);
@@ -1170,7 +1287,7 @@ async function syncFiles() {
       totalRecords += count;
       fl.innerHTML = fl.innerHTML.replace(
         new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
-        `✅ ${file.name} (${count}건)`
+        `✅ ${file.name} (${count}건${verifiedNote})`
       );
 
     } catch(e) {
@@ -1203,9 +1320,28 @@ async function syncFiles() {
 }
 
 // ── 공통 데이터 헬퍼 ────────────────────────────────────────────────
+// 전체 행 조회 (1,000행 한도 대응)
+// Supabase(PostgREST)는 기본 설정에서 요청 1번에 최대 1,000행만 돌려주고
+// 넘치는 행은 오류 없이 잘라버립니다. 품목(시계열)은 한 분류·한 달만으로도
+// 744건이라 2개월만 쌓여도 넘기 때문에, 빈 페이지가 나올 때까지 나눠서
+// 끝까지 불러옵니다. (서버 한도가 1,000이 아니어도 동작하도록 받은 행 수만큼 전진)
+// makeQuery는 호출할 때마다 새 쿼리를 만들어 반환해야 합니다.
+async function fetchAllRows(makeQuery) {
+  const PAGE = 1000;
+  const all = [];
+  for (let from = 0; from < 1000000; ) {
+    const { data, error } = await makeQuery().order('id', {ascending:true}).range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || !data.length) break;
+    all.push(...data);
+    from += data.length;
+  }
+  return all;
+}
+
 // 월별 매출·이익 집계 (홈 요약 + 매출 탭 추이 차트 공용)
 async function fetchMonthlyTrendData() {
-  const {data} = await sb.from('m4_category_sales').select('year_month,amount,profit').order('year_month');
+  const data = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month,amount,profit'));
   const map = {};
   for (const r of (data||[])) {
     if (!map[r.year_month]) map[r.year_month] = {amount:0, profit:0};
@@ -1254,10 +1390,9 @@ async function fetchRecentWasteData() {
   const end = String(latest[0].confirmed_date).substring(0,10);
   const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
 
-  const {data} = await sb.from('m4_waste_items')
+  const list = await fetchAllRows(() => sb.from('m4_waste_items')
     .select('item_name,category,quantity,amount,type')
-    .eq('type','폐기').gte('confirmed_date', start).lte('confirmed_date', end);
-  const list = data || [];
+    .eq('type','폐기').gte('confirmed_date', start).lte('confirmed_date', end));
 
   const map = {};
   let total = 0;
@@ -1285,14 +1420,15 @@ function renderWasteListHTML(listId, ranked, limit, showQty) {
 // 결품 의심 품목 (홈 요약 top3 + 품목 탭 top5 공용). 최신 월 데이터 기준.
 // 조건: 판매일 7일 이상 확보 + 일평균 1개 이상 + 판매 공백일 1일 이상.
 async function fetchStockoutData(month) {
-  const {data: mData} = await sb.from('m4_item_daily').select('year_month');
-  if (!mData || !mData.length) return null;
+  const mData = await fetchAllRows(() => sb.from('m4_item_daily').select('year_month'));
+  if (!mData.length) return null;
   const months = [...new Set(mData.map(d=>d.year_month))].sort().reverse();
   const targetMonth = month || months[0];
 
-  const {data} = await sb.from('m4_item_daily')
-    .select('item_name,sale_date,quantity').eq('year_month', targetMonth);
-  if (!data || !data.length) return { months, targetMonth, totalDays: 0, suspects: [] };
+  // 1,000행에서 잘리면 판매 기록이 빠진 날이 "공백일"로 잡혀 가짜 결품 경보가 나므로 전부 불러옴
+  const data = await fetchAllRows(() => sb.from('m4_item_daily')
+    .select('item_name,sale_date,quantity').eq('year_month', targetMonth));
+  if (!data.length) return { months, targetMonth, totalDays: 0, suspects: [] };
 
   const map = {}; const allDates = new Set();
   for (const r of data) {
@@ -1324,17 +1460,16 @@ async function loadMonthlyTrend() {
 // ── 매출 데이터 로드 ──────────────────────────────────────────────
 async function loadSalesData() {
   const month = document.getElementById('month-sel').value;
-  let q = sb.from('m4_category_sales').select('*').order('amount', {ascending:false});
-  if (month) q = q.eq('year_month', month);
-  const {data, error} = await q;
-  if (error) return;
-  salesData = data || [];
+  salesData = await fetchAllRows(() => {
+    let q = sb.from('m4_category_sales').select('*');
+    if (month) q = q.eq('year_month', month);
+    return q;
+  });
 
   // 월 목록 업데이트
-  const {data: months} = await sb.from('m4_category_sales')
-    .select('year_month').order('year_month', {ascending:false});
+  const months = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month'));
   if (months) {
-    const unique = [...new Set(months.map(m=>m.year_month))];
+    const unique = [...new Set(months.map(m=>m.year_month))].sort().reverse();
     const sel = document.getElementById('month-sel');
     const cur = sel.value;
     sel.innerHTML = '<option value="">전체 기간</option>' +
@@ -1438,8 +1573,7 @@ function renderProfitChart() {
 
 // ── 품목 분석 ────────────────────────────────────────────────────
 async function loadCatOptions() {
-  const {data} = await sb.from('m4_item_daily').select('category,year_month');
-  if (!data) return;
+  const data = await fetchAllRows(() => sb.from('m4_item_daily').select('category,year_month'));
   const cats = [...new Set(data.filter(d=>d.category).map(d=>d.category))].sort();
   const months = [...new Set(data.map(d=>d.year_month))].sort().reverse();
   const cs = document.getElementById('cat-sel');
@@ -1453,10 +1587,12 @@ async function loadItemData() {
   const month = document.getElementById('item-month-sel').value;
   if (!cat) { document.getElementById('items-tbody').innerHTML='<tr><td colspan="5" class="empty">카테고리를 선택하세요.</td></tr>'; return; }
 
-  let q = sb.from('m4_item_daily').select('item_name,sale_date,quantity').eq('category',cat);
-  if (month) q = q.eq('year_month', month);
-  const {data} = await q;
-  if (!data || !data.length) {
+  const data = await fetchAllRows(() => {
+    let q = sb.from('m4_item_daily').select('item_name,sale_date,quantity').eq('category',cat);
+    if (month) q = q.eq('year_month', month);
+    return q;
+  });
+  if (!data.length) {
     document.getElementById('items-tbody').innerHTML='<tr><td colspan="5" class="empty">데이터가 없습니다.</td></tr>'; return;
   }
 
@@ -1481,10 +1617,12 @@ async function loadItemData() {
 
 async function showItemTrend(itemName) {
   const month = document.getElementById('item-month-sel').value;
-  let q = sb.from('m4_item_daily').select('sale_date,quantity').eq('item_name',itemName).order('sale_date');
-  if (month) q = q.eq('year_month', month);
-  const {data} = await q;
-  if (!data || !data.length) {
+  const data = (await fetchAllRows(() => {
+    let q = sb.from('m4_item_daily').select('sale_date,quantity').eq('item_name',itemName);
+    if (month) q = q.eq('year_month', month);
+    return q;
+  })).sort((a,b) => String(a.sale_date).localeCompare(String(b.sale_date)));
+  if (!data.length) {
     if (trendChart) { trendChart.destroy(); trendChart = null; }
     document.getElementById('item-trend-card').style.display = 'none';
     return;
@@ -1512,8 +1650,7 @@ async function showItemTrend(itemName) {
 
 // ── 폐기 데이터 ───────────────────────────────────────────────────
 async function loadWasteMonthOptions() {
-  const {data} = await sb.from('m4_waste_items').select('confirmed_date');
-  if (!data) return;
+  const data = await fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date'));
   const months = [...new Set(data.filter(d=>d.confirmed_date).map(d=>String(d.confirmed_date).substring(0,7)))].sort().reverse();
   const sel = document.getElementById('waste-month-sel');
   sel.innerHTML = '<option value="">전체 기간</option>'+months.map(m=>`<option>${m}</option>`).join('');
@@ -1524,11 +1661,12 @@ async function loadWasteData() {
   const month = document.getElementById('waste-month-sel').value;
   const type = document.getElementById('waste-type-sel').value;
 
-  let q = sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date');
-  if (type) q = q.eq('type', type);
-  if (month) q = q.like('confirmed_date', month+'%');
-  const {data: items} = await q;
-  if (!items) return;
+  const items = await fetchAllRows(() => {
+    let q = sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date');
+    if (type) q = q.eq('type', type);
+    if (month) { const [s, e] = monthRange(month); q = q.gte('confirmed_date', s).lt('confirmed_date', e); }
+    return q;
+  });
 
   // 집계
   const map = {};
@@ -1697,21 +1835,24 @@ function renderWasteCatChart(items) {
 }
 
 function renderWasteChart(items) {
-  // 주차별 집계
+  // 월별 주차 집계 (1~7일=1주, 8~14일=2주 …). 예전에는 키에 '월'이 없어서
+  // 전체 기간을 보면 7월 1주와 8월 1주가 한 막대로 합쳐졌습니다.
+  // 날짜 문자열을 직접 잘라 쓰므로 시간대 영향도 없습니다.
   const weekly = {};
   for (const r of items) {
-    if (!r.confirmed_date) continue;
-    const d = new Date(r.confirmed_date);
-    const week = `${d.getFullYear()}-W${Math.ceil(d.getDate()/7)}`;
-    if (!weekly[week]) weekly[week]=0;
-    weekly[week] += r.amount||0;
+    const ymd = String(r.confirmed_date || '').substring(0,10);
+    const m = ymd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) continue;
+    const key = `${m[1]}-${m[2]}-W${Math.ceil(Number(m[3])/7)}`;
+    weekly[key] = (weekly[key] || 0) + (r.amount || 0);
   }
-  const labels = Object.keys(weekly).sort();
+  const keys = Object.keys(weekly).sort();
+  const labels = keys.map(k => { const [y, mo, w] = k.split('-'); return `${Number(mo)}월 ${w.substring(1)}주`; });
   const ctx = document.getElementById('waste-chart').getContext('2d');
   if (wasteChart) wasteChart.destroy();
   wasteChart = new Chart(ctx, {
     type:'bar',
-    data:{labels, datasets:[{label:'폐기금액', data:labels.map(k=>weekly[k]),
+    data:{labels, datasets:[{label:'폐기금액', data:keys.map(k=>weekly[k]),
       backgroundColor:'#ef4444', borderRadius:4, barPercentage:.6}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false}},
@@ -1733,6 +1874,13 @@ async function updateLastSync() {
 
 // ── 유틸 ─────────────────────────────────────────────────────────
 function fmt(n) { return (n||0).toLocaleString('ko-KR'); }
+// 'YYYY-MM' → ['YYYY-MM-01', '다음달-01'] (날짜 컬럼 월 필터용).
+// DATE 컬럼에 LIKE '2026-07%'를 쓰면 Postgres가 형 불일치로 거부하므로 범위로 거릅니다.
+function monthRange(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+  return [`${y}-${String(m).padStart(2,'0')}-01`, `${ny}-${String(nm).padStart(2,'0')}-01`];
+}
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 </script>
 </body>
