@@ -156,6 +156,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="tab" onclick="switchTab('sales')">매출·이익 현황</div>
   <div class="tab" onclick="switchTab('items')">품목 분석</div>
   <div class="tab" onclick="switchTab('waste')">폐기 현황</div>
+  <div class="tab" id="tab-btn-admin" onclick="switchTab('admin')" style="display:none;color:#b91c1c">⚙️ 관리자</div>
   <div class="tab" onclick="switchTab('help')" style="margin-left:auto;color:#94a3b8">❓ 사용 안내</div>
 </div>
 
@@ -509,8 +510,20 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
   </div>
 
-  <div class="help-sec" id="admin-partial-delete-card" style="display:none;border-color:#fde68a">
-    <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#92400e"><span>🗑️ 관리자 전용 — 특정 월만 삭제</span><span class="arw">▶</span></div>
+  <p class="src-note" style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0">
+    A1 편의점 수익관리 대시보드 · 문서 버전 1.0 · 문의: 관리자
+  </p>
+</div>
+</div>
+
+<!-- 탭 5: 관리자 (admin 역할만 탭 버튼이 노출됨 — initAuth에서 제어) -->
+<div class="tab-content main" id="tab-admin">
+<div class="help-wrap">
+
+  <p class="src-note" style="margin-bottom:14px">이 탭은 <b>관리자 계정에만</b> 보입니다. 실제 접근 차단은 화면 표시가 아니라 서버(Supabase RLS) 정책이 담당하므로, 이 탭이 안 보여도 데이터 자체는 안전합니다.</p>
+
+  <div class="help-sec open" id="admin-partial-delete-card" style="border-color:#fde68a">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#92400e"><span>🗑️ 특정 월만 삭제</span><span class="arw">▶</span></div>
     <div class="help-a">
       <div class="help-warn">
         선택한 월(폐기는 해당 월)의 데이터만 삭제합니다. 되돌릴 수 없으니 확인 후 실행하세요. <b>특정 파일 단위 삭제는 지원하지 않습니다</b> — 각 행이 어느 업로드 파일에서 왔는지 DB에 기록되어 있지 않아, 월(폐기는 확정일자 기준 월) 단위로만 지울 수 있습니다.
@@ -537,8 +550,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
   </div>
 
-  <div class="help-sec" id="admin-reset-card" style="display:none;border-color:#fecaca">
-    <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#b91c1c"><span>⚠️ 관리자 전용 — 데이터 전체 초기화</span><span class="arw">▶</span></div>
+  <div class="help-sec" id="admin-reset-card" style="border-color:#fecaca">
+    <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#b91c1c"><span>⚠️ 데이터 전체 초기화</span><span class="arw">▶</span></div>
     <div class="help-a">
       <div class="help-warn" style="background:#fef2f2;border-color:#fecaca;color:#7f1d1d">
         <b>되돌릴 수 없습니다.</b> 매출 · 품목 · 폐기 · 업로드 이력 전체가 삭제됩니다. 부분 삭제는 지원하지 않으며, 실행하면 전체 데이터가 한 번에 지워집니다. 테스트 데이터를 지우고 실사용으로 전환할 때만 사용하세요.
@@ -550,9 +563,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
   </div>
 
-  <p class="src-note" style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0">
-    A1 편의점 수익관리 대시보드 · 문서 버전 1.0 · 문의: 관리자
-  </p>
 </div>
 </div>
 
@@ -602,11 +612,9 @@ async function initAuth() {
   } else {
     ub.dataset.allowed = '1';
   }
-  // 관리자 전용 초기화 카드 — admin 역할만 노출 (RLS write_admin 정책이 실제 차단선)
-  const resetCard = document.getElementById('admin-reset-card');
-  if (resetCard) resetCard.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
-  const partialCard = document.getElementById('admin-partial-delete-card');
-  if (partialCard) partialCard.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
+  // 관리자 탭 — admin 역할만 노출 (RLS write_admin 정책이 실제 차단선, 이건 화면 표시일 뿐)
+  const adminTabBtn = document.getElementById('tab-btn-admin');
+  if (adminTabBtn) adminTabBtn.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
   if (CURRENT_ROLE === 'admin') loadAdminDeleteOptions();
   return true;
 }
@@ -756,11 +764,11 @@ window.onload = async () => {
 // ── 탭 전환 ──────────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('on', ['home','sales','items','waste','help'][i]===tab);
+    t.classList.toggle('on', ['home','sales','items','waste','admin','help'][i]===tab);
   });
-  // 홈 · 사용 안내 탭에서는 업로드 바 숨김 (읽기 전용 화면)
+  // 홈 · 관리자 · 사용 안내 탭에서는 업로드 바 숨김 (읽기 전용/관리 화면)
   const ub = document.querySelector('.upload-bar');
-  if (ub && ub.dataset.allowed === '1') ub.style.display = (tab==='help' || tab==='home') ? 'none' : 'flex';
+  if (ub && ub.dataset.allowed === '1') ub.style.display = (tab==='help' || tab==='home' || tab==='admin') ? 'none' : 'flex';
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
   document.getElementById('tab-'+tab).classList.add('on');
 }
