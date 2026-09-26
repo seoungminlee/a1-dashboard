@@ -869,11 +869,14 @@ function parseCategorySales(wb, yearMonth) {
       profit:       Math.round((r[4]||0) * unitMult),
       profit_rate:  r[5]||0,
       composition,
-      comp_quantity:   r[7]||0,
+      // comp_quantity/diff_quantity는 DB에 INTEGER로 저장됩니다. 여러 점포를
+      // 평균 낸 "비교점" 포맷은 평균이라 223.3처럼 소수로 나올 수 있어
+      // 반올림합니다(일반 단일 매장 비교기간 포맷은 원래 정수라 영향 없음).
+      comp_quantity:   Math.round(r[7]||0),
       comp_amount:     Math.round((r[8]||0) * unitMult),
       comp_profit:     Math.round((r[9]||0) * unitMult),
       comp_profit_rate: r[10]||0,
-      diff_quantity:   r[11]||0,
+      diff_quantity:   Math.round(r[11]||0),
       diff_amount:     Math.round((r[12]||0) * unitMult),
       diff_profit:     Math.round((r[13]||0) * unitMult),
       diff_profit_rate: r[14]||0,
