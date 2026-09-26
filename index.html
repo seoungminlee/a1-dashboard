@@ -587,9 +587,12 @@ async function initAuth() {
 
   // 권한 확인 — 쓰기 권한 없으면 업로드 UI 숨김 (RLS와 UI 일치)
   try {
-    const {data: role} = await sb.rpc('get_my_role');
-    CURRENT_ROLE = role || null;
-  } catch(e) { CURRENT_ROLE = null; }
+    const {data: role, error: roleErr} = await sb.rpc('get_my_role');
+    if (roleErr) console.error('[A1] get_my_role 호출 실패:', roleErr.message, roleErr);
+    // 값에 공백/대소문자 차이가 있어도 admin으로 인식되도록 방어적으로 정규화
+    CURRENT_ROLE = (typeof role === 'string') ? role.trim().toLowerCase() : (role || null);
+  } catch(e) { console.error('[A1] get_my_role 예외:', e); CURRENT_ROLE = null; }
+  console.log('[A1] 로그인 사용자:', user.email, '/ CURRENT_ROLE:', CURRENT_ROLE);
   const ub = document.querySelector('.upload-bar');
   if (!['admin','staff'].includes(CURRENT_ROLE)) {
     ub.style.display = 'none';
