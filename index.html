@@ -669,7 +669,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.5';
+const APP_VERSION = '2026.09.27-v2.6';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -731,8 +731,8 @@ async function initAuth() {
 async function loadAdminDeleteOptions() {
   if (CURRENT_ROLE !== 'admin') return;
   const [sales, waste] = await Promise.all([
-    fetchAllRows(() => sb.from('m4_category_sales').select('year_month')),
-    fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date'))
+    allCatSales(),
+    allWasteLite()
   ]);
   const salesMonths = [...new Set((sales||[]).map(r=>r.year_month))].sort().reverse();
   const wasteMonths = [...new Set((waste||[]).filter(r=>r.confirmed_date).map(r=>String(r.confirmed_date).substring(0,7)))].sort().reverse();
@@ -854,16 +854,18 @@ async function doLogout() {
 // ── 데이터 올리기 탭: 월별 현황 + 업로드 이력 ─────────────────────────
 async function loadUploadStatus() {
   if (!byId('upload-status-tbody')) return;
-  const [cats, items, waste, hist] = await Promise.all([
-    fetchAllRows(() => sb.from('m4_category_sales').select('year_month')),
-    fetchAllRows(() => sb.from('m4_item_sales').select('year_month')).catch(() => []),
-    fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date')),
+  const [cats, waste, hist] = await Promise.all([
+    allCatSales(), allWasteLite(),
     sb.from('m4_sync_history').select('file_name,file_type,record_count,synced_at').order('synced_at', {ascending:false}).limit(20),
   ]);
   const cnt = {};
   const add = (ym, k) => { if (!ym) return; (cnt[ym] = cnt[ym] || {cat:0, item:0, waste:0})[k]++; };
   cats.forEach(r => add(r.year_month, 'cat'));
-  items.forEach(r => add(r.year_month, 'item'));
+  // 품목은 달마다 1,300줄 안팎이라 전부 받지 않고 개수만 셉니다
+  const salesMonthList = [...new Set(cats.map(r => r.year_month))];
+  const itemCounts = await Promise.all(salesMonthList.map(m =>
+    sb.from('m4_item_sales').select('id', { count:'exact', head:true }).eq('year_month', m).then(r => r.count || 0, () => 0)));
+  salesMonthList.forEach((m, i) => { (cnt[m] = cnt[m] || {cat:0, item:0, waste:0}).item = itemCounts[i]; });
   waste.forEach(r => add(r.confirmed_date ? String(r.confirmed_date).substring(0,7) : null, 'waste'));
   const months = Object.keys(cnt).sort().reverse();
   byId('upload-status-tbody').innerHTML = months.length ? months.map(m => {
@@ -893,22 +895,26 @@ async function loadUploadStatus() {
 // 갱신되지 않은 채 멈춰서, 화면을 이동해도 옛날 값이 남아있고
 // 새로고침을 해야만 맞는 값이 보이는 문제가 있었습니다.
 async function refreshAllData() {
-  const steps = [
-    ['월별 추이', loadMonthlyTrend],
-    ['매출 데이터', loadSalesData],
-    ['품목 분석', loadItemData],
-    ['폐기 월 목록', loadWasteMonthOptions],
-    ['업로드 현황', loadUploadStatus],
-    ['최근 폐기', loadRecentWaste],
-    ['홈 요약', loadHomeSummary],
+  qCache = new Map(); // 업로드·삭제 직후 최신 데이터를 받도록 공유 캐시 비움
+  const run = (label, fn) => Promise.resolve().then(fn).catch(e => console.error(`[A1] 새로고침 실패 (${label}):`, e));
+  // 처음 보이는 홈을 먼저 채우고(나머지 탭과 같은 데이터를 캐시로 공유),
+  // 나머지 탭은 동시에 불러옵니다 — 예전엔 7단계를 하나씩 기다려서 홈이 맨 마지막에 떴습니다.
+  const t0 = performance.now();
+  const home = run('홈 요약', loadHomeSummary);
+  const rest = [
+    run('월별 추이', loadMonthlyTrend),
+    run('매출 데이터', loadSalesData),
+    run('품목 분석', loadItemData),
+    run('폐기 월 목록', loadWasteMonthOptions),
+    run('업로드 현황', loadUploadStatus),
+    run('최근 폐기', loadRecentWaste),
+    run('마지막 동기화', updateLastSync),
   ];
-  for (const [label, fn] of steps) {
-    try { await fn(); } catch(e) { console.error(`[A1] 새로고침 실패 (${label}):`, e); }
-  }
-  if (CURRENT_ROLE === 'admin') {
-    try { await loadAdminDeleteOptions(); } catch(e) { console.error('[A1] 관리자 삭제 옵션 새로고침 실패:', e); }
-  }
-  updateLastSync();
+  if (CURRENT_ROLE === 'admin') rest.push(run('관리자 삭제 옵션', loadAdminDeleteOptions));
+  await home;
+  console.log(`[A1] 홈 표시 ${Math.round(performance.now() - t0)}ms`);
+  await Promise.all(rest);
+  console.log(`[A1] 전체 새로고침 ${Math.round(performance.now() - t0)}ms`);
 }
 
 window.onload = async () => {
@@ -1580,9 +1586,21 @@ async function fetchAllRows(makeQuery) {
   return all;
 }
 
+// ── 새로고침 1회 동안 같은 전체 조회를 한 번만 하도록 공유 (속도 개선) ─────────
+// 예전엔 홈·매출·폐기·업로드 현황·관리자가 같은 표(대분류 매출, 폐기 목록)를 각자
+// 따로 불러와 새로고침 한 번에 수십 번 요청이 나갔습니다. 데이터가 바뀌는 건
+// 업로드·삭제뿐이고 그 뒤엔 항상 refreshAllData()가 캐시를 비우므로 안전합니다.
+let qCache = new Map();
+function memo(key, fn) {
+  if (!qCache.has(key)) { const pr = fn(); qCache.set(key, pr); pr.catch(() => qCache.delete(key)); }
+  return qCache.get(key);
+}
+const allCatSales  = () => memo('cat',  () => fetchAllRows(() => sb.from('m4_category_sales').select('year_month,category,quantity,amount,profit')));
+const allWasteLite = () => memo('waste', () => fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date,amount,type')));
+
 // 월별 매출·이익 집계 (홈 요약 + 매출 탭 추이 차트 공용)
 async function fetchMonthlyTrendData() {
-  const data = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month,amount,profit'));
+  const data = await allCatSales();
   const map = {};
   for (const r of (data||[])) {
     if (!map[r.year_month]) map[r.year_month] = {amount:0, profit:0};
@@ -1664,8 +1682,7 @@ function renderWasteListHTML(listId, ranked, limit, showQty) {
 // (7월 실측: 폐기 단가 ÷ 판매 단가 = 1 − 이익율, 41개 품목 중앙값 0.719로 일치).
 // 점내용도(종량제봉투 등 매장 사용분)는 빼고, 매출·폐기 파일이 둘 다 있는 달만 계산합니다.
 async function fetchWasteRates() {
-  const sales = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month,amount,profit'));
-  const waste = await fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date,amount,type'));
+  const [sales, waste] = await Promise.all([allCatSales(), allWasteLite()]);
   const cogs = {}, wasteCost = {}, wasteMonths = new Set();
   for (const r of sales) cogs[r.year_month] = (cogs[r.year_month] || 0) + (Number(r.amount) || 0) - (Number(r.profit) || 0);
   for (const w of waste) {
@@ -1757,7 +1774,7 @@ function salesPeriodLabel() {
 
 async function loadSalesData() {
   const sel = document.getElementById('month-sel');
-  const all = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month,category,quantity,amount,profit'));
+  const all = await allCatSales();
   const months = [...new Set(all.map(r => r.year_month))].sort().reverse();
 
   // 선택값: 사용자가 고른 값이 아직 있으면 유지, 아니면(처음 열었거나 그 달이 삭제됨) 최신 월
@@ -1986,16 +2003,16 @@ let itemView = { month:'', prevYm:null, hasPrev:false, hasWaste:false, rows:[] }
 
 // 매출 파일이 올라온 월 목록 (대분류 테이블이 가벼워서 여기서 뽑음 — 품목과 같은 파일에서 함께 저장됨)
 async function fetchSalesMonths() {
-  const rows = await fetchAllRows(() => sb.from('m4_category_sales').select('year_month'));
+  const rows = await allCatSales();
   return [...new Set(rows.map(r => r.year_month))].sort().reverse();
 }
 
 // 한 달치 품목 판매 + 전월 판매 + 폐기를 상품 코드로 합친 결과 (품목 탭·홈 공용)
-async function fetchItemMonthData(month, months) {
+async function fetchItemMonthData(month, months, opts = {}) {
   const cur = await fetchAllRows(() => sb.from('m4_item_sales')
     .select('plu_code,item_name,cat1,cat2,cat3,quantity,amount,profit,profit_rate').eq('year_month', month));
   const prevYm = prevMonthOf(month);
-  const hasPrev = months.includes(prevYm);
+  const hasPrev = !opts.skipPrev && months.includes(prevYm);
   const prev = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('plu_code,quantity').eq('year_month', prevYm)) : [];
   const [ws, we] = monthRange(month);
   const wasteAll = await fetchAllRows(() => sb.from('m4_waste_items')
@@ -2184,7 +2201,7 @@ function renderItemTable() {
 // (예전엔 업로드·삭제 후 목록을 다시 만들면서 선택이 '전체 기간'으로 조용히 풀렸음)
 let wasteMonthUserChosen = false;
 async function loadWasteMonthOptions() {
-  const data = await fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date'));
+  const data = await allWasteLite();
   const months = [...new Set(data.filter(d=>d.confirmed_date).map(d=>String(d.confirmed_date).substring(0,7)))].sort().reverse();
   const sel = document.getElementById('waste-month-sel');
   let month = sel.value;
@@ -2277,51 +2294,66 @@ async function goItemsMonth() {
 
 // ── 홈 요약 (매출/폐기/품목 헬퍼를 그대로 재사용, top개수와 렌더만 다름) ──
 async function loadHomeSummary() {
-  // 1) 최근 월 매출 · 이익율 — "이번 달"이 아니라 업로드된 가장 최근 월입니다.
-  //    (예: 9월 26일에 봐도 8월 파일까지만 올렸으면 8월 값) 그래서 기준월을 같이 표시
-  const { months: salesMonths, map: salesMap } = await fetchMonthlyTrendData();
-  if (salesMonths.length) {
-    const latestYm = salesMonths[salesMonths.length-1];
-    const latest = salesMap[latestYm];
-    const prevYm = prevMonthOf(latestYm);
-    const prev = salesMap[prevYm];
-    document.getElementById('h-amount').textContent = fmt(latest.amount)+'원';
-    if (prev && prev.amount > 0) {
-      const pct = (latest.amount - prev.amount) / prev.amount * 100;
-      setKpiNote('h-amount-c', `${latestYm} 기준 · ${prevYm} 대비 ${pct>=0?'▲ +':'▼ '}${pct.toFixed(1)}%`, pct >= 0 ? 'up' : 'down');
+  // 세 덩어리(매출 / 최근 7일 폐기 / 폐기율·판매 대비 폐기)를 동시에 불러와 각자 준비되는 대로 그립니다
+  const salesPart = (async () => {
+    // 최근 월 매출 · 이익율 — "이번 달"이 아니라 업로드된 가장 최근 월입니다 (기준월 표시)
+    const { months: salesMonths, map: salesMap } = await fetchMonthlyTrendData();
+    if (salesMonths.length) {
+      const latestYm = salesMonths[salesMonths.length-1];
+      const latest = salesMap[latestYm];
+      const prevYm = prevMonthOf(latestYm);
+      const prev = salesMap[prevYm];
+      byId('h-amount').textContent = fmt(latest.amount)+'원';
+      if (prev && prev.amount > 0) {
+        const pct = (latest.amount - prev.amount) / prev.amount * 100;
+        setKpiNote('h-amount-c', `${latestYm} 기준 · ${prevYm} 대비 ${pct>=0?'▲ +':'▼ '}${pct.toFixed(1)}%`, pct >= 0 ? 'up' : 'down');
+      } else {
+        setKpiNote('h-amount-c', `${latestYm} 기준 (업로드된 최신 월)`);
+      }
+      byId('h-rate').textContent = (latest.amount>0 ? (latest.profit/latest.amount*100).toFixed(1) : '0.0')+'%';
+      setKpiNote('h-rate-c', `${latestYm} 기준 · 예상이익 ÷ 매출`);
     } else {
-      setKpiNote('h-amount-c', `${latestYm} 기준 (업로드된 최신 월)`);
+      byId('h-amount').textContent = '—';
+      byId('h-rate').textContent = '—';
+      setKpiNote('h-amount-c', '매출 파일을 올리면 표시됩니다');
+      setKpiNote('h-rate-c', '');
     }
-    document.getElementById('h-rate').textContent = (latest.amount>0 ? (latest.profit/latest.amount*100).toFixed(1) : '0.0')+'%';
-    setKpiNote('h-rate-c', `${latestYm} 기준 · 예상이익 ÷ 매출`);
-  } else {
-    document.getElementById('h-amount').textContent = '—';
-    document.getElementById('h-rate').textContent = '—';
-    setKpiNote('h-amount-c', '매출 파일을 올리면 표시됩니다');
-    setKpiNote('h-rate-c', '');
-  }
+    // 월별 추이 미니 차트 (2개월 미만이면 숨김)
+    const trendCard = byId('home-trend-card');
+    if (salesMonths.length >= 2) {
+      trendCard.style.display = 'block';
+      homeTrendChart = renderTrendChart('home-trend-chart', salesMonths, salesMap, homeTrendChart);
+    } else {
+      trendCard.style.display = 'none';
+    }
+    return salesMonths;
+  })();
 
-  // 2) 최근 7일 폐기금액 + 상위 3 (기준: 업로드된 폐기 데이터의 마지막 날짜)
-  const waste = await fetchRecentWasteData();
-  if (waste) {
-    document.getElementById('h-waste').textContent = fmt(waste.total)+'원';
-    setKpiNote('h-waste-c', `${waste.start.substring(5).replace('-','/')} ~ ${waste.end.substring(5).replace('-','/')} · 원가 기준`);
-    renderWasteListHTML('home-waste-list', waste.ranked, 3, false);
-  } else {
-    document.getElementById('h-waste').textContent = '—';
-    setKpiNote('h-waste-c', '폐기 파일(분류별내역)을 올리면 표시됩니다');
-    document.getElementById('home-waste-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
-  }
+  const wastePart = (async () => {
+    // 최근 7일 폐기금액 + 상위 3 (기준: 업로드된 폐기 데이터의 마지막 날짜)
+    const waste = await fetchRecentWasteData();
+    if (waste) {
+      byId('h-waste').textContent = fmt(waste.total)+'원';
+      setKpiNote('h-waste-c', `${waste.start.substring(5).replace('-','/')} ~ ${waste.end.substring(5).replace('-','/')} · 원가 기준`);
+      renderWasteListHTML('home-waste-list', waste.ranked, 3, false);
+    } else {
+      byId('h-waste').textContent = '—';
+      setKpiNote('h-waste-c', '폐기 파일(분류별내역)을 올리면 표시됩니다');
+      byId('home-waste-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
+    }
+  })();
 
-  // 3) 폐기율 + 판매 대비 폐기 상위 3 — 매출·폐기 파일이 둘 다 있는 가장 최근 월 기준
-  const { months: rateMonths, rates } = await fetchWasteRates();
-  if (!rateMonths.length) {
-    byId('h-wrate').textContent = '—';
-    setKpiNote('h-wrate-c', '같은 달 매출·폐기 파일이 모두 있어야 계산됩니다');
-    byId('home-wvs-sub').textContent = '클릭하면 품목 분석으로 이동';
-    renderWasteVsSalesList('home-wvs-list', [], false, salesMonths.length > 0);
-    homeWvsMonth = '';
-  } else {
+  const ratePart = (async () => {
+    // 폐기율 + 판매 대비 폐기 상위 3 — 매출·폐기 파일이 둘 다 있는 가장 최근 월 기준
+    const [{ months: rateMonths, rates }, salesMonthsDesc] = await Promise.all([fetchWasteRates(), fetchSalesMonths()]);
+    if (!rateMonths.length) {
+      byId('h-wrate').textContent = '—';
+      setKpiNote('h-wrate-c', '같은 달 매출·폐기 파일이 모두 있어야 계산됩니다');
+      byId('home-wvs-sub').textContent = '클릭하면 품목 분석으로 이동';
+      renderWasteVsSalesList('home-wvs-list', [], false, salesMonthsDesc.length > 0);
+      homeWvsMonth = '';
+      return;
+    }
     const ym = rateMonths[rateMonths.length - 1];
     const cur = rates[ym];
     const prevYm = prevMonthOf(ym);
@@ -2338,18 +2370,11 @@ async function loadHomeSummary() {
     }
     homeWvsMonth = ym;
     byId('home-wvs-sub').textContent = `${ym} · 클릭하면 품목 분석으로 이동`;
-    const data = await fetchItemMonthData(ym, [...salesMonths].reverse());
+    const data = await fetchItemMonthData(ym, salesMonthsDesc, { skipPrev: true }); // 홈에선 전월 비교가 필요 없어 한 번 덜 불러옴
     renderWasteVsSalesList('home-wvs-list', wasteVsSalesTop(data.rows, 3), data.hasWaste);
-  }
+  })();
 
-  // 4) 월별 추이 미니 차트 (매출 탭과 동일 데이터, 2개월 미만이면 숨김)
-  const trendCard = document.getElementById('home-trend-card');
-  if (salesMonths.length >= 2) {
-    trendCard.style.display = 'block';
-    homeTrendChart = renderTrendChart('home-trend-chart', salesMonths, salesMap, homeTrendChart);
-  } else {
-    trendCard.style.display = 'none';
-  }
+  await Promise.all([salesPart, wastePart, ratePart]);
 }
 
 function renderWasteCatChart(items) {
