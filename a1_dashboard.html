@@ -220,7 +220,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>분류별이익현황</b> · 매월 초 지난달 한 달치</span>
-    <span class="src-note">— e-store에서 <b>총매출 · 원 · 비교기간 해제</b>로 조회하고 <b>상품까지 펼쳐서</b> 저장한 뒤, 이름을 <b>2026년 8월 분류별이익현황</b>처럼 바꿔 올리세요. 품목 분석도 이 파일로 채워집니다.</span>
+    <span class="src-note">— e-store에서 <b>총매출 · 원</b>으로 조회하고 <b>상품까지 펼쳐서</b> 저장한 뒤, 이름을 <b>2026년 8월 분류별이익현황</b>처럼 바꿔 올리세요. 비교점 열이 같이 나와도 그대로 올리면 됩니다. 품목 분석도 이 파일로 채워집니다.</span>
   </div>
   <div class="filter-row">
     <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
@@ -428,7 +428,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <li>상단의 <b>[운영]</b> 탭을 누릅니다.</li>
         <li><b>[분류별이익현황]</b>으로 들어갑니다.</li>
         <li>조회 기간을 올릴 달 한 달로 맞춥니다.</li>
-        <li>조건을 이렇게 맞춥니다: 기준 <b>합계</b> · 단위구분 <b>원</b> · 카테고리 <b>단일</b> · 매출구분 <b>총매출</b> · 비교기간 <b>체크 해제</b> → <b>[조회]</b></li>
+        <li>조건을 이렇게 맞춥니다: 기준 <b>합계</b> · 단위구분 <b>원</b> · 카테고리 <b>단일</b> · 매출구분 <b>총매출</b> · 비교기간 <b>체크 해제</b> → <b>[조회]</b><br><span class="src-note">비교기간을 해제해도 '비교점(점포별 평균)' 열이 붙어 나올 수 있습니다. 대시보드는 우리 매장 열(대상기간)만 읽으므로 그대로 올리면 됩니다.</span></li>
         <li>조회가 끝나면 하단의 <b>[카테고리/상품 펼치기]</b>를 누르고 <b>전체 체크</b> 후 <b>[저장]</b>합니다.</li>
         <li>저장한 파일 이름을 <code>2026년 8월 분류별이익현황</code>처럼 바꿉니다.</li>
       </ol>
@@ -540,7 +540,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <h5>"상품 줄이 없는 파일입니다"가 뜹니다</h5>
       <p>분류별이익현황을 받을 때 <b>[카테고리/상품 펼치기] → 전체 체크</b>를 하지 않고 저장한 경우입니다. 펼친 뒤 다시 저장해 주세요.</p>
       <h5>"올릴 수 없음"(⛔)으로 나옵니다</h5>
-      <p>시계열 파일, 폐기 "전체전표" 파일, "비교점"·"요일비교" 같은 다른 종류의 리포트는 받지 않습니다. 알림에 나오는 이유를 확인하고 위의 e-store 방법대로 다시 받아주세요.</p>
+      <p>시계열 파일, 폐기 "전체전표" 파일, "대분류별 매출액"·"요일비교" 같은 다른 종류의 리포트는 받지 않습니다. 알림에 나오는 이유를 확인하고 위의 e-store 방법대로 다시 받아주세요. (분류별이익현황에 비교점 열이 붙어 나오는 것은 괜찮습니다)</p>
+      <h5>'대분류별 매출액' 파일은 왜 안 되나요?</h5>
+      <p>수량과 상품 코드가 없고 금액이 천원 단위로 반올림돼 있어, 품목 분석과 판매 대비 폐기를 만들 수 없습니다. 매출은 분류별이익현황 하나로 받습니다.</p>
       <h5>월별 추이 그래프가 안 보입니다</h5>
       <p>데이터가 2개월 이상 있어야 표시됩니다.</p>
       <h5>폐기율이나 '판매 대비 폐기'가 비어 있습니다</h5>
@@ -626,7 +628,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2';
+const APP_VERSION = '2026.09.27-v2.1';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -878,7 +880,7 @@ function extractYearMonthFromFilename(name) {
 }
 
 // 파일을 고르는 즉시 시트 이름만 읽어(빠름) 종류를 판정합니다.
-//  - 올릴 수 없는 파일(시계열·전체전표·비교점 등)은 이 자리에서 ⛔ 표시 + 알림, 동기화 대상에서 제외
+//  - 올릴 수 없는 파일(시계열·전체전표·대분류별 매출액 등)은 이 자리에서 ⛔ 표시 + 알림, 동기화 대상에서 제외
 //  - '업로드 연월'은 파일명에 연월이 없는 **매출** 파일이 있을 때만 요구
 //    (폐기 파일은 날짜가 행마다 들어 있어 필요 없음)
 let handleFilesSeq = 0;
@@ -962,8 +964,12 @@ function clearFileChips() {
 // 뽑을 수 있는데, 시트 이름에 원래 이름을 포함하고 있어 detectType()의
 // 느슨한 매칭(.includes)은 이런 변종도 정상 파일로 오인합니다. 컬럼 구조/의미가
 // 달라 조용히 잘못된 데이터가 저장될 수 있어, 정확히 이 이름일 때만 통과시킵니다.
+// '분류별이익현황-비교점'도 받습니다. e-store에서 비교점(다른 점포 평균) 열이 끄지 못하고
+// 붙어 나오는데, 대시보드는 '대상기간'(우리 매장) 열만 읽고 비교 열은 쓰지 않습니다
+// (전월 대비는 대시보드가 직접 계산). 8월 실측: 비교점 양식과 비교기간 양식의
+// 대상기간 값이 1,307개 품목 전부 동일했습니다.
 const EXPECTED_SHEET_NAMES = {
-  category_sales: ['분류별이익현황'],
+  category_sales: ['분류별이익현황', '분류별이익현황-비교점'],
   waste_detail: ['분류별내역'],
 };
 const TYPE_LABEL = { category_sales: '매출·품목', waste_detail: '폐기' };
@@ -984,11 +990,15 @@ function detectType(wb) {
 //  - 시계열: 품목 분석이 분류별이익현황의 상품 줄로 바뀌어 더 이상 필요 없음
 //  - 폐기 "전체전표"(전표목록·상품목록): 품목별 소분류·날짜가 없고, 다시 올리면
 //    중복으로 쌓이며, 같은 기간 분류별내역과 함께 올리면 폐기금액이 두 배가 됨
-//  - 비교점·요일비교 같은 변종: 열 구성과 의미가 달라 숫자가 왜곡됨
+//  - 요일비교 같은 다른 리포트: 열 구성과 의미가 달라 숫자가 왜곡됨
+//    (분류별이익현황-비교점은 허용 — 위 EXPECTED_SHEET_NAMES 설명 참고)
 function checkUploadable(sheetNames) {
   const type = detectType({ SheetNames: sheetNames });
   if (!type) {
-    return { ok:false, type:null, reason:'지원하지 않는 파일입니다. 분류별이익현황(매출·품목)과 분류별내역(폐기) 두 가지만 올릴 수 있습니다.' };
+    const isCatSales = sheetNames.some(n => String(n).includes('대분류별매출액'));
+    return { ok:false, type:null, reason: isCatSales
+      ? '"대분류별 매출액" 파일입니다. 수량·상품 코드가 없고 금액이 천원 단위로 반올림돼 있어 쓸 수 없습니다. e-store에서 "분류별이익현황"으로 받아 올려주세요.'
+      : '지원하지 않는 파일입니다. 분류별이익현황(매출·품목)과 분류별내역(폐기) 두 가지만 올릴 수 있습니다.' };
   }
   if (type === 'item_daily') {
     return { ok:false, type, reason:'시계열 파일은 이제 올리지 않아도 됩니다. 품목 분석은 분류별이익현황을 올리면 자동으로 채워집니다.' };
@@ -1136,6 +1146,8 @@ function parseCategorySales(wb, yearMonth) {
   const byPlu = new Map();
   for (const it of items) {
     const r = it.row;
+    // 수량·금액·이익이 전부 비어 있는 상품 줄은 건너뜀 (8월 파일에 5개 — 판매 없음)
+    if (!Number(r[C.qty]) && !Number(r[C.amt]) && !Number(r[C.profit])) continue;
     const plu = C.plu >= 0 && r[C.plu] != null && String(r[C.plu]).trim() !== '' ? String(r[C.plu]).trim() : `NAME:${it.name}`;
     const cur = byPlu.get(plu);
     const amount = won(r[C.amt]), profit = won(r[C.profit]), qty = Math.round(Number(r[C.qty]) || 0);
