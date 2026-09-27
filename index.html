@@ -476,7 +476,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <li><b>[엑셀 저장]</b>을 누릅니다.</li>
         <li>저장한 파일 이름을 <code>2026년 8월 폐기점내용도내역</code>처럼 바꿉니다. (e-store 파일 이름에는 월이 붙지 않아서, 나중에 헷갈리지 않게 하기 위함)</li>
       </ol>
-      <p class="src-note">인식하는 파일 이름 형식: <code>2026년 8월</code> <code>2026-08</code> <code>2026.08</code> <code>2026_08</code> <code>202608</code></p>
+      <p class="src-note">인식하는 파일 이름 형식: <code>2026년 8월</code> <code>26년8월</code> <code>2026-08</code> <code>2026.08</code> <code>2026_08</code> <code>202608</code></p>
     </div>
   </div>
 
@@ -657,7 +657,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.2';
+const APP_VERSION = '2026.09.27-v2.3';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -933,8 +933,12 @@ function setupDrop() {
 
 function extractYearMonthFromFilename(name) {
   // '2026년 8월', '2026년08월' (e-store에서 받은 뒤 매뉴얼대로 이름을 바꾼 형식)
-  const k = name.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
-  if (k && Number(k[2]) >= 1 && Number(k[2]) <= 12) return `${k[1]}-${String(Number(k[2])).padStart(2,'0')}`;
+  // '26년1월'처럼 연도를 두 자리로 쓴 이름도 인식 (→ 2026)
+  const k = name.match(/(?<!\d)(\d{4}|\d{2})\s*년\s*(\d{1,2})\s*월/);
+  if (k && Number(k[2]) >= 1 && Number(k[2]) <= 12) {
+    const y = k[1].length === 2 ? 2000 + Number(k[1]) : Number(k[1]);
+    return `${y}-${String(Number(k[2])).padStart(2,'0')}`;
+  }
   // YYYY-MM / YYYY.MM / YYYY_MM
   const m1 = name.match(/(\d{4})[-._](0[1-9]|1[0-2])/);
   if (m1) return `${m1[1]}-${m1[2]}`;
@@ -995,6 +999,8 @@ async function handleFiles(files) {
   if (blocked.length) {
     setStatus(`⛔ ${blocked.length}개 파일은 올릴 수 없습니다 — ${blocked.map(c => `${c.file.name}: ${c.reason}`).join(' / ')}`, 'err');
     window.alert(`⛔ 올릴 수 없는 파일이 있습니다\n\n${blocked.map(c => `• ${c.file.name}\n  ${c.reason}`).join('\n\n')}${valid.length ? `\n\n나머지 ${valid.length}개 파일은 동기화할 수 있습니다.` : ''}`);
+  } else if (undatedSales.length > 1) {
+    setStatus(`⛔ 파일명에서 연월을 못 읽은 매출 파일이 ${undatedSales.length}개입니다 — '업로드 연월'은 한 달만 지정되므로 이대로 올리면 첫 파일만 저장되고 나머지는 거부됩니다. 파일명을 "2026년 8월 분류별이익현황"처럼 바꿔 주세요.`, 'err');
   } else if (undatedSales.length) {
     setStatus(`⚠️ 매출 파일 ${undatedSales.length}개는 파일명에 연월이 없습니다 — 파일명을 "2026년 8월 분류별이익현황"처럼 바꾸거나, 왼쪽 '업로드 연월'을 선택한 뒤 동기화하세요`, 'err');
   } else if (valid.length) {
@@ -1400,6 +1406,9 @@ async function syncFiles() {
   let totalRecords = 0;
   const unitWarnings = []; // 천원 단위로 감지된 파일 (원 단위로 통일하기로 했으므로 예외 신호)
   const fileErrors = []; // 파일별 실패 사유 — 마지막 완료 메시지에 절대 묻히지 않도록 별도 수집
+  // 이번 묶음에서 이미 저장한 매출 월 — 파일명에 연월이 없는 매출 파일 여러 개가 전부
+  // '업로드 연월' 한 달로 들어가 서로 덮어쓰는 사고를 막습니다 (예: 26년1월~8월이 전부 9월로 저장됨)
+  const salesMonthsInBatch = new Map();
 
   for (const file of pendingFiles) {
     try {
@@ -1436,6 +1445,14 @@ async function syncFiles() {
           );
           continue;
         }
+        if (salesMonthsInBatch.has(yearMonth)) {
+          const msg = `"${salesMonthsInBatch.get(yearMonth)}"와 같은 ${yearMonth}로 저장될 파일입니다. 파일명에서 연월을 읽지 못해 '업로드 연월'로 들어가는 경우입니다. 파일명을 "2026년 8월 분류별이익현황"처럼 바꿔 다시 올려주세요. (이 파일은 저장하지 않았습니다)`;
+          fileErrors.push(`${file.name}: ${msg}`);
+          setStatus(`${file.name}: ${msg}`,'err');
+          fl.innerHTML = fl.innerHTML.replace(new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`), `❌ ${file.name} (연월 중복)`);
+          continue;
+        }
+        salesMonthsInBatch.set(yearMonth, file.name);
         const records = parseCategorySales(wb, yearMonth);
         // 원 단위로 통일하기로 했는데 천원 단위가 감지되면 POS 내보내기
         // 설정 확인이 필요하다는 신호 — 값은 자동 보정하되 경고만 남김
