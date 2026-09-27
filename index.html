@@ -158,24 +158,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="tab" onclick="switchTab('sales')">매출·이익 현황</div>
   <div class="tab" onclick="switchTab('items')">품목 분석</div>
   <div class="tab" onclick="switchTab('waste')">폐기 현황</div>
+  <div class="tab" id="tab-btn-upload" onclick="switchTab('upload')" style="display:none;color:#4f46e5">📂 데이터 올리기</div>
   <div class="tab" id="tab-btn-admin" onclick="switchTab('admin')" style="display:none;color:#b91c1c">⚙️ 관리자</div>
   <div class="tab" onclick="switchTab('help')" style="margin-left:auto;color:#94a3b8">❓ 사용 안내</div>
 </div>
 
-<div class="upload-bar">
-  <div class="period-box" id="period-box" style="display:none">
-    <label title="업로드하는 파일이 파일명에 날짜가 없을 때만 쓰입니다. 화면 표시는 각 탭의 '전체 기간' 드롭다운으로 바꾸세요.">업로드 연월 ⓘ</label>
-    <input type="month" id="period-input" />
-  </div>
-  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-    📂 파일 드래그 또는 클릭 (여러 파일 동시 가능)
-    <input type="file" id="file-input" accept=".xlsx" multiple onchange="handleFiles(this.files)">
-  </div>
-  <div class="file-list" id="file-list"></div>
-  <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
-</div>
 
-<div class="status hide" id="status"></div>
 
 <!-- 탭 0: 홈 -->
 <div class="tab-content on main" id="tab-home">
@@ -220,7 +208,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>분류별이익현황</b> · 매월 초 지난달 한 달치</span>
-    <span class="src-note">— e-store에서 <b>총매출 · 원</b>으로 조회하고 <b>상품까지 펼쳐서</b> 저장한 뒤, 이름을 <b>2026년 8월 분류별이익현황</b>처럼 바꿔 올리세요. 비교점 열이 같이 나와도 그대로 올리면 됩니다. 품목 분석도 이 파일로 채워집니다.</span>
+    <span class="src-note">— <b>📂 데이터 올리기</b> 탭에서 올리세요. 한 번 올리면 품목 분석까지 같이 채워집니다.</span>
   </div>
   <div class="filter-row">
     <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
@@ -282,7 +270,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>따로 없음</b> — 매출 탭에 올리는 <b>분류별이익현황</b>에서 자동으로 채워집니다</span>
-    <span class="src-note">— 폐기 수량은 분류별내역(폐기) 파일과 상품 코드로 연결해 보여줍니다.</span>
+    <span class="src-note">— <b>📂 데이터 올리기</b> 탭에서 매출 파일을 올리면 함께 채워집니다. 폐기 수량은 분류별내역과 상품 코드로 연결합니다.</span>
   </div>
 
   <div class="filter-row">
@@ -341,7 +329,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>분류별내역</b> · 매월 초 지난달 한 달치</span>
-    <span class="src-note">— e-store 폐기/점내용도 내역 → <b>분류별 내역</b> → 기간 월별로 조회해 엑셀 저장 후, 이름을 <b>2026년 8월 폐기점내용도내역</b>처럼 바꿔 올리세요. ("전체 전표"는 받지 않습니다)</span>
+    <span class="src-note">— e-store 폐기/점내용도 내역 → <b>분류별 내역</b> → 기간 월별로 조회해 엑셀 저장 후, 이름을 <b>2026년 8월 폐기점내용도내역</b>처럼 바꿔 <b>📂 데이터 올리기</b> 탭에서 올리세요.</span>
   </div>
   <!-- '최근 7일'은 아래 조회 기간과 무관하게 항상 데이터 마지막 날 기준이라 필터 위에 둡니다 -->
   <div class="act-card" id="recent-waste-card">
@@ -395,6 +383,47 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="card">
       <div class="card-h"><div class="card-title">주차별 폐기 추이</div></div>
       <div class="card-b"><div class="chart-wrap"><canvas id="waste-chart"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭: 데이터 올리기 (admin·staff만 탭 버튼 노출) — 업로드는 여기 한 곳에서만 합니다 -->
+<div class="tab-content main" id="tab-upload">
+  <div class="src-bar">
+    <span class="src-tag">올리는 파일</span>
+    <span><b>분류별이익현황</b> → 매출·이익 현황 + 품목 분석 &nbsp;|&nbsp; <b>분류별내역</b> → 폐기 현황</span>
+    <span class="src-note">— 한 번 올리면 관련 탭에 모두 반영됩니다. 두 파일을 같이 올려도 됩니다. 받는 방법은 '사용 안내' 탭 참고.</span>
+  </div>
+  <div class="upload-bar" style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:0">
+  <div class="period-box" id="period-box" style="display:none">
+    <label title="업로드하는 파일이 파일명에 날짜가 없을 때만 쓰입니다. 화면 표시는 각 탭의 '조회 기간'으로 바꾸세요.">업로드 연월 ⓘ</label>
+    <input type="month" id="period-input" />
+  </div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    📂 파일 드래그 또는 클릭 (여러 파일 동시 가능)
+    <input type="file" id="file-input" accept=".xlsx" multiple onchange="handleFiles(this.files)">
+  </div>
+  <div class="file-list" id="file-list"></div>
+  <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
+</div>
+
+<div class="status hide" id="status"></div>
+    <div class="card" style="margin-top:16px">
+    <div class="card-h"><div><div class="card-title">📋 월별 데이터 현황</div><div class="card-sub">어느 달이 올라와 있고 어느 달이 비었는지 — 매출·폐기가 둘 다 있어야 폐기율·판매 대비 폐기가 계산됩니다</div></div></div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>월</th><th class="r">매출·품목 (분류별이익현황)</th><th class="r">폐기 (분류별내역)</th><th>상태</th></tr></thead>
+        <tbody id="upload-status-tbody"><tr><td colspan="4" class="empty">올라온 데이터가 없습니다.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div><div class="card-title">🕘 최근 업로드 이력</div><div class="card-sub">최근 20건 · 같은 파일 이름을 다시 올리면 마지막 시각으로 갱신됩니다</div></div></div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>시각</th><th>파일</th><th>종류</th><th class="r">저장 건수</th></tr></thead>
+        <tbody id="upload-history-tbody"><tr><td colspan="4" class="empty">이력이 없습니다.</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -455,11 +484,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>⬆️ 업로드하는 방법</span><span class="arw">▶</span></div>
     <div class="help-a">
       <ol>
-        <li>매출·품목 또는 폐기 탭 위쪽 점선 상자에 파일을 <b>끌어다 놓거나</b>, 상자를 눌러 고릅니다. 두 파일을 같이 골라도 됩니다.</li>
+        <li><b>📂 데이터 올리기</b> 탭의 점선 상자에 파일을 <b>끌어다 놓거나</b>, 상자를 눌러 고릅니다. 두 파일을 같이 골라도 됩니다. (업로드 권한이 있는 계정에만 보이는 탭입니다)</li>
         <li>파일 옆에 종류(<b>매출·품목</b> / <b>폐기</b>)가 표시됩니다. 올릴 수 없는 파일은 <b>⛔</b>와 함께 이유가 알림으로 뜨고 자동으로 빠집니다.</li>
         <li>매출 파일 이름에 연월이 없으면 왼쪽에 '업로드 연월' 칸이 나타납니다. 파일 이름을 바꾸거나 여기서 연월을 고르세요.</li>
         <li>오른쪽 <b>[동기화]</b>를 누릅니다.</li>
-        <li>매출 파일은 <code>2026-08 · 대분류 23 · 품목 1,307 · 파일 합계와 일치 ✔</code>처럼, 폐기 파일은 날짜 범위와 건수가 표시되면 끝입니다.</li>
+        <li>매출 파일은 <code>2026-08 · 대분류 23 · 품목 1,307 · 파일 합계와 일치 ✔</code>처럼, 폐기 파일은 날짜 범위와 건수가 표시되면 끝입니다. 아래 <b>월별 데이터 현황</b>에서 그 달이 '완료'가 됐는지 확인하세요.</li>
       </ol>
       <div class="help-info"><b>같은 파일을 여러 번 올려도 안전합니다.</b> 그 달(폐기는 그 날짜 범위)의 기존 데이터를 지우고 새로 넣기 때문에 두 번 쌓이지 않습니다. 잘못 올렸으면 올바른 파일로 다시 올리면 됩니다.</div>
       <p class="src-note">매출 파일은 파일 안의 합계행과 대분류·품목 합계를 원 단위까지 대조합니다. 한 원이라도 맞지 않으면 저장하지 않습니다.</p>
@@ -628,7 +657,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.1';
+const APP_VERSION = '2026.09.27-v2.2';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -675,6 +704,9 @@ async function initAuth() {
   } else {
     ub.dataset.allowed = '1';
   }
+  // 데이터 올리기 탭 — 업로드 권한(admin·staff)이 있을 때만 노출
+  const upTabBtn = document.getElementById('tab-btn-upload');
+  if (upTabBtn) upTabBtn.style.display = ['admin','staff'].includes(CURRENT_ROLE) ? '' : 'none';
   // 관리자 탭 — admin 역할만 노출 (RLS write_admin 정책이 실제 차단선, 이건 화면 표시일 뿐)
   const adminTabBtn = document.getElementById('tab-btn-admin');
   if (adminTabBtn) adminTabBtn.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
@@ -806,6 +838,41 @@ async function doLogout() {
 }
 
 // ── 초기화 ────────────────────────────────────────────────────────
+// ── 데이터 올리기 탭: 월별 현황 + 업로드 이력 ─────────────────────────
+async function loadUploadStatus() {
+  if (!byId('upload-status-tbody')) return;
+  const [cats, items, waste, hist] = await Promise.all([
+    fetchAllRows(() => sb.from('m4_category_sales').select('year_month')),
+    fetchAllRows(() => sb.from('m4_item_sales').select('year_month')).catch(() => []),
+    fetchAllRows(() => sb.from('m4_waste_items').select('confirmed_date')),
+    sb.from('m4_sync_history').select('file_name,file_type,record_count,synced_at').order('synced_at', {ascending:false}).limit(20),
+  ]);
+  const cnt = {};
+  const add = (ym, k) => { if (!ym) return; (cnt[ym] = cnt[ym] || {cat:0, item:0, waste:0})[k]++; };
+  cats.forEach(r => add(r.year_month, 'cat'));
+  items.forEach(r => add(r.year_month, 'item'));
+  waste.forEach(r => add(r.confirmed_date ? String(r.confirmed_date).substring(0,7) : null, 'waste'));
+  const months = Object.keys(cnt).sort().reverse();
+  byId('upload-status-tbody').innerHTML = months.length ? months.map(m => {
+    const c = cnt[m], hasS = c.cat > 0, hasW = c.waste > 0;
+    const state = hasS && hasW ? '<span class="bdg bdg-up">완료</span>'
+      : hasS ? '<span class="bdg bdg-fl">폐기 파일 없음</span>' : '<span class="bdg bdg-dn">매출 파일 없음</span>';
+    const noItems = hasS && !c.item ? ' <span style="color:#b91c1c;font-size:11px">(품목 없음 — 다시 올리세요)</span>' : '';
+    return `<tr><td class="cat">${m}</td>
+      <td class="r">${hasS ? `대분류 ${c.cat} · 품목 ${fmt(c.item)}${noItems}` : '—'}</td>
+      <td class="r">${hasW ? `${fmt(c.waste)}건` : '—'}</td><td>${state}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="empty">올라온 데이터가 없습니다.</td></tr>';
+
+  const TYPE_NAME = { category_sales:'매출·품목', waste_detail:'폐기', reset:'전체 초기화', item_daily:'시계열(예전)', waste:'전체전표(예전)' };
+  const rows = (hist && hist.data) || [];
+  byId('upload-history-tbody').innerHTML = rows.length ? rows.map(h => {
+    const d = new Date(h.synced_at);
+    const when = isNaN(d) ? '—' : `${d.toLocaleDateString('ko-KR')} ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`;
+    const name = h.file_type === 'reset' ? String(h.file_name).replace(/^__RESET__ /,'') : h.file_name;
+    return `<tr><td style="white-space:nowrap">${when}</td><td class="cat">${esc(name)}</td><td>${esc(TYPE_NAME[h.file_type] || h.file_type || '—')}</td><td class="r">${h.file_type==='reset' ? '—' : fmt(h.record_count)}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="empty">이력이 없습니다.</td></tr>';
+}
+
 // ── 공통: 전체 화면 데이터 새로고침 ─────────────────────────────────
 // 업로드 / 부분삭제 / 전체초기화 후 공통으로 호출합니다. 단계 하나가
 // 실패해도(예: 특정 쿼리 오류) 나머지는 계속 진행합니다 — 예전에는
@@ -818,6 +885,7 @@ async function refreshAllData() {
     ['매출 데이터', loadSalesData],
     ['품목 분석', loadItemData],
     ['폐기 월 목록', loadWasteMonthOptions],
+    ['업로드 현황', loadUploadStatus],
     ['최근 폐기', loadRecentWaste],
     ['홈 요약', loadHomeSummary],
   ];
@@ -846,11 +914,8 @@ window.onload = async () => {
 // ── 탭 전환 ──────────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('on', ['home','sales','items','waste','admin','help'][i]===tab);
+    t.classList.toggle('on', ['home','sales','items','waste','upload','admin','help'][i]===tab);
   });
-  // 홈 · 관리자 · 사용 안내 탭에서는 업로드 바 숨김 (읽기 전용/관리 화면)
-  const ub = document.querySelector('.upload-bar');
-  if (ub && ub.dataset.allowed === '1') ub.style.display = (tab==='help' || tab==='home' || tab==='admin') ? 'none' : 'flex';
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
   document.getElementById('tab-'+tab).classList.add('on');
 }
