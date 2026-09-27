@@ -239,7 +239,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
   <div class="card">
     <div class="card-h">
-      <div><div class="card-title">카테고리별 상세</div><div class="card-sub" id="sales-table-sub">대분류 기준</div></div>
+      <div><div class="card-title">카테고리별 상세</div><div class="card-sub" id="sales-table-sub">대분류 기준</div><div class="card-sub">▶ 대분류를 누르면 중분류, 중분류를 누르면 소분류가 펼쳐집니다</div></div>
       <div style="display:flex;gap:8px">
         <select class="sel" id="sort-sel" onchange="renderSalesTable()">
           <option value="amount">매출 높은순</option>
@@ -302,7 +302,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
   <div class="card">
     <div class="card-h">
-      <div><div class="card-title">품목별 판매 순위</div><div class="card-sub" id="items-sub">분류별이익현황 상품 기준</div></div>
+      <div><div class="card-title">품목별 판매 순위</div><div class="card-sub" id="items-sub">분류별이익현황 상품 기준</div><div class="card-sub">품목을 누르면 월별 판매·폐기 추이가 아래에 나옵니다</div></div>
       <span style="font-size:12px;color:#94a3b8" id="item-count"></span>
     </div>
     <div style="overflow-x:auto">
@@ -321,6 +321,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tbody id="items-tbody"><tr><td colspan="9" class="empty">매출 파일(분류별이익현황)을 올리면 표시됩니다.</td></tr></tbody>
       </table>
     </div>
+  </div>
+  <div class="card" id="item-trend-card" style="display:none">
+    <div class="card-h"><div><div class="card-title" id="item-trend-title">품목 월별 추이</div><div class="card-sub" id="item-trend-sub">막대 = 판매수량 · 폐기수량 (월별)</div></div>
+      <button class="sel" onclick="byId('item-trend-card').style.display='none'" style="cursor:pointer">닫기</button></div>
+    <div class="card-b"><div class="chart-wrap"><canvas id="item-trend-chart"></canvas></div></div>
   </div>
 </div>
 
@@ -358,6 +363,10 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="kpi"><div class="kpi-t">폐기 건수</div><div class="kpi-v" id="w-count">—</div><div class="kpi-c muted" id="w-count-c"></div></div>
     <div class="kpi"><div class="kpi-t">점내용도 금액</div><div class="kpi-v" id="w-internal">—</div><div class="kpi-c muted" id="w-internal-c"></div></div>
     <div class="kpi"><div class="kpi-t">폐기율 (매출원가 대비)</div><div class="kpi-v" id="w-ratio">—</div><div class="kpi-c muted" id="w-ratio-c"></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px" id="waste-rate-card">
+    <div class="card-h"><div><div class="card-title">📈 월별 폐기율 추이</div><div class="card-sub" id="waste-rate-sub">점선 = 직전 3개월 평균(우리 매장 기준선). 조회 기간과 무관하게 전체 달을 보여줍니다</div></div></div>
+    <div class="card-b"><div class="chart-wrap"><canvas id="waste-rate-chart"></canvas></div></div>
   </div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-h"><div class="card-title">소분류별 폐기금액</div></div>
@@ -521,12 +530,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td>전월 대비 매출</td><td>선택한 월과 <b>바로 전 달</b>의 총매출 차이. 대시보드에 저장된 전 달 데이터로 직접 계산합니다. 전 달 파일이 없거나 '전체 기간 (합산)'을 보고 있으면 표시되지 않습니다.</td></tr>
       </table>
       <p class="src-note">월별 추이 그래프는 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
+      <p class="src-note"><b>펼쳐보기</b>: 카테고리별 상세 표에서 대분류(▶)를 누르면 중분류가, 중분류를 누르면 소분류가 펼쳐집니다. 어느 하위 분류 때문에 매출이 늘거나 줄었는지 바로 볼 수 있습니다.</p>
       <h5>품목 분석</h5>
       <table>
         <tr><th style="width:30%">항목</th><th>의미</th></tr>
         <tr><td>판매수량 · 매출 · 예상이익 · 이익율</td><td>분류별이익현황의 상품 줄 그대로입니다. 대분류·중분류·품목명으로 좁혀 볼 수 있습니다.</td></tr>
         <tr><td>전월 대비 수량</td><td>바로 전 달보다 몇 개 더(덜) 팔렸는지. 전 달에 없던 품목은 <b>신규</b>로 표시됩니다.</td></tr>
         <tr><td>폐기 (수량 · 원가)</td><td>같은 달 분류별내역의 폐기 기록을 <b>상품 코드</b>로 연결한 값. 점내용도는 제외합니다.</td></tr>
+        <tr><td>품목 월별 추이</td><td>표에서 품목을 누르면 올라와 있는 모든 달의 판매수량·폐기수량이 막대그래프로 나옵니다. 한 달만 보고 판단하지 않도록 계절·추세를 확인하는 용도입니다.</td></tr>
       </table>
       <h5>폐기 현황</h5>
       <table>
@@ -535,6 +546,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td>폐기 건수</td><td>폐기로 처리된 건수 (점내용도 제외)</td></tr>
         <tr><td>점내용도 금액</td><td>매장 자체 사용분 (종량제봉투 등)</td></tr>
         <tr><td>폐기율 (매출원가 대비)</td><td>그 달 폐기 원가 ÷ 그 달 매출원가(매출 − 예상이익). 폐기 금액이 원가라서 분모도 원가로 맞췄습니다. 같은 달 매출 파일이 있어야 계산됩니다.</td></tr>
+        <tr><td>월별 폐기율 추이 · 기준선</td><td>월별 폐기율 그래프와 <b>직전 3개월 평균</b>(점선)을 함께 보여줍니다. 카드와 홈에는 "직전 3개월 평균 대비 ▲/▼ %p"로 표시됩니다. 업계 기준치 대신 <b>우리 매장 추세</b>를 기준선으로 씁니다.</td></tr>
       </table>
     </div>
   </div>
@@ -589,7 +601,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <p>없는 데이터를 추정으로 채우지 않는 것이 원칙입니다. 현재 한계를 밝힙니다.</p>
       <ul>
         <li><b>품절(결품)은 알 수 없습니다</b> — 재고와 날짜별 판매 데이터가 없어서, 어느 날 품절됐는지는 판단하지 않습니다.</li>
-        <li><b>폐기율 '정상 범위' 기준은 외부 기준이 아니라 우리 매장 추세입니다</b> — 검증된 업계 기준치를 확보하지 못해, 전월·최근 몇 달과 비교해서 판단합니다.</li>
+        <li><b>폐기율 '정상 범위' 기준은 외부 기준이 아니라 우리 매장 추세입니다</b> — 검증된 업계 기준치를 확보하지 못해, 직전 3개월 평균과 비교합니다. 평균보다 높다고 곧 비정상이라는 뜻은 아니며, 원인은 품목 분석에서 확인하십시오.</li>
         <li><b>주 단위 매출은 볼 수 없습니다</b> — 매출이 월 단위로 들어옵니다.</li>
         <li><b>자동으로 갱신되지 않습니다</b> — e-store와 직접 연결되어 있지 않아 파일을 올려야 최신화됩니다.</li>
         <li><b>PC 기준으로 만들었습니다</b> — 모바일 화면 최적화는 되어 있지 않습니다.</li>
@@ -598,7 +610,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
 
   <p class="src-note" style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0">
-    A1 편의점 수익관리 대시보드 · 문서 버전 2.0 (2026-09) · 문의: 관리자
+    A1 편의점 수익관리 대시보드 · 문서 버전 2.5 (2026-09) · 문의: 관리자
   </p>
 </div>
 </div>
@@ -657,7 +669,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.4';
+const APP_VERSION = '2026.09.27-v2.5';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -667,6 +679,7 @@ const APP_VERSION = '2026.09.27-v2.4';
 // ── 상태 ─────────────────────────────────────────────────────────
 let pendingFiles = [];
 let salesData = [];
+let wasteRateChart = null, itemTrendChart = null;
 let catChart = null, profitChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null, homeTrendChart = null;
 let CURRENT_ROLE = null;
 
@@ -1667,6 +1680,41 @@ async function fetchWasteRates() {
   return { months, rates };
 }
 function fmtRate(r) { return r.toFixed(2) + '%'; }
+// 우리 매장 기준선: 그 달 직전(데이터 있는 달 기준) 최대 3개월 폐기율 평균.
+// 검증된 업계 기준치가 없어서 외부 숫자 대신 우리 매장 추세와 비교합니다.
+function wasteBaseline(months, rates, ym) {
+  const i = months.indexOf(ym);
+  if (i <= 0) return null;
+  const prior = months.slice(Math.max(0, i - 3), i);
+  return { avg: prior.reduce((s, m) => s + rates[m].rate, 0) / prior.length, n: prior.length, from: prior[0], to: prior[prior.length - 1] };
+}
+function baselineNote(months, rates, ym) {
+  const b = wasteBaseline(months, rates, ym);
+  if (!b) return '';
+  const d = rates[ym].rate - b.avg;
+  return ` · 직전 ${b.n}개월 평균 ${fmtRate(b.avg)} 대비 ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)}%p`;
+}
+function renderWasteRateChart(months, rates, selected) {
+  const card = byId('waste-rate-card');
+  if (!months.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const base = months.map(m => { const b = wasteBaseline(months, rates, m); return b ? Math.round(b.avg * 100) / 100 : null; });
+  const ctx = byId('waste-rate-chart').getContext('2d');
+  if (wasteRateChart) wasteRateChart.destroy();
+  wasteRateChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: months, datasets: [
+      { label: '폐기율', data: months.map(m => Math.round(rates[m].rate * 100) / 100), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', fill: true, tension: .3,
+        pointRadius: months.map(m => m === selected ? 7 : 4), pointBackgroundColor: months.map(m => m === selected ? '#b91c1c' : '#ef4444') },
+      { label: '직전 3개월 평균', data: base, borderColor: '#94a3b8', borderDash: [6, 4], pointRadius: 0, fill: false, tension: .3, spanGaps: true },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y == null ? '—' : c.parsed.y.toFixed(2) + '%'}` } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v + '%' } } } }
+  });
+}
 
 // ── 월별 추이 (매출 탭) ───────────────────────────────────────────
 async function loadMonthlyTrend() {
@@ -1787,6 +1835,65 @@ function renderKPI() {
   }
 }
 
+// ── 매출 탭 펼쳐보기 (대분류 → 중분류 → 소분류) ──────────────────────
+// 품목 테이블(m4_item_sales)에 대/중/소분류가 함께 저장돼 있어 DB 변경 없이 집계합니다.
+// 처음 펼칠 때 한 번만 불러오고, 조회 월이 바뀌면 다시 불러옵니다.
+let salesDrill = { key:null, cur:[], prev:null, open:new Set() };
+async function ensureSalesDrillData() {
+  const key = (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '');
+  if (salesDrill.key === key) return;
+  const sel = 'cat1,cat2,cat3,quantity,amount,profit';
+  const cur = await fetchAllRows(() => { let q = sb.from('m4_item_sales').select(sel); if (salesView.month) q = q.eq('year_month', salesView.month); return q; });
+  const prev = salesView.hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select(sel).eq('year_month', salesView.prevYm)) : null;
+  salesDrill = { key, cur, prev, open: salesDrill.key === key ? salesDrill.open : new Set() };
+}
+async function toggleSalesDrill(pathJson) {
+  const btn = document.activeElement; // 로딩 중 표시용 아님 — 단순 토글
+  await ensureSalesDrillData();
+  if (salesDrill.open.has(pathJson)) {
+    // 닫을 때 하위 단계도 같이 닫음
+    for (const k of [...salesDrill.open]) if (k === pathJson || k.startsWith(pathJson.slice(0, -1) + ',')) salesDrill.open.delete(k);
+  } else salesDrill.open.add(pathJson);
+  renderSalesTable();
+}
+function drillAgg(rows, level, parent) {
+  const map = {};
+  for (const r of rows || []) {
+    if (r.cat1 !== parent[0] || (level === 3 && r.cat2 !== parent[1])) continue;
+    const k = level === 2 ? r.cat2 : r.cat3;
+    if (!k) continue;
+    const a = map[k] || (map[k] = { name:k, amount:0, profit:0 });
+    a.amount += Number(r.amount) || 0; a.profit += Number(r.profit) || 0;
+  }
+  return map;
+}
+function drillRowsHTML(level, parent) {
+  const cur = drillAgg(salesDrill.cur, level, parent);
+  const prev = salesDrill.prev ? drillAgg(salesDrill.prev, level, parent) : null;
+  return Object.values(cur).sort((a,b) => b.amount - a.amount).map(c => {
+    const comp = prev ? (prev[c.name] ? prev[c.name].amount : 0) : null;
+    const diff = comp == null ? null : c.amount - comp;
+    const pct = diff != null && comp > 0 ? (diff / comp * 100).toFixed(1) : null;
+    const bdg = diff == null ? 'bdg-fl' : diff > 0 ? 'bdg-up' : diff < 0 ? 'bdg-dn' : 'bdg-fl';
+    const sign = diff != null && diff >= 0 ? '+' : '';
+    const rate = c.amount ? (Math.round(c.profit / c.amount * 1000) / 10) : 0;
+    const path = level === 2 ? [parent[0], c.name] : null;
+    const pj = path ? esc(JSON.stringify(path)) : '';
+    const opened = path && salesDrill.open.has(JSON.stringify(path));
+    const indent = level === 2 ? 22 : 44;
+    const head = level === 2
+      ? `<td class="cat" style="padding-left:${indent}px;cursor:pointer" data-path="${pj}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#94a3b8">${opened ? '▼' : '▶'}</span> ${esc(c.name)}</td>`
+      : `<td style="padding-left:${indent}px;color:#475569">· ${esc(c.name)}</td>`;
+    let html = `<tr style="background:${level === 2 ? '#f8fafc' : '#fcfcfd'};font-size:12.5px">${head}
+      <td class="r">${fmt(c.amount)}</td><td class="r">${fmt(c.profit)}</td><td class="r">${rate}%</td>
+      <td class="r">${comp == null ? '—' : fmt(comp)}</td>
+      <td class="r">${diff == null ? '—' : `<span class="bdg ${bdg}">${sign}${fmt(diff)}</span>`}</td>
+      <td class="r">${pct != null ? `<span class="bdg ${bdg}">${sign}${pct}%</span>` : '—'}</td></tr>`;
+    if (opened) html += drillRowsHTML(3, path);
+    return html;
+  }).join('');
+}
+
 function renderSalesTable() {
   const sort = document.getElementById('sort-sel').value;
   // 전월 데이터가 없으면 증감이 비어 있으므로 맨 아래로
@@ -1809,15 +1916,17 @@ function renderSalesTable() {
     const pct = hasDiff && r.comp_amount > 0 ? ((r.diff_amount/r.comp_amount)*100).toFixed(1) : null;
     const bdg = !hasDiff ? 'bdg-fl' : r.diff_amount>0 ? 'bdg-up' : r.diff_amount<0 ? 'bdg-dn' : 'bdg-fl';
     const sign = hasDiff && r.diff_amount>=0 ? '+' : '';
+    const pj = JSON.stringify([r.category]);
+    const opened = salesDrill.open.has(pj) && salesDrill.key === (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '');
     return `<tr>
-      <td class="cat">${esc(r.category)}</td>
+      <td class="cat" style="cursor:pointer" data-path="${esc(pj)}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#94a3b8">${opened ? '▼' : '▶'}</span> ${esc(r.category)}</td>
       <td class="r">${fmt(r.amount)}</td>
       <td class="r">${fmt(r.profit)}</td>
       <td class="r">${r.profit_rate}%</td>
       <td class="r">${r.comp_amount == null ? '—' : fmt(r.comp_amount)}</td>
       <td class="r">${hasDiff ? `<span class="bdg ${bdg}">${sign}${fmt(r.diff_amount)}</span>` : '—'}</td>
       <td class="r">${pct!=null?`<span class="bdg ${bdg}">${sign}${pct}%</span>`:'—'}</td>
-    </tr>`;
+    </tr>` + (opened ? drillRowsHTML(2, [r.category]) : '');
   }).join('');
 }
 
@@ -1991,6 +2100,42 @@ function fillItemCat2Options() {
 }
 function onItemCat1Change() { fillItemCat2Options(); renderItemTable(); }
 
+// 품목을 누르면 올라와 있는 모든 달의 판매수량·폐기수량을 나란히 보여줍니다
+async function showItemMonthlyTrend(plu, name) {
+  const card = byId('item-trend-card');
+  card.style.display = 'block';
+  byId('item-trend-title').textContent = `${name} — 월별 판매 · 폐기`;
+  byId('item-trend-sub').textContent = '불러오는 중...';
+  const months = (await fetchSalesMonths()).slice().reverse();
+  const byCode = !String(plu).startsWith('NAME:');
+  const sales = await fetchAllRows(() => byCode
+    ? sb.from('m4_item_sales').select('year_month,quantity,amount').eq('plu_code', plu)
+    : sb.from('m4_item_sales').select('year_month,quantity,amount').eq('item_name', name));
+  const waste = await fetchAllRows(() => (byCode
+    ? sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('plu_code', plu)
+    : sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('item_name', name)).eq('type', '폐기'));
+  const wasteMonthsSet = new Set();
+  const sq = {}, wq = {};
+  for (const r of sales) sq[r.year_month] = (sq[r.year_month] || 0) + (Number(r.quantity) || 0);
+  for (const w of waste) { const ym = String(w.confirmed_date || '').substring(0,7); if (!ym) continue; wasteMonthsSet.add(ym); wq[ym] = (wq[ym] || 0) + (Number(w.quantity) || 0); }
+  const labels = [...new Set([...months, ...wasteMonthsSet])].sort();
+  const totS = labels.reduce((a,m) => a + (sq[m] || 0), 0), totW = labels.reduce((a,m) => a + (wq[m] || 0), 0);
+  byId('item-trend-sub').textContent = `${labels[0] || ''} ~ ${labels[labels.length-1] || ''} · 판매 ${fmt(totS)}개 · 폐기 ${fmt(totW)}개 · 매출 파일이 없는 달은 판매가 0으로 보일 수 있습니다`;
+  const ctx = byId('item-trend-chart').getContext('2d');
+  if (itemTrendChart) itemTrendChart.destroy();
+  itemTrendChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: '판매수량', data: labels.map(m => sq[m] || 0), backgroundColor: '#4f46e5', borderRadius: 4, barPercentage: .7 },
+      { label: '폐기수량', data: labels.map(m => wq[m] || 0), backgroundColor: '#ef4444', borderRadius: 4, barPercentage: .7 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, precision: 0 } } } }
+  });
+  card.scrollIntoView && card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function renderItemTable() {
   const c1 = byId('item-cat1-sel').value, c2 = byId('item-cat2-sel').value;
   const q = byId('item-search').value.trim().toLowerCase();
@@ -2020,7 +2165,7 @@ function renderItemTable() {
       : `<span class="bdg ${r.diffQty>0?'bdg-up':r.diffQty<0?'bdg-dn':'bdg-fl'}">${r.diffQty>0?'+':''}${fmt(r.diffQty)}</span>`;
     const waste = r.wasteQty > 0 ? `<span class="bdg bdg-dn">${fmt(r.wasteQty)}개</span> ${fmt(r.wasteAmt)}원` : (itemView.hasWaste ? '—' : '');
     const cat = [r.cat2, r.cat3].filter(Boolean).join(' › ');
-    return `<tr${r.soldZero ? ' style="background:#fef2f2"' : ''}>
+    return `<tr style="cursor:pointer;${r.soldZero ? 'background:#fef2f2' : ''}" data-plu="${esc(r.plu_code)}" data-name="${esc(r.item_name)}" onclick="showItemMonthlyTrend(this.dataset.plu, this.dataset.name)">
       <td style="color:#94a3b8;font-size:11px">${i+1}</td>
       <td class="cat">${esc(r.item_name)}${r.soldZero ? ' <span style="font-size:11px;color:#b91c1c">(판매 없음)</span>' : ''}</td>
       <td style="font-size:11px;color:#64748b">${esc(cat || '—')}</td>
@@ -2085,15 +2230,16 @@ async function loadWasteData() {
   const wasteCount = items.filter(r=>r.type==='폐기').length;
   document.getElementById('w-count').textContent = hasData ? fmt(wasteCount)+'건' : '—';
   // 폐기율 = 폐기 원가 ÷ 매출원가 (같은 달 매출 파일이 있어야 계산)
-  const { rates } = await fetchWasteRates();
+  const { months: rateMonths, rates } = await fetchWasteRates();
   const r = month ? rates[month] : null;
+  renderWasteRateChart(rateMonths, rates, month);
   document.getElementById('w-ratio').textContent = r ? fmtRate(r.rate) : '—';
   // 폐기 금액은 판매가가 아니라 원가(매입가) 기준입니다 (실제 파일 대조로 확인)
   setKpiNote('w-total-c', hasData ? `${basis} · 원가 기준` : '');
   setKpiNote('w-count-c', hasData ? basis : '');
   setKpiNote('w-internal-c', hasData ? `${basis} · 종량제봉투 등` : '');
   setKpiNote('w-ratio-c', !month ? '월을 하나 고르면 표시됩니다'
-    : r ? `폐기원가 ${fmt(r.wasteCost)}원 ÷ 매출원가 ${fmt(Math.round(r.cogs))}원`
+    : r ? `폐기원가 ${fmt(r.wasteCost)}원 ÷ 매출원가 ${fmt(Math.round(r.cogs))}원${baselineNote(rateMonths, rates, month)}`
     : `${month} 매출 파일이 없어 계산할 수 없습니다`);
 
   document.getElementById('waste-tbody').innerHTML = ranked.length ? ranked.map((r,i)=>`<tr>
@@ -2180,7 +2326,11 @@ async function loadHomeSummary() {
     const cur = rates[ym];
     const prevYm = prevMonthOf(ym);
     byId('h-wrate').textContent = fmtRate(cur.rate);
-    if (rates[prevYm]) {
+    const bl = wasteBaseline(rateMonths, rates, ym);
+    if (bl) {
+      const d = cur.rate - bl.avg;
+      setKpiNote('h-wrate-c', `${ym} · 직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)} 대비 ${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up');
+    } else if (rates[prevYm]) {
       const d = cur.rate - rates[prevYm].rate;
       setKpiNote('h-wrate-c', `${ym} · 원가 기준 · ${prevYm} ${fmtRate(rates[prevYm].rate)} → ${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up');
     } else {
