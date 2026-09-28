@@ -26,16 +26,30 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 /* 업로드 바 */
 .upload-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.period-box{display:flex;align-items:center;gap:8px;font-size:13px}
-.period-box label{color:#64748b;font-weight:500}
-.period-box input{border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:13px}
+/* v3.6 업로드: 파일별 저장 미리보기 + 저장 전 확인 */
+.upload-bar.col{flex-direction:column;align-items:stretch}
+.file-chip.up-chip{display:block;padding:8px 12px;margin:0 0 6px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b}
+.file-chip.up-chip.bad{background:#fef2f2;border-color:#fecaca}
+.up-name{font-weight:600}
+.up-meta{font-size:12.5px;color:#475569;margin-top:3px;line-height:1.8}
+.up-meta select{font-size:13px;font-weight:700;padding:1px 6px;border:1px solid #a5b4fc;border-radius:6px;background:#fff}
+.up-src{color:#64748b}
+.up-note{color:#b45309;font-weight:600}
+.up-bad{font-size:12px;color:#b91c1c;font-weight:600;margin-left:6px}
+.up-check{display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:8px;font-size:13px;line-height:1.6}
+.up-check.ok{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.up-check.info{background:#f8fafc;color:#334155;border:1px solid #e2e8f0}
+.up-check.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.up-check.danger,.up-check.block{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.up-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.up-btn2{background:#fff;color:#334155;border:1px solid #cbd5e1;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+.sync-btn.risky{background:#fff;color:#b91c1c;border:1px solid #fca5a5}
+.sync-btn.risky:not(:disabled):hover{background:#fef2f2}
 .drop-zone{border:2px dashed #c7d2fe;border-radius:8px;padding:10px 20px;text-align:center;color:#6366f1;font-size:13px;cursor:pointer;min-width:220px;transition:background .2s}
 .drop-zone:hover,.drop-zone.over{background:#eef2ff}
 .drop-zone input{display:none}
 .file-list{font-size:12px;color:#64748b;flex:1}
 .file-chip{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:4px;padding:3px 8px;margin:2px}
-.file-chip.ok{background:#dcfce7;color:#16a34a}
-.file-chip.skip{background:#fef9c3;color:#92400e}
 .sync-btn{margin-left:auto;background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:600}
 .sync-btn:disabled{background:#94a3b8;cursor:not-allowed}
 .sync-btn:not(:disabled):hover{background:#4338ca}
@@ -48,35 +62,50 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .status.hide{display:none}
 
 /* 메인 */
-.main{padding:20px 24px}
+.main{padding:16px 24px 20px;max-width:1440px;margin:0 auto}
+/* 기준 월 (홈·매출·품목·폐기 공통) */
+.gm-bar{max-width:1440px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:10px;font-size:13px;color:#1e293b;flex-wrap:wrap}
+.gm-bar.hide{display:none}
+.gm-label{font-weight:700}
+.gm-bar .sel{font-size:14px;font-weight:700;padding:6px 12px;border-color:#a5b4fc}
+.gm-chip{font-size:12px;padding:2px 9px;border-radius:10px;font-weight:600}
+.gm-chip.ok{background:#dcfce7;color:#166534}
+.gm-chip.no{background:#fee2e2;color:#b91c1c}
+.gm-hint{font-size:12px;color:#64748b}
+.flt-label{font-size:12.5px;font-weight:600;color:#475569}
+.flt-note{font-size:12px;color:#64748b}
 
 /* KPI */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
 .kpi{background:#fff;border-radius:10px;padding:16px 18px;border:1px solid #e2e8f0}
-.kpi-t{font-size:11px;color:#64748b;margin-bottom:6px}
-.kpi-v{font-size:22px;font-weight:700}
+.kpi-t{font-size:12px;color:#475569;margin-bottom:6px;font-weight:600}
+.kpi-v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi-c{font-size:12px;margin-top:4px}
 .up{color:#10b981}.down{color:#ef4444}
-.kpi-c.muted{color:#94a3b8;font-size:11.5px}
+.kpi-c.muted{color:#64748b;font-size:12px}
 
 /* 카드 */
 .card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden}
 .card-h{padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:13px;font-weight:700}
-.card-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.card-title{font-size:14px;font-weight:700}
+.card-sub{font-size:12px;color:#64748b;margin-top:2px}
 .card-b{padding:16px 18px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .chart-wrap{height:260px;position:relative}
 
 /* 테이블 */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;font-size:11px;color:#94a3b8;padding:8px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;background:#f8fafc}
+.tbl th{text-align:left;font-size:12px;color:#475569;padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;background:#f8fafc}
 .tbl th.r,.tbl td.r{text-align:right}
-.tbl td{padding:9px 10px;border-bottom:1px solid #f8fafc;font-size:12px}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f1f5f9;font-size:13px}
+.tbl td.r{font-variant-numeric:tabular-nums}
+/* 긴 표: 표 안에서 스크롤하고 머리글은 고정 */
+.tbl-scroll{max-height:560px;overflow:auto}
+.tbl-scroll .tbl th{position:sticky;top:0;z-index:1}
 .tbl tr:last-child td{border:none}
 .tbl tr:hover td{background:#f8fafc}
 .cat{font-weight:600;color:#374151}
-.bdg{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.bdg{font-size:12px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
 .bdg-up{background:#dcfce7;color:#16a34a}
 .bdg-dn{background:#fee2e2;color:#dc2626}
 .bdg-fl{background:#f1f5f9;color:#64748b}
@@ -84,14 +113,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 /* 필터 */
 .filter-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .sel{border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:13px}
-.empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+.empty{text-align:center;padding:40px;color:#64748b;font-size:13px}
 .tab-content{display:none}.tab-content.on{display:block}
 
 /* 파일 안내 배너 */
 .src-bar{display:flex;align-items:center;gap:9px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:#4c1d95}
 .src-bar b{color:#4f46e5}
-.src-tag{background:#4f46e5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
-.src-note{color:#7c6aa8;font-size:11px}
+.src-tag{background:#4f46e5;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.src-note{color:#5b21b6;font-size:12px}
 
 /* 도움말 */
 .help-wrap{max-width:900px}
@@ -115,6 +144,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .fresh{border-radius:8px;padding:9px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.6}
 .fresh.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
 .fresh.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.fresh-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fresh-pill{font-size:12px;padding:1px 9px;border-radius:10px;font-weight:600}
+.fresh-pill.ok{background:#dcfce7;color:#166534}
+.fresh-pill.no{background:#fee2e2;color:#b91c1c}
+.fresh-btn{margin-left:auto;background:#fff;border:1px solid #d97706;color:#92400e;border-radius:6px;padding:4px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
 #report-view{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1000;overflow:auto}
 #report-paper{background:#fff;max-width:900px;margin:24px auto;padding:28px 34px;border-radius:10px;font-size:12.5px;color:#1e293b}
 #report-paper h1{font-size:19px;margin:0 0 4px}
@@ -144,24 +178,21 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 /* 액션 카드 */
 .act-card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden;border-left:4px solid #ef4444}
-.act-card.blue{border-left-color:#4f46e5}
 .act-h{padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
-.act-t{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
-.act-sub{font-size:11px;color:#94a3b8;margin-top:2px;font-weight:400}
+.act-t{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
+.act-sub{font-size:12px;color:#64748b;margin-top:2px;font-weight:400}
 .act-b{padding:6px 18px 12px}
 .act-list{list-style:none}
 .act-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc;font-size:13px}
 .act-item:last-child{border:none}
-.act-rank{width:20px;height:20px;border-radius:5px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.act-card.blue .act-rank{background:#e0e7ff;color:#4f46e5}
+.act-rank{width:20px;height:20px;border-radius:5px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .act-name{flex:1;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.act-meta{font-size:11px;color:#94a3b8;flex-shrink:0}
-.act-val{font-weight:700;color:#dc2626;flex-shrink:0;font-size:13px}
-.act-card.blue .act-val{color:#4f46e5}
-.act-empty{padding:24px;text-align:center;color:#94a3b8;font-size:12px}
+.act-meta{font-size:12px;color:#64748b;flex-shrink:0;font-variant-numeric:tabular-nums}
+.act-val{font-weight:700;color:#dc2626;flex-shrink:0;font-size:13px;font-variant-numeric:tabular-nums}
+.act-empty{padding:24px;text-align:center;color:#64748b;font-size:13px}
 .seg-btn{font-size:12px;padding:5px 10px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:6px;cursor:pointer}
 .seg-btn.on{background:#4f46e5;border-color:#4f46e5;color:#fff;font-weight:600}
-.note{font-size:11px;color:#92400e;background:#fef9c3;padding:7px 12px;border-radius:6px;margin:0 18px 12px;line-height:1.5}
+.note{font-size:12px;color:#92400e;background:#fef9c3;padding:7px 12px;border-radius:6px;margin:0 18px 12px;line-height:1.5}
 
 /* 로딩 스피너 */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -176,7 +207,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <h1>편의점 수익관리 대시보드</h1>
   </div>
   <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
-    <span id="app-version" style="font-size:11px;color:#64748b" title="지금 브라우저에서 돌고 있는 대시보드 버전입니다. 배포 후에도 예전 번호가 보이면 Cmd+Shift+R로 새로고침하세요."></span>
+    <span id="app-version" style="font-size:12px;color:#64748b" title="지금 브라우저에서 돌고 있는 대시보드 버전입니다. 배포 후에도 예전 번호가 보이면 Cmd+Shift+R로 새로고침하세요."></span>
     <span id="user-name" style="font-size:12px;color:#94a3b8"></span>
     <span id="last-sync" style="font-size:12px;color:#94a3b8"></span>
     <button onclick="doLogout()" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#cbd5e1;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer">로그아웃</button>
@@ -190,7 +221,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="tab" onclick="switchTab('waste')">폐기 현황</div>
   <div class="tab" id="tab-btn-upload" onclick="switchTab('upload')" style="display:none;color:#4f46e5">📂 데이터 올리기</div>
   <div class="tab" id="tab-btn-admin" onclick="switchTab('admin')" style="display:none;color:#b91c1c">⚙️ 관리자</div>
-  <div class="tab" onclick="switchTab('help')" style="margin-left:auto;color:#94a3b8">❓ 사용 안내</div>
+  <div class="tab" onclick="switchTab('help')" style="margin-left:auto;color:#64748b">❓ 사용 안내</div>
+</div>
+<!-- 기준 월: 홈·매출·품목·폐기 탭이 모두 이 한 달을 봅니다 (탭마다 따로 고르던 방식 폐지) -->
+<div class="gm-bar" id="gm-bar">
+  <span class="gm-label">기준 월</span>
+  <select class="sel" id="gm-sel" onchange="onGlobalMonthChange(this.value)"><option value="">불러오는 중</option></select>
+  <span id="gm-status"></span>
+  <span class="gm-hint">홈 · 매출 · 품목 · 폐기 탭이 모두 이 달 기준입니다</span>
 </div>
 
 
@@ -201,44 +239,35 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="filter-row">
     <span style="font-size:12.5px;font-weight:600;color:#475569">📄 종합 보고서</span>
     <select class="sel" id="report-from-sel"><option value="">시작 월</option></select>
-    <span style="color:#94a3b8">~</span>
+    <span style="color:#64748b">~</span>
     <select class="sel" id="report-to-sel"><option value="">끝 월</option></select>
     <button class="sel" onclick="openMonthlyReport()" style="cursor:pointer;background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600">보고서 만들기</button>
-    <span style="font-size:11.5px;color:#94a3b8">— 같은 달을 고르면 월별, 다르게 고르면 기간 보고서. 인쇄 창에서 'PDF로 저장'</span>
+    <span style="font-size:12px;color:#64748b">— 같은 달을 고르면 월별, 다르게 고르면 기간 보고서. 인쇄 창에서 'PDF로 저장'</span>
   </div>
   <div class="kpi-row" id="home-kpi-row">
-    <div class="kpi"><div class="kpi-t">최근 월 매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div></div>
-    <div class="kpi"><div class="kpi-t">최근 월 이익율</div><div class="kpi-v" id="h-rate">—</div><div class="kpi-c muted" id="h-rate-c"></div></div>
-    <div class="kpi"><div class="kpi-t">최근 7일 폐기금액</div><div class="kpi-v" id="h-waste">—</div><div class="kpi-c muted" id="h-waste-c"></div></div>
-    <div class="kpi"><div class="kpi-t">최근 월 폐기율</div><div class="kpi-v" id="h-wrate">—</div><div class="kpi-c muted" id="h-wrate-c"></div></div>
+    <div class="kpi"><div class="kpi-t">매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div></div>
+    <div class="kpi"><div class="kpi-t">이익율</div><div class="kpi-v" id="h-rate">—</div><div class="kpi-c muted" id="h-rate-c"></div></div>
+    <div class="kpi"><div class="kpi-t">폐기 원가</div><div class="kpi-v" id="h-waste">—</div><div class="kpi-c muted" id="h-waste-c"></div></div>
+    <div class="kpi"><div class="kpi-t">폐기율</div><div class="kpi-v" id="h-wrate">—</div><div class="kpi-c muted" id="h-wrate-c"></div></div>
   </div>
 
   <div class="card" style="margin-bottom:16px; cursor:pointer" id="home-trend-card" onclick="switchTab('sales')">
     <div class="card-h">
-      <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">클릭하면 매출·이익 현황으로 이동</div></div>
+      <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">큰 점 = 기준 월 · 클릭하면 매출·이익 현황으로 이동</div></div>
     </div>
     <div class="card-b"><div class="chart-wrap"><canvas id="home-trend-chart"></canvas></div></div>
   </div>
 
-  <div class="row2">
-    <div class="act-card" id="home-waste-card" style="cursor:pointer; margin-bottom:0" onclick="switchTab('waste')">
-      <div class="act-h">
-        <div>
-          <div class="act-t">🗑 최근 7일 폐기 상위</div>
-          <div class="act-sub">클릭하면 폐기 현황으로 이동</div>
-        </div>
+  <!-- 예전 '최근 7일 폐기 상위'(월 1회 업로드라 늘 지난달 마지막 주)와
+       '판매 대비 폐기 품목 3개'(유통기한 짧은 FF가 매달 같은 자리) 대신 -->
+  <div class="act-card" id="home-wup-card">
+    <div class="act-h">
+      <div>
+        <div class="act-t">📈 전월보다 폐기가 늘어난 소분류</div>
+        <div class="act-sub" id="home-wup-sub">폐기 원가 기준 · 누르면 품목 분석에서 그 소분류 품목이 열립니다</div>
       </div>
-      <div class="act-b"><ul class="act-list" id="home-waste-list"><li class="act-empty">데이터 없음</li></ul></div>
     </div>
-    <div class="act-card blue" id="home-wvs-card" style="cursor:pointer; margin-bottom:0" onclick="goItemsMonth()">
-      <div class="act-h">
-        <div>
-          <div class="act-t">📉 판매 대비 폐기가 많은 품목</div>
-          <div class="act-sub" id="home-wvs-sub">클릭하면 품목 분석으로 이동</div>
-        </div>
-      </div>
-      <div class="act-b"><ul class="act-list" id="home-wvs-list"><li class="act-empty">데이터 없음</li></ul></div>
-    </div>
+    <div class="act-b"><ul class="act-list" id="home-wup-list"><li class="act-empty">데이터 없음</li></ul></div>
   </div>
 </div>
 
@@ -249,14 +278,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <span><b>분류별이익현황</b> · 매월 1~7일 지난달 한 달치 (월 1회)</span>
     <span class="src-note">— <b>📂 데이터 올리기</b> 탭에서 올리세요. 한 번 올리면 품목 분석까지 같이 채워집니다.</span>
   </div>
-  <div class="filter-row">
-    <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
-    <select class="sel" id="month-sel" onchange="salesMonthUserChosen=true; loadSalesData()"><option value="">전체 기간 (합산)</option></select>
-    <span style="font-size:11.5px;color:#94a3b8">— 아래 KPI · 그래프 · 표 전부 이 기간 기준입니다. 처음 열면 가장 최근 월이 선택됩니다.</span>
-  </div>
   <div class="card" style="margin-bottom:16px" id="trend-month-card">
     <div class="card-h">
-      <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">데이터가 쌓일수록 자동 확장</div></div>
+      <div><div class="card-title">월별 매출·이익 추이</div><div class="card-sub">올라온 전체 달 · 큰 점 = 기준 월</div></div>
     </div>
     <div class="card-b"><div class="chart-wrap"><canvas id="monthly-trend-chart"></canvas></div></div>
   </div>
@@ -313,8 +337,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
 
   <div class="filter-row">
-    <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
-    <select class="sel" id="item-month-sel" onchange="itemMonthUserChosen=true; loadItemData()"><option value="">월 선택</option></select>
+    <span class="flt-label">좁혀 보기</span>
     <select class="sel" id="item-cat1-sel" onchange="onItemCat1Change()"><option value="">대분류 전체</option></select>
     <select class="sel" id="item-cat2-sel" onchange="itemCat3Filter=''; renderItemTable()"><option value="">중분류 전체</option></select>
     <input class="sel" id="item-search" placeholder="품목명 검색" oninput="renderItemTable()" style="width:150px">
@@ -354,9 +377,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="card">
     <div class="card-h">
       <div><div class="card-title">품목별 판매 순위</div><div class="card-sub" id="items-sub">분류별이익현황 상품 기준</div><div class="card-sub">품목을 누르면 월별 판매·폐기 추이가 아래에 나옵니다</div></div>
-      <span style="font-size:12px;color:#94a3b8" id="item-count"></span>
+      <span style="font-size:12px;color:#64748b" id="item-count"></span>
     </div>
-    <div style="overflow-x:auto">
+    <div class="tbl-scroll">
       <table class="tbl" id="items-table">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -385,38 +408,17 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">필요 파일</span>
     <span><b>분류별내역</b> · 매월 1~7일 지난달 한 달치 (월 1회)</span>
-    <span class="src-note">— e-store 폐기/점내용도 내역 → <b>분류별 내역</b> → 기간 월별로 조회해 엑셀 저장 후, 이름을 <b>2026년 8월 폐기점내용도내역</b>처럼 바꿔 <b>📂 데이터 올리기</b> 탭에서 올리세요.</span>
+    <span class="src-note">— e-store 폐기/점내용도 내역 → <b>분류별 내역</b> → 기간 월별로 조회해 엑셀 저장 후, 받은 이름 그대로 <b>📂 데이터 올리기</b> 탭에서 올리세요.</span>
   </div>
-  <!-- '최근 7일'은 아래 조회 기간과 무관하게 항상 데이터 마지막 날 기준이라 필터 위에 둡니다 -->
-  <div class="act-card" id="recent-waste-card">
-    <div class="act-h">
-      <div>
-        <div class="act-t">🗑 최근 7일 폐기 상위</div>
-        <div class="act-sub" id="recent-waste-period">발주 조정 검토 대상</div>
-      </div>
-      <div style="text-align:right"><div class="act-sub">기간 합계</div><div style="font-size:15px;font-weight:700;color:#dc2626" id="recent-waste-total">—</div></div>
-    </div>
-    <div class="act-b"><ul class="act-list" id="recent-waste-list"><li class="act-empty">데이터 없음</li></ul></div>
-  </div>
-
-  <div class="filter-row">
-    <span style="font-size:12.5px;font-weight:600;color:#475569">조회 기간</span>
-    <select class="sel" id="waste-month-sel" onchange="wasteMonthUserChosen=true; loadWasteData()"><option value="">전체 기간 (합산)</option></select>
-    <select class="sel" id="waste-type-sel" onchange="loadWasteData()">
-      <option value="">폐기 + 점내용도</option>
-      <option value="폐기">폐기만</option>
-      <option value="점내용도">점내용도만</option>
-    </select>
-    <span style="font-size:11.5px;color:#94a3b8">— 아래 KPI · 그래프 · 표 전부 이 기간 기준입니다. 처음 열면 가장 최근 월이 선택됩니다.</span>
-  </div>
+  <!-- KPI: 폐기와 점내용도를 각각 따로 (아래 보기 선택과 무관하게 기준 월 전체) -->
   <div class="kpi-row">
-    <div class="kpi"><div class="kpi-t">총 폐기금액</div><div class="kpi-v" id="w-total">—</div><div class="kpi-c muted" id="w-total-c"></div></div>
+    <div class="kpi"><div class="kpi-t">폐기 원가</div><div class="kpi-v" id="w-total">—</div><div class="kpi-c muted" id="w-total-c"></div></div>
     <div class="kpi"><div class="kpi-t">폐기 건수</div><div class="kpi-v" id="w-count">—</div><div class="kpi-c muted" id="w-count-c"></div></div>
     <div class="kpi"><div class="kpi-t">점내용도 금액</div><div class="kpi-v" id="w-internal">—</div><div class="kpi-c muted" id="w-internal-c"></div></div>
     <div class="kpi"><div class="kpi-t">폐기율 (매출원가 대비)</div><div class="kpi-v" id="w-ratio">—</div><div class="kpi-c muted" id="w-ratio-c"></div></div>
   </div>
   <div class="card" style="margin-bottom:16px" id="waste-rate-card">
-    <div class="card-h"><div><div class="card-title">📈 월별 폐기율 추이</div><div class="card-sub" id="waste-rate-sub">점선 = 직전 3개월 평균(우리 매장 기준선). 조회 기간과 무관하게 전체 달을 보여줍니다</div></div></div>
+    <div class="card-h"><div><div class="card-title">📈 월별 폐기율 추이</div><div class="card-sub" id="waste-rate-sub">점선 = 직전 3개월 평균(우리 매장 기준선) · 올라온 전체 달 · 큰 점 = 기준 월</div></div></div>
     <div class="card-b"><div class="chart-wrap"><canvas id="waste-rate-chart"></canvas></div></div>
   </div>
   <div class="card" style="margin-bottom:16px;display:none" id="waste-day-card">
@@ -436,29 +438,36 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
     <div class="note" id="waste-day-note" style="margin:10px 16px 14px"></div>
   </div>
+
+  <!-- 아래 그래프·표는 폐기 / 점내용도 중 하나만 (섞지 않음) -->
+  <div class="filter-row" style="margin-top:4px">
+    <span class="flt-label">아래 그래프 · 표</span>
+    <button class="seg-btn on" id="wv-waste" onclick="setWasteView('폐기')">폐기</button>
+    <button class="seg-btn" id="wv-internal" onclick="setWasteView('점내용도')">점내용도</button>
+    <span class="flt-note">점내용도 = 종량제봉투 등 매장에서 쓴 것이라 폐기와 섞지 않고 따로 봅니다</span>
+  </div>
   <div class="card" style="margin-bottom:16px">
-    <div class="card-h"><div class="card-title">소분류별 폐기금액</div></div>
-    <div class="card-b"><div style="height:220px;position:relative"><canvas id="waste-cat-chart"></canvas></div></div>
+    <div class="card-h"><div><div class="card-title" id="waste-cat-title">소분류별 폐기 원가</div><div class="card-sub" id="waste-cat-sub"></div></div></div>
+    <div class="card-b"><div style="height:240px;position:relative"><canvas id="waste-cat-chart"></canvas></div></div>
   </div>
   <div class="row2">
     <div class="card">
-      <div class="card-h"><div class="card-title">폐기 상위 품목</div></div>
-      <div style="overflow-x:auto">
+      <div class="card-h"><div><div class="card-title" id="waste-top-title">폐기 상위 품목</div><div class="card-sub" id="waste-top-sub"></div></div></div>
+      <div class="tbl-scroll">
         <table class="tbl" id="waste-table">
           <thead><tr>
-            <th style="width:28px">#</th>
+            <th style="width:32px">#</th>
             <th>소분류</th>
             <th>품목명</th>
             <th class="r">수량</th>
-            <th class="r">금액</th>
-            <th class="r">구분</th>
+            <th class="r" id="waste-top-amt-th">원가</th>
           </tr></thead>
           <tbody id="waste-tbody"><tr><td colspan="5" class="empty">데이터가 없습니다.</td></tr></tbody>
         </table>
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><div class="card-title">주차별 폐기 추이</div></div>
+      <div class="card-h"><div><div class="card-title" id="waste-week-title">주차별 폐기 원가</div><div class="card-sub" id="waste-week-sub"></div></div></div>
       <div class="card-b"><div class="chart-wrap"><canvas id="waste-chart"></canvas></div></div>
     </div>
   </div>
@@ -469,20 +478,21 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="src-bar">
     <span class="src-tag">올리는 파일</span>
     <span><b>분류별이익현황</b> → 매출·이익 현황 + 품목 분석 &nbsp;|&nbsp; <b>분류별내역</b> → 폐기 현황</span>
-    <span class="src-note">— 한 번 올리면 관련 탭에 모두 반영됩니다. 두 파일을 같이 올려도 됩니다. 받는 방법은 '사용 안내' 탭 참고.</span>
+    <span class="src-note">— 한 번 올리면 관련 탭에 모두 반영됩니다. 두 파일을 같이 올려도 됩니다. <b>파일 이름은 바꾸지 않아도 됩니다.</b> 받는 방법은 '사용 안내' 탭 참고.</span>
   </div>
-  <div class="upload-bar" style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:0">
-  <div class="period-box" id="period-box" style="display:none">
-    <label title="업로드하는 파일이 파일명에 날짜가 없을 때만 쓰입니다. 화면 표시는 각 탭의 '조회 기간'으로 바꾸세요.">업로드 연월 ⓘ</label>
-    <input type="month" id="period-input" />
-  </div>
+  <div class="upload-bar col" style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:0">
   <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-    📂 파일 드래그 또는 클릭 (여러 파일 동시 가능)
-    <input type="file" id="file-input" accept=".xlsx" multiple onchange="handleFiles(this.files)">
+    📂 e-store에서 받은 파일을 이름 그대로 끌어놓거나 눌러서 고르세요 (두 파일 같이 가능)
+    <input type="file" id="file-input" accept=".xlsx" multiple onchange="handleFiles(this.files); this.value=''">
   </div>
   <div class="file-list" id="file-list"></div>
-  <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
-  <button id="undo-btn" onclick="undoLastUpload()" style="display:none;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer" title="이 화면에서 방금 동기화한 파일을, 올리기 직전 상태로 되돌립니다">↩ 방금 업로드 되돌리기</button>
+  <!-- v3.6: 저장 전 확인 — 두 파일이 같은 달인지, 진행 중인 달·미래 달·같은 달 중복은 아닌지 -->
+  <div class="up-check" id="up-check" style="display:none"></div>
+  <div class="up-actions">
+    <button id="reselect-btn" class="up-btn2" onclick="document.getElementById('file-input').click()" style="display:none">파일 다시 고르기</button>
+    <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
+    <button id="undo-btn" onclick="undoLastUpload()" style="display:none;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer" title="이 화면에서 방금 동기화한 파일을, 올리기 직전 상태로 되돌립니다">↩ 방금 업로드 되돌리기</button>
+  </div>
 </div>
 
 <div class="status hide" id="status"></div>
@@ -496,7 +506,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     </div>
   </div>
   <div class="card">
-    <div class="card-h"><div><div class="card-title">🕘 최근 업로드 이력</div><div class="card-sub">최근 20건 · 같은 파일 이름을 다시 올리면 마지막 시각으로 갱신됩니다</div></div></div>
+    <div class="card-h"><div><div class="card-title">🕘 최근 업로드 이력</div><div class="card-sub">최근 20건 · 파일 이름과 저장한 달(폐기는 날짜 범위)로 구분해 남깁니다 — 같은 달을 다시 올리면 마지막 시각으로 갱신</div></div></div>
     <div style="overflow-x:auto">
       <table class="tbl">
         <thead><tr><th>시각</th><th>파일</th><th>종류</th><th class="r">저장 건수</th><th>올린 사람</th></tr></thead>
@@ -515,9 +525,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-a">
       <p><b>두 가지 파일만 올리면 됩니다.</b> 둘 다 <b>월 1회, 매월 1~7일</b>에 <b>지난달 한 달치</b>를 받아서 올립니다. 이번 달(진행 중인 달) 파일은 올리지 마세요.</p>
       <table>
-        <tr><th style="width:24%">파일</th><th style="width:30%">채워지는 화면</th><th>파일 이름 (받은 뒤 바꾸기)</th></tr>
-        <tr><td><b>분류별이익현황</b></td><td>매출·이익 현황, 품목 분석, 홈</td><td><code>2026년 8월 분류별이익현황</code><br><span class="src-note">파일 안에 날짜가 없어서 <b>이름에 연월이 꼭 있어야</b> 합니다.</span></td></tr>
-        <tr><td><b>분류별내역</b> (폐기)</td><td>폐기 현황, 품목 분석의 폐기 수량, 폐기율</td><td><code>2026년 8월 폐기점내용도내역</code><br><span class="src-note">날짜가 행마다 들어 있어 이름은 구분용입니다.</span></td></tr>
+        <tr><th style="width:24%">파일</th><th style="width:30%">채워지는 화면</th><th>파일 이름</th></tr>
+        <tr><td><b>분류별이익현황</b></td><td>매출·이익 현황, 품목 분석, 홈</td><td><b>바꾸지 않아도 됩니다.</b><br><span class="src-note">파일 안에 날짜가 없어서, 이름에 연월이 없으면 <b>지난달</b>로 잡힙니다. 올리기 화면에서 파일마다 바꿀 수 있습니다.</span></td></tr>
+        <tr><td><b>분류별내역</b> (폐기)</td><td>폐기 현황, 품목 분석의 폐기 수량, 폐기율</td><td><b>바꾸지 않아도 됩니다.</b><br><span class="src-note">날짜가 줄마다 들어 있어 저장 기간이 자동으로 잡힙니다.</span></td></tr>
       </table>
       <div class="help-warn">
         <b>시계열 파일과 폐기 "전체전표" 파일은 올리지 않습니다.</b> 올리면 자동으로 막힙니다.
@@ -537,7 +547,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <li>조회 기간을 올릴 달 한 달로 맞춥니다.</li>
         <li>조건을 이렇게 맞춥니다: 기준 <b>합계</b> · 단위구분 <b>원</b> · 카테고리 <b>단일</b> · 매출구분 <b>총매출</b> · 비교기간 <b>체크 해제</b> → <b>[조회]</b><br><span class="src-note">비교기간을 해제해도 '비교점(점포별 평균)' 열이 붙어 나올 수 있습니다. 대시보드는 우리 매장 열(대상기간)만 읽으므로 그대로 올리면 됩니다.</span></li>
         <li>조회가 끝나면 하단의 <b>[카테고리/상품 펼치기]</b>를 누르고 <b>전체 체크</b> 후 <b>[저장]</b>합니다.</li>
-        <li>저장한 파일 이름을 <code>2026년 8월 분류별이익현황</code>처럼 바꿉니다.</li>
+        <li>파일 이름은 받은 그대로 두어도 됩니다. (올리기 화면에서 저장할 달을 확인·변경)</li>
       </ol>
       <div class="help-warn">
         <b>매출구분은 반드시 총매출, 단위는 원</b>입니다. 순매출로 받으면 달마다 기준이 섞여 비교가 어긋납니다.<br>
@@ -552,9 +562,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <li><b>[분류별 내역]</b>을 고릅니다. ("전체 전표"가 아닙니다)</li>
         <li>기간을 <b>[월별]</b>로 두고 올릴 달을 고른 뒤 <b>[조회]</b>합니다.</li>
         <li><b>[엑셀 저장]</b>을 누릅니다.</li>
-        <li>저장한 파일 이름을 <code>2026년 8월 폐기점내용도내역</code>처럼 바꿉니다. (e-store 파일 이름에는 월이 붙지 않아서, 나중에 헷갈리지 않게 하기 위함)</li>
+        <li>파일 이름은 받은 그대로 두어도 됩니다. (파일 안 날짜로 기간이 잡힘)</li>
       </ol>
-      <p class="src-note">인식하는 파일 이름 형식: <code>2026년 8월</code> <code>26년8월</code> <code>2026-08</code> <code>2026.08</code> <code>2026_08</code> <code>202608</code></p>
+      <p class="src-note">여러 달을 한꺼번에 올릴 때는 파일 이름에 연월을 넣어 두면 달이 자동으로 잡힙니다. 인식하는 형식: <code>2026년 8월</code> <code>26년8월</code> <code>2026-08</code> <code>2026.08</code> <code>2026_08</code> <code>202608</code></p>
     </div>
   </div>
 
@@ -562,16 +572,16 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>⬆️ 업로드하는 방법</span><span class="arw">▶</span></div>
     <div class="help-a">
       <ol>
-        <li><b>📂 데이터 올리기</b> 탭의 점선 상자에 파일을 <b>끌어다 놓거나</b>, 상자를 눌러 고릅니다. 두 파일을 같이 골라도 됩니다. (업로드 권한이 있는 계정에만 보이는 탭입니다)</li>
-        <li>파일 옆에 종류(<b>매출·품목</b> / <b>폐기</b>)가 표시됩니다. 올릴 수 없는 파일은 <b>⛔</b>와 함께 이유가 알림으로 뜨고 자동으로 빠집니다.</li>
-        <li>매출 파일 이름에 연월이 없으면 왼쪽에 '업로드 연월' 칸이 나타납니다. 파일 이름을 바꾸거나 여기서 연월을 고르세요.</li>
-        <li>오른쪽 <b>[동기화]</b>를 누릅니다.</li>
+        <li><b>📂 데이터 올리기</b> 탭의 점선 상자에 파일을 <b>끌어다 놓거나</b>, 상자를 눌러 고릅니다. 두 파일을 같이 골라도 되고, <b>파일 이름은 바꾸지 않아도 됩니다</b>. (업로드 권한이 있는 계정에만 보이는 탭입니다)</li>
+        <li>고르는 즉시 파일마다 저장될 내용이 나옵니다 — 매출은 <b>저장할 달</b>(이름에 연월이 없으면 지난달, 옆 칸에서 바꿀 수 있음)과 파일 합계 확인 결과, 폐기는 <b>날짜 범위와 줄 수</b>. 이미 있는 달이면 '새 파일로 바뀝니다'가 붙습니다. 올릴 수 없는 파일은 <b>⛔</b>와 이유가 파일 아래에 나옵니다.</li>
+        <li>그 아래 확인 줄을 봅니다. <b>초록</b> 같은 달 · <b>회색</b> 한쪽 파일만(같이 올리면 폐기율 계산) · <b>노랑</b> 두 파일 달이 다름([이대로 동기화] 또는 [파일 다시 고르기]) · <b>빨강</b> 진행 중인 달([그래도 저장]으로만 진행) — 같은 달로 저장될 매출 파일이 둘이거나 미래 달이면 저장할 수 없습니다.</li>
+        <li><b>[동기화]</b>를 누릅니다.</li>
         <li>매출 파일은 <code>2026-08 · 대분류 23 · 품목 1,307 · 파일 합계와 일치 ✔</code>처럼, 폐기 파일은 날짜 범위와 건수가 표시되면 끝입니다. 아래 <b>월별 데이터 현황</b>에서 그 달이 '완료'가 됐는지 확인하세요.</li>
       </ol>
       <div class="help-info"><b>같은 파일을 여러 번 올려도 안전합니다.</b> 그 달(폐기는 그 날짜 범위)의 기존 데이터를 지우고 새로 넣기 때문에 두 번 쌓이지 않습니다. 잘못 올렸으면 올바른 파일로 다시 올리면 됩니다.</div>
       <p class="src-note">매출 파일은 파일 안의 합계행과 대분류·품목 합계를 원 단위까지 대조합니다. 한 원이라도 맞지 않으면 저장하지 않습니다.</p>
       <h5>잘못 올렸을 때 — 방금 업로드 되돌리기</h5>
-      <p>동기화 직후 <b>[↩ 방금 업로드 되돌리기]</b> 버튼이 나타납니다. 누르면 방금 올린 파일들을 <b>올리기 직전 상태</b>로 되돌립니다(처음 올린 달이면 그 달이 비워집니다). 이 화면을 새로고침하거나 다른 파일을 다시 동기화하면 이전 업로드는 되돌릴 수 없습니다. 업로드 이력에는 <b>올린 사람</b>과 되돌림 기록이 함께 남습니다.</p>
+      <p>동기화 직후 <b>[↩ 방금 업로드 되돌리기]</b> 버튼이 나타납니다. 누르면 방금 올린 파일들을 <b>올리기 직전 상태</b>로 되돌립니다(처음 올린 달이면 그 달이 비워집니다). <b>저장 도중 실패한 파일</b>도 이 버튼으로 원래대로 돌릴 수 있습니다. 이 화면을 새로고침하거나 다른 파일을 다시 동기화하면 이전 업로드는 되돌릴 수 없습니다. 업로드 이력에는 <b>올린 사람</b>과 되돌림 기록이 함께 남습니다.</p>
     </div>
   </div>
 
@@ -584,9 +594,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td rowspan="2"><b>매월 1~7일</b></td><td>분류별이익현황 (매출·품목)</td><td>지난달 한 달</td></tr>
         <tr><td>분류별내역 (폐기)</td><td>지난달 한 달</td></tr>
       </table>
-      <p>두 파일을 <b>같은 달로 맞춰서</b> 올려야 폐기율과 '판매 대비 폐기'가 계산됩니다. 8일이 지나도 지난달 파일이 없으면 홈 맨 위에 노란 경고가 뜹니다.</p>
+      <p>두 파일을 <b>같은 달로 맞춰서</b> 올려야 폐기율과 '판매 대비 폐기'가 계산됩니다. 1~7일에는 업로드 권한자의 홈 맨 위에 "○월 파일 올릴 기간 · D-n"과 [데이터 올리기] 버튼이 뜨고, 8일이 지나도 없으면 노란 경고가 뜹니다.</p>
       <div class="help-warn"><b>진행 중인 달(이번 달) 매출 파일은 올리지 마세요.</b> 매출은 한 달 단위로 저장되어, 월 중간에 올리면 반쪽짜리 달이 한 달 전체처럼 저장됩니다. 그 사이 전월 대비·폐기율·보고서 숫자가 틀리게 나옵니다. (다시 올리면 덮어써서 복구는 됩니다)</div>
-      <p class="src-note">'최근 7일 폐기 상위'는 오늘이 아니라 <b>올라와 있는 폐기 데이터의 마지막 7일</b>입니다. 월 1회 운영에서는 지난달 마지막 주가 표시됩니다.</p>
       <p class="src-note"><b>처음 한 번만 확인</b>: 말일 심야 등록 건이 1일에는 반영되지 않았을 수 있습니다. 1일에 받은 총매출과 3일에 다시 받은 총매출이 다르면, 업로드를 3~7일 사이로 옮기세요.</p>
       <h5>매달 하는 일 (월간 운영 루틴)</h5>
       <table>
@@ -600,19 +609,28 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   <div class="help-sec">
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📊 화면의 숫자는 무슨 뜻인가요?</span><span class="arw">▶</span></div>
     <div class="help-a">
-      <p class="src-note">매출·품목·폐기 탭은 처음 열면 <b>올라와 있는 가장 최근 월</b>이 선택됩니다. 홈의 "최근 월"도 오늘 날짜가 아니라 올라와 있는 가장 최근 월이며, 카드 아래에 기준월이 표시됩니다.</p>
+      <h5>기준 월 (화면 위)</h5>
+      <p><b>홈 · 매출 · 품목 · 폐기 탭이 모두 화면 위 '기준 월' 한 달을 봅니다.</b> 처음 열면 매출 파일이 올라온 가장 최근 월이고, 파일을 새로 올리면 그 최신 달로 바뀝니다. 옆의 표시로 그 달 파일이 있는지 바로 알 수 있습니다(초록 = 있음, 빨강 = 파일 없음). <b>그 달 파일이 없으면 다른 달로 바꿔 보여주지 않고 '파일 없음'으로 비워 둡니다.</b> 여러 달을 합쳐 보려면 홈의 기간 보고서를 씁니다.</p>
+      <h5>홈 — 기준 월 한 장 요약</h5>
+      <table>
+        <tr><th style="width:30%">항목</th><th>의미</th></tr>
+        <tr><td>매출 · 이익율</td><td>기준 월 총매출과 이익율. 아래에 전월 대비(%, %p)가 나옵니다.</td></tr>
+        <tr><td>폐기 원가</td><td>기준 월 폐기 원가 합계(점내용도 제외). 아래에 전월 대비가 나오며, 늘면 빨강·줄면 초록입니다.</td></tr>
+        <tr><td>폐기율</td><td>폐기 원가 ÷ 매출원가. 아래에 직전 3개월 평균(우리 매장 기준선) 대비가 나옵니다.</td></tr>
+        <tr><td>전월보다 폐기가 늘어난 소분류</td><td>전월보다 폐기 원가가 가장 많이 늘어난 소분류 3개(전월 → 이번 달). 누르면 품목 분석에서 그 소분류 품목이 바로 열립니다. 전월 폐기 파일이 없으면 비교하지 않습니다.</td></tr>
+      </table>
       <h5>홈 — 데이터 신선도 · 종합 보고서</h5>
-      <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. 매월 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다.</p>
-      <p><b>📄 종합 보고서</b>에서 시작 월과 끝 월을 고르고 [보고서 만들기]를 누릅니다. <b>같은 달을 고르면 월별 보고서, 다르게 고르면 기간 보고서</b>(예: 2026-01 ~ 2026-05, 기간 합산 + 월별 내역 표)가 됩니다. 비교 기준은 바로 앞 같은 길이의 기간(한 달이면 전월, 1~5월이면 전년 8~12월)이며, 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다. 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 계산합니다. [인쇄 / PDF로 저장] → 'PDF로 저장'을 고르면 "A1_종합보고서_2026-01_2026-05" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
+      <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. <b>매월 1~7일</b>에는 업로드 권한자에게 "9월 파일 올릴 기간 · D-4"처럼 남은 날과 빠진 파일(매출·폐기), [데이터 올리기] 버튼이 뜨고, 두 파일이 다 올라오면 "9월 파일 완료"로 바뀝니다. 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다.</p>
+      <p><b>📄 종합 보고서</b>에서 시작 월과 끝 월을 고르고 [보고서 만들기]를 누릅니다(기본값은 기준 월). <b>같은 달을 고르면 월별 보고서, 다르게 고르면 기간 보고서</b>(예: 2026-01 ~ 2026-05, 기간 합산 + 월별 내역 표)가 됩니다. 비교 기준은 바로 앞 같은 길이의 기간(한 달이면 전월, 1~5월이면 전년 8~12월)이며, 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다. 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 계산합니다. [인쇄 / PDF로 저장] → 'PDF로 저장'을 고르면 "A1_종합보고서_2026-01_2026-05" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
       <h5>매출 · 이익 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
-        <tr><td>총 매출</td><td>선택한 기간의 <b>총매출</b> 합계. 대분류(밥류·음료·담배 등 23개) 기준입니다.</td></tr>
+        <tr><td>총 매출</td><td>기준 월의 <b>총매출</b> 합계. 대분류(밥류·음료·담배 등 23개) 기준입니다.</td></tr>
         <tr><td>예상 이익</td><td>매출에서 원가를 뺀 금액 (e-store 산출 기준)</td></tr>
         <tr><td>평균 이익율</td><td>예상이익 ÷ 총매출. 매출 규모를 반영한 가중평균입니다.</td></tr>
-        <tr><td>전월 대비 매출</td><td>선택한 월과 <b>바로 전 달</b>의 총매출 차이. 대시보드에 저장된 전 달 데이터로 직접 계산합니다. 전 달 파일이 없거나 '전체 기간 (합산)'을 보고 있으면 표시되지 않습니다.</td></tr>
+        <tr><td>전월 대비 매출</td><td>기준 월과 <b>바로 전 달</b>의 총매출 차이. 대시보드에 저장된 전 달 데이터로 직접 계산합니다. 전 달 파일이 없으면 표시되지 않습니다.</td></tr>
       </table>
-      <p class="src-note">월별 추이 그래프는 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
+      <p class="src-note">월별 추이 그래프는 올라온 전체 달을 보여주며(큰 점 = 기준 월), 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
       <p class="src-note"><b>펼쳐보기</b>: 카테고리별 상세 표에서 대분류(▶)를 누르면 중분류가, 중분류를 누르면 소분류가 펼쳐집니다. 어느 하위 분류 때문에 매출이 늘거나 줄었는지 바로 볼 수 있습니다.</p>
       <h5>품목 분석</h5>
       <table>
@@ -625,12 +643,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <h5>폐기 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
-        <tr><td>총 폐기금액</td><td>폐기로 처리된 상품 금액 합계. <b>판매가가 아니라 원가(매입가) 기준</b>입니다.</td></tr>
-        <tr><td>폐기 건수</td><td>폐기로 처리된 건수 (점내용도 제외)</td></tr>
-        <tr><td>점내용도 금액</td><td>매장 자체 사용분 (종량제봉투 등)</td></tr>
-        <tr><td>폐기율 (매출원가 대비)</td><td>그 달 폐기 원가 ÷ 그 달 매출원가(매출 − 예상이익). 폐기 금액이 원가라서 분모도 원가로 맞췄습니다. 같은 달 매출 파일이 있어야 계산됩니다.</td></tr>
-        <tr><td>요일 · 주말 · 공휴일별 폐기</td><td>요일마다, 그리고 평일·주말·공휴일로 나눠 <b>하루 평균 폐기원가</b>를 비교합니다(폐기가 없던 날도 하루로 셈). 기본은 <b>팔지 못한 날 기준</b>(폐기일 하루 전)으로, 도시락·김밥처럼 다음 날 버리는 상품의 실제 판매 부진일을 봅니다. 공휴일은 2026년 공식 목록(대체공휴일·선거일 포함)을 씁니다.</td></tr>
-        <tr><td>월별 폐기율 추이 · 기준선</td><td>월별 폐기율 그래프와 <b>직전 3개월 평균</b>(점선)을 함께 보여줍니다. 카드와 홈에는 "직전 3개월 평균 대비 ▲/▼ %p"로 표시됩니다. 업계 기준치 대신 <b>우리 매장 추세</b>를 기준선으로 씁니다.</td></tr>
+        <tr><td>폐기 원가</td><td>기준 월에 폐기로 처리된 상품의 합계. <b>판매가가 아니라 원가(매입가) 기준</b>이며 점내용도는 빠집니다.</td></tr>
+        <tr><td>폐기 건수</td><td>폐기로 등록된 줄 수 (점내용도 제외)</td></tr>
+        <tr><td>점내용도 금액</td><td>매장에서 쓴 것(종량제봉투 등). 폐기와 따로 셉니다.</td></tr>
+        <tr><td>폐기율 (매출원가 대비)</td><td>그 달 폐기 원가 ÷ 그 달 매출원가(매출 − 예상이익). 폐기 금액이 원가라서 분모도 원가로 맞췄습니다. 같은 달 매출·폐기 파일이 둘 다 있어야 계산됩니다.</td></tr>
+        <tr><td>월별 폐기율 추이 · 기준선</td><td>올라온 전체 달의 폐기율과 <b>직전 3개월 평균</b>(점선). 큰 점이 기준 월입니다. 업계 기준치 대신 <b>우리 매장 추세</b>를 기준선으로 씁니다.</td></tr>
+        <tr><td>요일 · 주말 · 공휴일별 폐기</td><td>요일마다, 그리고 평일·주말·공휴일로 나눠 <b>하루 평균 폐기원가</b>를 비교합니다(폐기가 없던 날도 하루로 셈). 한 달만 보면 요일마다 4~5일뿐이라 흔들림이 커서 <b>기준 월과 관계없이 올라온 전체 달</b>로 봅니다. 기본은 <b>팔지 못한 날 기준</b>(폐기일 하루 전)입니다. 공휴일은 2026년 공식 목록(대체공휴일·선거일 포함)을 씁니다.</td></tr>
+        <tr><td>아래 그래프 · 표 [폐기 | 점내용도]</td><td>소분류별 · 상위 품목 · 주차별은 <b>폐기와 점내용도 중 하나만</b> 보여줍니다(섞지 않음). 위 KPI는 이 선택과 관계없이 그대로입니다. 상위 품목 표는 전부 나오며 표 안에서 스크롤합니다.</td></tr>
+        <tr><td>주차별</td><td>1~7일, 8~14일 … 로 나눈 합계입니다. 마지막 주는 1~3일뿐이라(8월이면 29~31일) 라벨에 일수를 적었고, 막대에 마우스를 올리면 하루 평균이 나옵니다.</td></tr>
       </table>
     </div>
   </div>
@@ -643,7 +663,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <li><b>폐기 비율</b> = 폐기 수량 ÷ (판매 수량 + 폐기 수량)</li>
         <li>폐기가 판매 이상(비율 50% 이상)인 품목을 먼저, 그 안에서는 폐기 원가가 큰 순으로 보여줍니다.</li>
         <li><b>품목 분석 탭에는 두 가지 보기가 있습니다.</b> <b>소분류별 한눈에</b>(기본)는 폐기가 있었던 소분류를 폐기 원가 큰 순으로 전부 한 표에 보여줍니다. 유통기한이 짧은 FF 말고 빵·디저트·음료 등 어디서 폐기가 나는지 한 번에 볼 수 있습니다. 줄을 누르면 그 소분류의 폐기 품목이 전부 나옵니다. <b>품목별</b>은 10개를 먼저 보여주고 [전체 보기]로 모두 펼칩니다.</li>
-        <li>두 보기 모두 위의 대분류·중분류·검색 조건을 따라가고, 제목 아래에 그 조건의 판매·폐기 합계와 폐기 비율이 나옵니다. 홈 카드는 늘 전체 기준 상위 3개입니다.</li>
+        <li>두 보기 모두 위의 대분류·중분류·검색 조건을 따라가고, 제목 아래에 그 조건의 판매·폐기 합계와 폐기 비율이 나옵니다. 홈에는 이 카드 대신 <b>전월보다 폐기가 늘어난 소분류</b>가 나오고, 누르면 여기로 와서 그 소분류가 열립니다.</li>
         <li><b>판매 없음</b>: 그 달 분류별이익현황에 아예 없는 품목입니다. 한 개도 팔지 못하고 폐기한 것으로 봅니다. (그 달 매출 파일이 상품까지 펼쳐서 제대로 올라와 있어야 정확합니다)</li>
       </ul>
       <div class="help-warn">재고 데이터가 없어서 "들여온 수량"은 알 수 없습니다. 이 표는 발주 점검 대상을 추리는 용도이며, 발주량은 현장 확인 후 정하십시오.</div>
@@ -663,7 +683,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>❔ 자주 묻는 질문</span><span class="arw">▶</span></div>
     <div class="help-a">
       <h5>"파일의 합계와 계산 결과가 맞지 않아 저장하지 않았습니다"가 뜹니다</h5>
-      <p>파일을 엑셀에서 열어 고쳤거나, 표준 리포트가 아닌 경우입니다. e-store에서 원본을 다시 받아 이름만 바꾸고 그대로 올려주세요.</p>
+      <p>파일을 엑셀에서 열어 고쳤거나, 표준 리포트가 아닌 경우입니다. e-store에서 원본을 다시 받아 그대로 올려주세요. (이 확인은 파일을 고르는 순간 이뤄져, 저장 전에 ⛔로 표시됩니다)</p>
       <h5>"상품 줄이 없는 파일입니다"가 뜹니다</h5>
       <p>분류별이익현황을 받을 때 <b>[카테고리/상품 펼치기] → 전체 체크</b>를 하지 않고 저장한 경우입니다. 펼친 뒤 다시 저장해 주세요.</p>
       <h5>"올릴 수 없음"(⛔)으로 나옵니다</h5>
@@ -677,7 +697,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <h5>배포했다는데 화면이 그대로입니다</h5>
       <p>화면 오른쪽 위의 버전 번호를 확인하세요. 예전 번호면 <b>Cmd+Shift+R</b>(윈도우는 Ctrl+Shift+R)로 새로고침합니다.</p>
       <h5>숫자가 이상합니다</h5>
-      <p>올린 파일의 달이 맞는지, 화면 위쪽 조회 기간이 원하는 달로 되어 있는지 먼저 확인하세요. 그래도 이상하면 관리자에게 문의하십시오.</p>
+      <p>화면 위 <b>기준 월</b>이 원하는 달인지, 옆에 <b>"파일 없음"</b>(빨간 표시)이 떠 있지 않은지 먼저 확인하세요. 그다음 올린 파일의 달이 맞는지 봅니다. 그래도 이상하면 관리자에게 문의하십시오.</p>
     </div>
   </div>
 
@@ -696,7 +716,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
 
   <p class="src-note" style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0">
-    A1 편의점 수익관리 대시보드 · 문서 버전 3.3 (2026-09) · 문의: 관리자
+    A1 편의점 수익관리 대시보드 · 문서 버전 3.6 (2026-09) · 문의: 관리자
   </p>
 </div>
 </div>
@@ -716,7 +736,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <table style="margin-top:8px">
         <tr><th style="width:32%">데이터</th><th>삭제할 월</th><th style="width:20%"></th></tr>
         <tr>
-          <td>매출·품목 (분류별이익현황)<div style="font-size:11px;color:#94a3b8">같은 파일에서 저장되므로 함께 삭제됩니다</div></td>
+          <td>매출·품목 (분류별이익현황)<div style="font-size:12px;color:#64748b">같은 파일에서 저장되므로 함께 삭제됩니다</div></td>
           <td><select class="sel" id="admin-sales-month-sel" style="width:140px"><option value="">월 선택</option></select></td>
           <td><button onclick="deletePartial('sales', this)" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">삭제</button></td>
         </tr>
@@ -734,7 +754,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')" style="color:#b91c1c"><span>⚠️ 데이터 전체 초기화</span><span class="arw">▶</span></div>
     <div class="help-a">
       <div class="help-warn" style="background:#fef2f2;border-color:#fecaca;color:#7f1d1d">
-        <b>되돌릴 수 없습니다.</b> 매출 · 품목 · 폐기 · 업로드 이력 전체가 삭제됩니다. 부분 삭제는 지원하지 않으며, 실행하면 전체 데이터가 한 번에 지워집니다. 테스트 데이터를 지우고 실사용으로 전환할 때만 사용하세요.
+        <b>되돌릴 수 없습니다.</b> 매출 · 품목 · 폐기 · 업로드 이력 전체가 삭제됩니다. 실행하면 전체 데이터가 한 번에 지워집니다. 특정 달만 지우려면 위의 '특정 월만 삭제'를 쓰세요. 테스트 데이터를 지우고 실사용으로 전환할 때만 사용하세요.
       </div>
       <p style="margin:10px 0 6px">확인을 위해 아래 칸에 <b>초기화</b>를 입력하면 버튼이 활성화됩니다.</p>
       <input type="text" id="reset-confirm-input" placeholder="초기화" oninput="document.getElementById('reset-confirm-btn').disabled = (this.value !== '초기화')" style="border:1px solid #e2e8f0;border-radius:6px;padding:7px 11px;font-size:13px;width:160px">
@@ -755,15 +775,21 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.28-v3.3';
+const APP_VERSION = '2026.09.29-v3.6';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
-  console.log('[A1] 대시보드 버전', APP_VERSION);
+  console.log('[A1] 대시보드 버전', APP_VERSION); // 매뉴얼 2.5 '버전 확인'에서 안내하는 로그라 유지
 }
+// v3.5: 디버그 로그는 평소 끔 — 문제 추적할 때만 true로 배포 (로그인 이메일 등이 콘솔에 남지 않게)
+const DEBUG = false;
+const dlog = (...a) => { if (DEBUG) console.log('[A1]', ...a); };
+
+// ── 차트 기본값 ───────────────────────────────────────────────────
+// Chart.js 기본 글자(연한 회색·작은 크기)가 흐려서 진하게
+if (typeof Chart !== 'undefined' && Chart.defaults) { Chart.defaults.color = '#475569'; Chart.defaults.font.family = "'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; Chart.defaults.font.size = 12; }
 
 // ── 상태 ─────────────────────────────────────────────────────────
-let pendingFiles = [];
 let CURRENT_EMAIL = '';
 let salesData = [];
 let wasteRateChart = null, itemTrendChart = null;
@@ -795,7 +821,7 @@ async function initAuth() {
     // 값에 공백/대소문자 차이가 있어도 admin으로 인식되도록 방어적으로 정규화
     CURRENT_ROLE = (typeof role === 'string') ? role.trim().toLowerCase() : (role || null);
   } catch(e) { console.error('[A1] get_my_role 예외:', e); CURRENT_ROLE = null; }
-  console.log('[A1] 로그인 사용자:', user.email, '/ CURRENT_ROLE:', CURRENT_ROLE);
+  dlog('로그인 사용자:', user.email, '/ CURRENT_ROLE:', CURRENT_ROLE); // v3.5: 이메일이 콘솔에 남지 않게 디버그 때만
   const ub = document.querySelector('.upload-bar');
   if (!['admin','staff'].includes(CURRENT_ROLE)) {
     ub.style.display = 'none';
@@ -811,25 +837,22 @@ async function initAuth() {
   // 관리자 탭 — admin 역할만 노출 (RLS write_admin 정책이 실제 차단선, 이건 화면 표시일 뿐)
   const adminTabBtn = document.getElementById('tab-btn-admin');
   if (adminTabBtn) adminTabBtn.style.display = (CURRENT_ROLE === 'admin') ? '' : 'none';
-  if (CURRENT_ROLE === 'admin') loadAdminDeleteOptions();
+  // v3.5: 여기서 loadAdminDeleteOptions()를 부르던 것 삭제 — 바로 뒤 refreshAllData()가 캐시를 비우고
+  // 다시 부르므로, 관리자 로그인 때마다 매출·폐기 전체 조회가 두 번씩 나갔음
   return true;
 }
 
 // ── 관리자 전용: 특정 월만 삭제 ──────────────────────────────────────
-async function loadAdminDeleteOptions() {
+function loadAdminDeleteOptions() {
   if (CURRENT_ROLE !== 'admin') return;
-  const [sales, waste] = await Promise.all([
-    allCatSales(),
-    allWasteLite()
-  ]);
-  const salesMonths = [...new Set((sales||[]).map(r=>r.year_month))].sort().reverse();
-  const wasteMonths = [...new Set((waste||[]).filter(r=>r.confirmed_date).map(r=>String(r.confirmed_date).substring(0,7)))].sort().reverse();
-
+  // v3.5: 월 목록은 refreshAllData가 먼저 만든 GM(매출·폐기 월 집합)을 그대로 씀 — 전체 조회를 또 하지 않음
+  const salesMonths = [...GM.salesMonths].sort().reverse();
+  const wasteMonths = [...GM.wasteMonths].sort().reverse();
   const fill = (id, list) => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
-    sel.innerHTML = '<option value="">월 선택</option>' + list.map(m=>`<option${m===cur?' selected':''}>${m}</option>`).join('');
+    sel.innerHTML = '<option value="">월 선택</option>' + list.map(m => `<option${m === cur ? ' selected' : ''}>${esc(m)}</option>`).join('');
   };
   fill('admin-sales-month-sel', salesMonths);
   fill('admin-waste-month-sel', wasteMonths);
@@ -855,7 +878,7 @@ async function deletePartial(kind, btn) {
   try {
     // 실제로 어떤 조건으로 삭제되는지 콘솔에 남깁니다 — "다른 달까지 지워졌다"는
     // 문제가 재발하면 여기 로그로 정확히 어떤 쿼리가 나갔는지 바로 확인 가능합니다.
-    console.log(`[A1] 부분삭제 실행: table=${cfg.table} col=${cfg.col} ${cfg.exact ? 'eq' : '월범위'}=${month}`);
+    dlog(`부분삭제 실행: table=${cfg.table} col=${cfg.col} ${cfg.exact ? 'eq' : '월범위'}=${month}`);
     for (const t of (cfg.also || [])) {
       const { error: e2 } = await sb.from(t).delete().eq(cfg.col, month);
       // 품목 테이블을 아직 만들지 않은 경우(마이그레이션 전)는 건너뜀
@@ -864,20 +887,16 @@ async function deletePartial(kind, btn) {
     let q = sb.from(cfg.table).delete();
     if (cfg.exact) q = q.eq(cfg.col, month);
     else { const [s, e] = monthRange(month); q = q.gte(cfg.col, s).lt(cfg.col, e); }
-    const { error, count } = await q;
+    const { error } = await q;
     if (error) throw error;
 
-    // 삭제 직후 실제 DB 상태를 다시 조회해서 콘솔에 남김 — 화면 표시가 아니라
-    // DB 자체에 어떤 연월이 남아있는지 직접 확인할 수 있게 합니다.
-    const remaining = await fetchAllRows(() => sb.from(cfg.table).select(cfg.col));
-    const remainingMonths = [...new Set((remaining||[]).map(r => String(r[cfg.col]).substring(0,7)))].sort();
-    console.log(`[A1] 삭제 후 ${cfg.table}에 남은 월:`, remainingMonths);
-
+    clearFileChips(); // 방금 삭제한 데이터가 업로드 바에 "성공"으로 남아있지 않도록
+    // v3.5: 남은 월은 새로고침 때 DB에서 다시 만든 GM으로 확인 (예전엔 테이블 전체 행을 한 번 더 받아서 셈)
+    await refreshAllData();
+    const remainingMonths = [...(kind === 'sales' ? GM.salesMonths : GM.wasteMonths)].sort();
+    dlog(`삭제 후 ${cfg.table}에 남은 월:`, remainingMonths);
     statusEl.textContent = `${cfg.label} ${month} 삭제 완료. (남은 월: ${remainingMonths.join(', ') || '없음'})`;
     statusEl.style.color = '#15803d';
-
-    clearFileChips(); // 방금 삭제한 데이터가 업로드 바에 "성공"으로 남아있지 않도록
-    await refreshAllData();
   } catch(e) {
     statusEl.textContent = `삭제 실패: ${e.message}`;
     statusEl.style.color = '#b91c1c';
@@ -905,20 +924,18 @@ async function doFullReset() {
   statusEl.textContent = '초기화 진행 중...';
   statusEl.style.color = '#78350f';
 
-  const tables = ['m4_category_sales', 'm4_item_sales', 'm4_item_daily', 'm4_waste_items', 'm4_waste_slips', 'm4_sync_history'];
+  const tables = ['m4_category_sales', 'm4_item_sales', 'm4_waste_items', 'm4_sync_history'];
+  // 예전 형식용 테이블(지금은 안 씀). DB 정리 SQL로 지웠으면 건너뜀 (v3.5: 예전엔 없으면 초기화 전체가 실패)
+  const legacy = ['m4_item_daily', 'm4_waste_slips'];
+  const missing = msg => /(does not exist|Could not find|schema cache)/i.test(msg);
   try {
-    for (const t of tables) {
+    for (const t of [...tables, ...legacy]) {
       const { error } = await sb.from(t).delete().gt('id', 0);
-      // 품목 테이블(m4_item_sales)을 아직 만들지 않은 경우는 건너뜀
-      if (error && !(t === 'm4_item_sales' && /(does not exist|Could not find|schema cache)/i.test(error.message))) throw new Error(`${t}: ${error.message}`);
+      if (error && !(legacy.includes(t) && missing(error.message))) throw new Error(`${t}: ${error.message}`);
     }
-    // 초기화 감사 기록 — sync_history를 지운 직후 흔적을 남김 (누가 언제 초기화했는지)
+    // 초기화 감사 기록 — sync_history를 지운 직후 흔적을 남김 (누가 언제 초기화했는지). 올린 사람 칸도 채우도록 공용 함수 사용
     const who = (await sb.auth.getSession()).data.session?.user?.email || 'unknown';
-    await sb.from('m4_sync_history').insert({
-      file_name: `__RESET__ by ${who} at ${new Date().toISOString()}`,
-      file_type: 'reset',
-      record_count: 0
-    });
+    await saveHistory({ file_name: `__RESET__ by ${who} at ${new Date().toISOString()}`, file_type: 'reset', record_count: 0, synced_at: new Date().toISOString() });
 
     statusEl.textContent = '초기화 완료 — 모든 데이터가 삭제되었습니다.';
     statusEl.style.color = '#15803d';
@@ -938,7 +955,6 @@ async function doLogout() {
   await sb.auth.signOut();
 }
 
-// ── 초기화 ────────────────────────────────────────────────────────
 // ── 데이터 올리기 탭: 월별 현황 + 업로드 이력 ─────────────────────────
 async function loadUploadStatus() {
   if (!byId('upload-status-tbody')) return;
@@ -961,8 +977,8 @@ async function loadUploadStatus() {
     const c = cnt[m], hasS = c.cat > 0, hasW = c.waste > 0;
     const state = hasS && hasW ? '<span class="bdg bdg-up">완료</span>'
       : hasS ? '<span class="bdg bdg-fl">폐기 파일 없음</span>' : '<span class="bdg bdg-dn">매출 파일 없음</span>';
-    const noItems = hasS && !c.item ? ' <span style="color:#b91c1c;font-size:11px">(품목 없음 — 다시 올리세요)</span>' : '';
-    return `<tr><td class="cat">${m}</td>
+    const noItems = hasS && !c.item ? ' <span style="color:#b91c1c;font-size:12px">(품목 없음 — 다시 올리세요)</span>' : '';
+    return `<tr><td class="cat">${esc(m)}</td>
       <td class="r">${hasS ? `대분류 ${c.cat} · 품목 ${fmt(c.item)}${noItems}` : '—'}</td>
       <td class="r">${hasW ? `${fmt(c.waste)}건` : '—'}</td><td>${state}</td></tr>`;
   }).join('') : '<tr><td colspan="4" class="empty">올라온 데이터가 없습니다.</td></tr>';
@@ -973,7 +989,7 @@ async function loadUploadStatus() {
     const d = new Date(h.synced_at);
     const when = isNaN(d) ? '—' : `${d.toLocaleDateString('ko-KR')} ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`;
     const name = h.file_type === 'reset' ? String(h.file_name).replace(/^__RESET__ /,'') : h.file_name;
-    return `<tr><td style="white-space:nowrap">${when}</td><td class="cat">${esc(name)}</td><td>${esc(TYPE_NAME[h.file_type] || h.file_type || '—')}</td><td class="r">${h.file_type==='reset' || h.file_type==='undo' ? '—' : fmt(h.record_count)}</td><td style="font-size:11.5px;color:#64748b">${esc(h.uploaded_by || '—')}</td></tr>`;
+    return `<tr><td style="white-space:nowrap">${when}</td><td class="cat">${esc(name)}</td><td>${esc(TYPE_NAME[h.file_type] || h.file_type || '—')}</td><td class="r">${h.file_type==='reset' || h.file_type==='undo' ? '—' : fmt(h.record_count)}</td><td style="font-size:12px;color:#64748b">${esc(h.uploaded_by || '—')}</td></tr>`;
   }).join('') : '<tr><td colspan="5" class="empty">이력이 없습니다.</td></tr>';
 }
 
@@ -990,10 +1006,11 @@ async function saveHistory(row) {
 // 처음 올린 달이면 되돌린 뒤 그 달은 비게 됩니다. 이 화면을 새로고침하면 되돌릴 수 없습니다.
 let lastUpload = null;
 const stripMeta = rows => rows.map(({ id, created_at, ...rest }) => rest);
-async function insertChunks(table, rows, size) {
+// v3.5: 업로드(syncFiles)와 되돌리기가 함께 씀 — 예전엔 업로드 쪽에 같은 반복문이 세 번 따로 있었음
+async function insertChunks(table, rows, size, label = '복구') {
   for (let i = 0; i < rows.length; i += size) {
     const { error } = await sb.from(table).insert(rows.slice(i, i + size));
-    if (error) throw new Error(`${table} 복구 실패: ${error.message}`);
+    if (error) throw new Error(`${label} 실패(${table} ${i + 1}~${Math.min(i + size, rows.length)}번째 행): ${error.message}`);
   }
 }
 async function undoLastUpload() {
@@ -1005,7 +1022,8 @@ async function undoLastUpload() {
   try {
     for (const f of [...lastUpload.files].reverse()) { // 나중에 올린 것부터 되돌려야 겹친 범위도 정확히 복구
       if (f.type === 'category_sales') {
-        await sb.from('m4_item_sales').delete().eq('year_month', f.yearMonth);
+        const di = await sb.from('m4_item_sales').delete().eq('year_month', f.yearMonth);
+        if (di.error) throw new Error(di.error.message); // v3.5: 예전엔 이 오류를 무시하고 계속 진행
         const d = await sb.from('m4_category_sales').delete().eq('year_month', f.yearMonth);
         if (d.error) throw new Error(d.error.message);
         await insertChunks('m4_category_sales', stripMeta(f.prevCat), 50);
@@ -1034,24 +1052,42 @@ function expectedLatestMonth(today = new Date()) {
   while (m <= 0) { m += 12; y--; }
   return `${y}-${pad2(m)}`;
 }
+// v3.6: 업로드 기간(매월 1~7일)에는 업로드 권한자에게 '지난달 파일 올릴 차례'를 D-day·빠진 파일과 함께 알려줍니다.
+// (예전엔 이 기간에 지난달 파일이 없어도 '✓ 데이터 최신'만 떠서, 8일이 돼서야 경고가 나왔음)
 async function renderFreshness() {
   const box = byId('home-fresh');
   const [cats, waste] = await Promise.all([allCatSales(), allWasteLite()]);
   const salesLast = cats.reduce((a, r) => r.year_month > a ? r.year_month : a, '');
   const wasteLastDate = waste.reduce((a, r) => r.confirmed_date && String(r.confirmed_date).substring(0,10) > a ? String(r.confirmed_date).substring(0,10) : a, '');
   const wasteLast = wasteLastDate.substring(0,7);
+  const today = new Date();
+  const canUpload = ['admin', 'staff'].includes(CURRENT_ROLE);
+  const upBtn = canUpload ? `<button class="fresh-btn" onclick="switchTab('upload')">데이터 올리기</button>` : '';
+  if (canUpload && today.getDate() <= 7) {
+    const due = prevMonthOf(currentYm(today)); // 이번 업로드 기간에 올릴 달
+    const hasS = cats.some(r => r.year_month === due);
+    const hasW = waste.some(r => r.confirmed_date && String(r.confirmed_date).startsWith(due));
+    const label = `${Number(due.slice(5))}월`;
+    box.style.display = 'block';
+    if (hasS && hasW) { box.className = 'fresh ok'; box.innerHTML = `✓ ${label} 파일 완료 — 매출 · 폐기 모두 올라와 있습니다.`; return; }
+    const left = 7 - today.getDate();
+    const pill = (ok, t) => `<span class="fresh-pill ${ok ? 'ok' : 'no'}">${t} ${ok ? '있음' : '없음'}</span>`;
+    box.className = 'fresh warn';
+    box.innerHTML = `<div class="fresh-row"><span>📌 <b>${label} 파일 올릴 기간이에요</b> · ${today.getMonth() + 1}/7까지 (${left ? `D-${left}` : '오늘까지'})</span>${pill(hasS, '매출')}${pill(hasW, '폐기')}${upBtn}</div>`;
+    return;
+  }
   if (!salesLast && !wasteLast) { box.style.display = 'none'; return; }
   const exp = expectedLatestMonth();
   const late = [];
-  if (!salesLast || salesLast < exp) late.push(`매출(분류별이익현황)이 <b>${salesLast || '없음'}</b>까지`);
-  if (!wasteLast || wasteLast < exp) late.push(`폐기(분류별내역)가 <b>${wasteLast || '없음'}</b>까지`);
+  if (!salesLast || salesLast < exp) late.push(`매출(분류별이익현황)이 <b>${esc(salesLast || '없음')}</b>까지`);
+  if (!wasteLast || wasteLast < exp) late.push(`폐기(분류별내역)가 <b>${esc(wasteLast || '없음')}</b>까지`);
   box.style.display = 'block';
   if (late.length) {
     box.className = 'fresh warn';
-    box.innerHTML = `⚠️ 데이터가 밀려 있습니다 — ${late.join(', ')}만 올라와 있습니다. <b>${exp}</b> 파일을 <b>📂 데이터 올리기</b>에서 올려주세요.`;
+    box.innerHTML = `<div class="fresh-row"><span>⚠️ 데이터가 밀려 있습니다 — ${late.join(', ')}만 올라와 있습니다. <b>${exp}</b> 파일을 <b>📂 데이터 올리기</b>에서 올려주세요.</span>${upBtn}</div>`;
   } else {
     box.className = 'fresh ok';
-    box.innerHTML = `✓ 데이터 최신 — 매출 ${salesLast} · 폐기 ${wasteLastDate.substring(5).replace('-','/')}까지 올라와 있습니다.`;
+    box.innerHTML = `✓ 데이터 최신 — 매출 ${esc(salesLast)} · 폐기 ${wasteLastDate.substring(5).replace('-','/')}까지 올라와 있습니다.`;
   }
 }
 
@@ -1061,8 +1097,8 @@ async function fillReportMonths() {
   const fs = byId('report-from-sel'), ts = byId('report-to-sel'); if (!fs || !ts) return;
   const months = (await fetchSalesMonths()).slice().reverse(); // 오래된 달 → 최신 달
   const opt = (sel, def) => { const cur = sel.value; sel.innerHTML = months.length ? months.map(m => `<option value="${m}">${m}</option>`).join('') : '<option value="">매출 데이터 없음</option>'; sel.value = months.includes(cur) ? cur : def; };
-  const last = months[months.length - 1] || '';
-  opt(fs, last); opt(ts, last); // 기본: 가장 최근 한 달
+  const def = months.includes(GM.month) ? GM.month : (months[months.length - 1] || '');
+  opt(fs, def); opt(ts, def); // 기본: 기준 월 한 달
 }
 // PDF로 저장할 때 기본 파일 이름이 "A1_종합보고서_2026-08"(기간이면 2026-01_2026-05)이 되도록 잠시 문서 제목을 바꿈
 let reportYm = '';
@@ -1152,7 +1188,7 @@ function wasteDayChartConfig(r) {
     options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => {
         const k = r.order[c.dataIndex]; const a = r.g[k] || { days: 0, cost: 0, n: 0 };
         return ` 하루 평균 ${fmt(Math.round(r.avg(k)))}원 · ${a.days}일 · 합계 ${fmt(a.cost)}원 (${a.n}건)`; } } } },
-      scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => fmt(v) + '원' } } } } };
+      scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, callback: v => fmt(v) + '원' } } } } };
 }
 
 function renderWasteDayAnalysis() {
@@ -1167,7 +1203,7 @@ function renderWasteDayAnalysis() {
   if (wasteDayChart) wasteDayChart.destroy();
   wasteDayChart = new Chart(byId('waste-day-chart').getContext('2d'), cfg);
   byId('waste-day-tbody').innerHTML = wasteDayRowsHTML(r);
-  byId('waste-day-sub').textContent = `${months.length === 1 ? months[0] : `${months[0]} ~ ${months[months.length-1]}`} · 폐기만(점내용도 제외) · 원가 기준 · ${shift ? '팔지 못한 날(폐기일 하루 전) 기준' : '폐기한 날 기준'}`;
+  byId('waste-day-sub').textContent = `올라온 전체 달(${months.length === 1 ? months[0] : `${months[0]} ~ ${months[months.length-1]}`}) 기준 · 기준 월과 무관 · 폐기만(점내용도 제외) · 원가 기준 · ${shift ? '팔지 못한 날(폐기일 하루 전) 기준' : '폐기한 날 기준'}`;
   byId('waste-day-note').innerHTML =
     `하루 평균 = 그 요일(또는 공휴일)의 폐기원가 합 ÷ 기간 안의 그 날 수. 폐기가 없던 날도 하루로 셉니다. ` +
     `폐기일은 '안 팔린 날'이 아니라 유통기한이 지나 처리한 날이어서, 도시락·김밥처럼 하루 뒤에 버리는 상품은 <b>팔지 못한 날 기준</b>으로 보는 게 발주 판단에 맞습니다. ` +
@@ -1223,7 +1259,7 @@ async function fetchItemPeriodData(pMonths, prevMonths, hasPrev) {
   const waste = new Map();
   for (const w of wasteAll) {
     if (w.type !== '폐기') continue;
-    const key = w.plu_code ? String(w.plu_code).trim() : `NAME:${w.item_name}`;
+    const key = w.plu_code ? String(w.plu_code).trim() : nameKey(w.item_name);
     const acc = waste.get(key) || { qty:0, amt:0, name:w.item_name, cat3:w.category };
     acc.qty += Number(w.quantity) || 0; acc.amt += Number(w.amount) || 0; waste.set(key, acc);
   }
@@ -1289,8 +1325,8 @@ async function buildReport(from, to) {
   const qDown = sold.filter(r => r.diffQty != null && r.diffQty < 0).sort((a,b) => a.diffQty - b.diffQty).slice(0, 5);
   // 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 봅니다.
   // (예: 7~8월 보고서인데 폐기가 7월만 있으면, 7월 폐기를 7~8월 두 달 판매와 비교하게 되어 비율이 낮게 왜곡됨)
-  const wMonthAll = new Set((await allWasteLite()).filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
-  const matched = pMonths.filter(m => salesMonthSet.has(m) && wMonthAll.has(m));
+  const wMonthSet = new Set((await allWasteLite()).filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
+  const matched = pMonths.filter(m => salesMonthSet.has(m) && wMonthSet.has(m));
   const matchData = matched.length === N ? itemData : (matched.length ? await fetchItemPeriodData(matched, [], false) : null);
   const matchNote = matched.length && matched.length < N ? ` (매출·폐기 파일이 모두 있는 ${matched.join(', ')} 기준)` : '';
   const wvs = matchData ? wasteVsSalesTop(matchData.rows, 10) : [];
@@ -1346,8 +1382,6 @@ async function buildReport(from, to) {
     missingSales.length ? `<span style="color:#b91c1c">매출 파일이 없는 달: ${missingSales.join(', ')} — 합계에서 빠져 있습니다.</span>` : '',
   ].filter(Boolean);
 
-  const wasteLite = await allWasteLite();
-  const wMonthSet = new Set(wasteLite.filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
   const statusMonths = single ? [...new Set([...trend.months, ...wMonthSet])].filter(m => m <= to).sort().slice(-6) : pMonths;
   const statusRows = statusMonths.map(m => `<tr><td>${m}</td><td>${salesMonthSet.has(m) ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td><td>${wMonthSet.has(m) ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td></tr>`).join('');
 
@@ -1428,42 +1462,87 @@ async function buildReport(from, to) {
 // 순서대로 await만 하다가 중간에 하나가 실패하면 그 뒤 탭들이 전부
 // 갱신되지 않은 채 멈춰서, 화면을 이동해도 옛날 값이 남아있고
 // 새로고침을 해야만 맞는 값이 보이는 문제가 있었습니다.
+// ── 기준 월 (홈·매출·품목·폐기 공통) ─────────────────────────────────
+// 예전엔 탭마다 월 선택이 따로 있어서, 매출 탭에서 5월을 보다가 폐기 탭으로 가면
+// 조용히 8월이 나왔습니다. 이제 화면 위 '기준 월' 하나를 모든 탭이 함께 씁니다.
+// 그 달 파일이 없으면 다른 달로 바꿔 보여주지 않고 '파일 없음'으로 표시합니다.
+// GM = 기준 월 상태: month(보는 달), userChosen(사용자가 직접 골랐는지), salesMonths·wasteMonths(파일이 있는 달)
+let GM = { month: '', userChosen: false, salesMonths: new Set(), wasteMonths: new Set() };
+async function loadGlobalMonths() {
+  const [cats, waste] = await Promise.all([allCatSales(), allWasteLite()]);
+  const sm = new Set(cats.map(r => r.year_month));
+  const wm = new Set(waste.filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
+  const months = [...new Set([...sm, ...wm])].sort().reverse();
+  const latestSales = [...sm].sort().pop() || '';
+  let m = GM.month;
+  if (!GM.userChosen || !months.includes(m)) m = latestSales || months[0] || '';
+  GM.month = m; GM.salesMonths = sm; GM.wasteMonths = wm;
+  const sel = byId('gm-sel');
+  sel.innerHTML = months.length ? months.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('') : '<option value="">데이터 없음</option>';
+  sel.value = m;
+  renderGmStatus();
+}
+function renderGmStatus() {
+  const m = GM.month, box = byId('gm-status');
+  if (!m) { box.innerHTML = ''; return; }
+  const chip = (ok, label) => `<span class="gm-chip ${ok ? 'ok' : 'no'}">${label} ${ok ? '있음' : '파일 없음'}</span>`;
+  box.innerHTML = chip(GM.salesMonths.has(m), '매출') + ' ' + chip(GM.wasteMonths.has(m), '폐기');
+}
+async function onGlobalMonthChange(m) {
+  GM.userChosen = true; GM.month = m;
+  renderGmStatus();
+  syncReportToGm();
+  const run = (label, fn) => Promise.resolve().then(fn).catch(e => console.error(`[A1] 기준 월 변경 실패 (${label}):`, e));
+  await Promise.all([run('홈', loadHomeSummary), run('월별 추이', loadMonthlyTrend), run('매출', loadSalesData), run('품목', loadItemData), run('폐기', loadWasteData)]);
+}
+// 보고서 기간 기본값도 기준 월을 따라갑니다 (그 뒤 직접 바꿀 수 있음)
+function syncReportToGm() {
+  const f = byId('report-from-sel'), t = byId('report-to-sel');
+  if (!f || !t || !GM.month || !GM.salesMonths.has(GM.month)) return;
+  f.value = GM.month; t.value = GM.month;
+}
+
 async function refreshAllData() {
   qCache = new Map(); // 업로드·삭제 직후 최신 데이터를 받도록 공유 캐시 비움
   const run = (label, fn) => Promise.resolve().then(fn).catch(e => console.error(`[A1] 새로고침 실패 (${label}):`, e));
-  // 처음 보이는 홈을 먼저 채우고(나머지 탭과 같은 데이터를 캐시로 공유),
-  // 나머지 탭은 동시에 불러옵니다 — 예전엔 7단계를 하나씩 기다려서 홈이 맨 마지막에 떴습니다.
   const t0 = performance.now();
+  // 기준 월을 먼저 정합니다 — 홈이 어차피 쓰는 두 조회(매출·폐기 목록)를 캐시로 공유해 추가 대기는 거의 없습니다.
+  // 그다음 홈을 먼저 채우고 나머지 탭은 동시에 불러옵니다.
+  await run('기준 월', loadGlobalMonths);
   const home = run('홈 요약', loadHomeSummary);
   const rest = [
     run('월별 추이', loadMonthlyTrend),
     run('매출 데이터', loadSalesData),
     run('품목 분석', loadItemData),
-    run('폐기 월 목록', loadWasteMonthOptions),
+    run('폐기 현황', loadWasteData),
     run('업로드 현황', loadUploadStatus),
-    run('최근 폐기', loadRecentWaste),
     run('데이터 신선도', renderFreshness),
     run('리포트 월 목록', fillReportMonths),
     run('마지막 동기화', updateLastSync),
   ];
   if (CURRENT_ROLE === 'admin') rest.push(run('관리자 삭제 옵션', loadAdminDeleteOptions));
   await home;
-  console.log(`[A1] 홈 표시 ${Math.round(performance.now() - t0)}ms`);
+  dlog(`홈 표시 ${Math.round(performance.now() - t0)}ms`);
   await Promise.all(rest);
-  console.log(`[A1] 전체 새로고침 ${Math.round(performance.now() - t0)}ms`);
+  dlog(`전체 새로고침 ${Math.round(performance.now() - t0)}ms`);
 }
 
 window.onload = async () => {
-  const authed = await initAuth();
-  if (!authed) return;
+  try {
+    const authed = await initAuth();
+    if (!authed) return;
 
-  switchTab('home'); // 초기 화면 = 홈, 업로드 바 표시 상태 동기화
+    switchTab('home'); // 초기 화면 = 홈, 업로드 바 표시 상태 동기화
 
-  const now = new Date();
-  document.getElementById('period-input').value =
-    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  setupDrop();
-  await refreshAllData();
+    // (v3.6: '업로드 연월' 칸은 없앰 — 매출 파일의 저장할 달은 파일을 고를 때 파일마다 정함, 기본 지난달)
+    setupDrop();
+    await refreshAllData();
+  } catch (e) {
+    // v3.5: 네트워크·인증 오류로 첫 화면이 빈 채 멈추지 않도록 원인을 화면에 표시
+    console.error('[A1] 시작 실패:', e);
+    const box = byId('home-fresh');
+    if (box) { box.style.display = 'block'; box.className = 'fresh warn'; box.textContent = `대시보드를 불러오지 못했습니다: ${e.message || e} — 잠시 후 새로고침(Cmd+Shift+R)해 주세요.`; }
+  }
 };
 
 // ── 탭 전환 ──────────────────────────────────────────────────────
@@ -1473,6 +1552,8 @@ function switchTab(tab) {
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
   document.getElementById('tab-'+tab).classList.add('on');
+  const gm = document.getElementById('gm-bar'); // 기준 월은 홈·매출·품목·폐기에서만
+  if (gm) gm.classList.toggle('hide', !['home','sales','items','waste'].includes(tab));
 }
 
 // ── 파일 드롭 ────────────────────────────────────────────────────
@@ -1506,69 +1587,145 @@ function extractYearMonthFromFilename(name) {
   return null;
 }
 
-// 파일을 고르는 즉시 시트 이름만 읽어(빠름) 종류를 판정합니다.
-//  - 올릴 수 없는 파일(시계열·전체전표·대분류별 매출액 등)은 이 자리에서 ⛔ 표시 + 알림, 동기화 대상에서 제외
-//  - '업로드 연월'은 파일명에 연월이 없는 **매출** 파일이 있을 때만 요구
-//    (폐기 파일은 날짜가 행마다 들어 있어 필요 없음)
+// ── 데이터 올리기: 고르기 → 저장 미리보기 → 저장 전 확인 ─────────────────
+// v3.6: 파일을 고르는 즉시 내용까지 읽어 파일마다 '어느 달로 저장되는지'(매출)와 '며칠부터 며칠, 몇 줄'(폐기)을 보여주고,
+// 두 파일이 같은 달인지, 진행 중인 달·미래 달·같은 달 중복은 아닌지 동기화 전에 알려줍니다. 매출 파일은 합계 대조도 여기서 끝냅니다.
+// 파일 이름은 바꾸지 않아도 됩니다 — 매출 파일은 이름에 연월이 있으면 그 달, 없으면 지난달로 잡히고 파일마다 바꿀 수 있습니다.
+// (예전엔 종류만 보여주고, 이름에 연월이 없는 매출 파일은 '업로드 연월' 칸 하나로 달을 정했으며, 달 확인은 저장 뒤에야 가능했음)
+let pendingUploads = []; // 올릴 파일: { file, wb, type, ym, ymFrom, catCount, itemCount, waste }
+let uploadBlocked = [];  // 올릴 수 없는 파일: { file, reason }
+let uploadCheck = null;  // 저장 전 확인: { level: ok|info|warn|danger|block, msg, go }
+const currentYm = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+const defaultUploadMonth = () => prevMonthOf(currentYm()); // 월 1회(매월 1~7일) 지난달 파일을 올리므로
+
+// 고른 파일 하나를 미리 읽어 저장될 내용을 요약 (틀린 파일은 여기서 예외 → ⛔와 이유 표시)
+function previewFile(file, type, wb) {
+  if (type === 'category_sales') {
+    const fromName = extractYearMonthFromFilename(file.name);
+    const ym = fromName || defaultUploadMonth();
+    const recs = parseCategorySales(wb, ym); // 합계 행과 원 단위 대조까지
+    return { ym, ymFrom: fromName ? 'name' : 'default', catCount: recs.length, itemCount: (recs.items || []).length };
+  }
+  const recs = parseWasteDetail(wb);
+  const dates = recs.map(r => r.confirmed_date).sort();
+  if (!dates.length) throw new Error(recs.skippedNoDate
+    ? `확정일자가 있는 줄이 없습니다(날짜 빈 줄 ${recs.skippedNoDate}개). 전표가 확정된 뒤 다시 받아 올려주세요.`
+    : '폐기 내역 줄이 없습니다. e-store 분류별 내역에서 받은 원본인지 확인해주세요.');
+  return { waste: { from: dates[0], to: dates[dates.length - 1], rows: recs.length, noDate: recs.skippedNoDate || 0,
+                    months: [...new Set(dates.map(d => d.slice(0, 7)))] } };
+}
+
 let handleFilesSeq = 0;
 async function handleFiles(files) {
   const seq = ++handleFilesSeq;
-  const list = [...files];
-  const fl = document.getElementById('file-list');
-  const periodBox = document.getElementById('period-box');
-  const pi = document.getElementById('period-input');
-  const syncBtn = document.getElementById('sync-btn');
-
-  pendingFiles = [];
-  syncBtn.disabled = true;
-  fl.innerHTML = list.map(f=>`<span class="file-chip">⏳ ${esc(f.name)}</span>`).join('');
-  setStatus('파일 종류 확인 중...', 'loading');
-
-  const checks = [];
+  const list = [...files]; // 입력창을 비우기 전에 목록부터 복사
+  pendingUploads = []; uploadBlocked = [];
+  byId('file-list').innerHTML = list.map(f => `<div class="file-chip up-chip" data-name="${esc(f.name)}">⏳ ${esc(f.name)} — 읽는 중</div>`).join('');
+  renderUploadCheck();
+  setStatus('파일 확인 중...', 'loading');
+  const ok = [], bad = [];
   for (const f of list) {
-    let res;
-    try {
-      const wb = XLSX.read(await f.arrayBuffer(), {type:'array', bookSheets:true});
-      res = checkUploadable(wb.SheetNames);
-    } catch (e) {
-      res = { ok:false, type:null, reason:'엑셀 파일을 열 수 없습니다. e-store에서 받은 .xlsx 원본인지 확인해주세요.' };
-    }
-    checks.push({ file:f, ...res });
+    let wb;
+    try { wb = XLSX.read(await f.arrayBuffer(), {type:'array'}); } // cellDates 미사용 — 날짜는 excelToYmd()로 (시간대 오류 방지)
+    catch (e) { bad.push({ file: f, reason: '엑셀 파일을 열 수 없습니다. e-store에서 받은 .xlsx 원본인지 확인해주세요.' }); continue; }
+    const chk = checkUploadable(wb.SheetNames);
+    if (!chk.ok) { bad.push({ file: f, reason: chk.reason }); continue; }
+    try { ok.push({ file: f, wb, type: chk.type, ...previewFile(f, chk.type, wb) }); }
+    catch (e) { bad.push({ file: f, reason: e.message }); } // 합계 불일치·상품 줄 없음 등 파서 안내 문구 그대로
   }
   if (seq !== handleFilesSeq) return; // 확인하는 사이 파일을 다시 고른 경우 이전 결과는 버림
+  pendingUploads = ok; uploadBlocked = bad;
+  renderUploadChips();
+  renderUploadCheck();
+  if (bad.length) setStatus(`⛔ ${bad.length}개 파일은 올릴 수 없습니다 — 파일 아래 이유를 확인하세요${ok.length ? ` (나머지 ${ok.length}개는 올릴 수 있습니다)` : ''}`, 'err');
+  else if (ok.length) setStatus(`✔ ${ok.length}개 파일 확인됨 — 파일마다 저장될 달과 아래 확인 줄을 본 뒤 동기화하세요`, 'ok');
+  else setStatus('', 'hide');
+}
 
-  const valid = checks.filter(c => c.ok);
-  const blocked = checks.filter(c => !c.ok);
-  pendingFiles = valid.map(c => c.file);
+// 매출 파일의 '저장할 달' 선택지: 최근 24개월 (진행 중인 달·미래 달은 표시를 붙임)
+function monthOptions(sel) {
+  const cur = currentYm(), out = [];
+  for (let i = 0, m = cur; i < 24; i++, m = prevMonthOf(m)) out.push(m);
+  if (sel && !out.includes(sel)) out.push(sel);
+  return out.sort().reverse().map(m => `<option value="${m}"${m === sel ? ' selected' : ''}>${m}${m === cur ? ' (진행 중)' : m > cur ? ' (미래)' : ''}</option>`).join('');
+}
+// 파일마다 저장 미리보기 (data-i = 동기화 순번 — e-store 기본 이름이 같아도 칩을 구분)
+function renderUploadChips() {
+  const md = d => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const chip = (i, name, inner, cls = '') => `<div class="file-chip up-chip${cls}" data-i="${i}" data-name="${esc(name)}">${inner}</div>`;
+  byId('file-list').innerHTML = pendingUploads.map((u, i) => {
+    if (u.type === 'category_sales') {
+      const src = { name: '파일 이름에서 읽음', default: '이름에 연월이 없어 지난달로', user: '직접 고름' }[u.ymFrom];
+      const replace = GM.salesMonths.has(u.ym) ? ' · <span class="up-note">이미 있는 달 — 새 파일로 바뀝니다</span>' : '';
+      return chip(i, u.file.name, `<div class="up-name">📄 ${esc(u.file.name)}</div>
+        <div class="up-meta">매출·품목 → <select class="up-month" onchange="setUploadMonth(${i}, this.value)" aria-label="저장할 달">${monthOptions(u.ym)}</select> 로 저장 <span class="up-src">(${src})</span> · 대분류 ${u.catCount} · 품목 ${fmt(u.itemCount)} · 파일 합계와 일치 ✔${replace}</div>`);
+    }
+    const w = u.waste;
+    const replace = w.months.some(m => GM.wasteMonths.has(m)) ? ' · <span class="up-note">이미 있는 기간 — 새 파일로 바뀝니다</span>' : '';
+    return chip(i, u.file.name, `<div class="up-name">📄 ${esc(u.file.name)}</div>
+      <div class="up-meta">폐기 → <b>${md(w.from)} ~ ${md(w.to)}</b> (${w.months.join(', ')}) · ${fmt(w.rows)}줄${w.noDate ? ` · 확정일자 없는 ${w.noDate}줄은 빼고 저장` : ''}${replace}</div>`);
+  }).join('') + uploadBlocked.map((b, j) => chip(`x${j}`, b.file.name,
+    `<div class="up-name">⛔ ${esc(b.file.name)} <span class="up-bad">올릴 수 없음</span></div><div class="up-meta">${esc(b.reason)}</div>`, ' bad')).join('');
+}
+function setUploadMonth(i, v) {
+  const u = pendingUploads[i];
+  if (!u || !/^\d{4}-\d{2}$/.test(v)) return;
+  u.ym = v; u.ymFrom = 'user';
+  renderUploadChips(); renderUploadCheck();
+}
 
-  fl.innerHTML = checks.map(c => c.ok
-    ? `<span class="file-chip">📄 ${esc(c.file.name)}<span style="color:#94a3b8"> · ${TYPE_LABEL[c.type]}</span></span>`
-    : `<span class="file-chip" style="background:#fef2f2;color:#b91c1c" title="${esc(c.reason)}">⛔ ${esc(c.file.name)} (올릴 수 없음)</span>`
-  ).join('');
-
-  const undatedSales = valid.filter(c => c.type === 'category_sales' && !extractYearMonthFromFilename(c.file.name));
-  if (undatedSales.length) {
-    periodBox.style.display = 'flex';
-    pi.style.borderColor = '#f59e0b';
-  } else {
-    periodBox.style.display = 'none';
+// 저장 전 확인 — 막음(block) > 위험(danger: 진행 중인 달) > 주의(warn: 두 파일 달이 다름) > 정상(ok) / 참고(info: 한쪽 파일만)
+function uploadCheckState() {
+  if (!pendingUploads.length) return null;
+  const cur = currentYm();
+  const sales = pendingUploads.filter(u => u.type === 'category_sales').map(u => u.ym);
+  const sSet = [...new Set(sales)].sort();
+  const wSet = [...new Set(pendingUploads.filter(u => u.type === 'waste_detail').flatMap(u => u.waste.months))].sort();
+  const dups = [...new Set(sales.filter((m, i) => sales.indexOf(m) !== i))];
+  if (dups.length) return { level: 'block', msg: `같은 달(${dups.join(', ')})로 저장될 매출 파일이 여러 개예요. 파일마다 저장할 달을 다르게 골라주세요.` };
+  const future = [...new Set([...sSet, ...wSet])].filter(m => m > cur);
+  if (future.length) return { level: 'block', msg: `${future.join(', ')}는 아직 오지 않은 달이에요. 저장할 달을 다시 골라주세요.` };
+  if (sSet.includes(cur) || wSet.includes(cur))
+    return { level: 'danger', go: '그래도 저장', msg: `진행 중인 달(${cur}) 파일이에요. 반쪽 달이 한 달 전체처럼 저장돼 전월 대비·폐기율이 틀어져요. 지난달 파일인지 확인하세요.` };
+  if (sSet.length && wSet.length) {
+    if (sSet.join() !== wSet.join())
+      return { level: 'warn', go: '이대로 동기화', msg: `매출 ${sSet.join(', ')} · 폐기 ${wSet.join(', ')} — 달이 달라요. 폐기율과 판매 대비 폐기는 같은 달 두 파일이 모두 있어야 계산돼요.` };
+    return { level: 'ok', msg: sSet.length === 1 ? `두 파일 모두 ${sSet[0]} · 같은 달이에요` : `매출·폐기 모두 ${sSet[0]} ~ ${sSet[sSet.length - 1]} (${sSet.length}개월) · 달이 맞아요` };
   }
-
-  if (blocked.length) {
-    setStatus(`⛔ ${blocked.length}개 파일은 올릴 수 없습니다 — ${blocked.map(c => `${c.file.name}: ${c.reason}`).join(' / ')}`, 'err');
-    window.alert(`⛔ 올릴 수 없는 파일이 있습니다\n\n${blocked.map(c => `• ${c.file.name}\n  ${c.reason}`).join('\n\n')}${valid.length ? `\n\n나머지 ${valid.length}개 파일은 동기화할 수 있습니다.` : ''}`);
-  } else if (undatedSales.length > 1) {
-    setStatus(`⛔ 파일명에서 연월을 못 읽은 매출 파일이 ${undatedSales.length}개입니다 — '업로드 연월'은 한 달만 지정되므로 이대로 올리면 첫 파일만 저장되고 나머지는 거부됩니다. 파일명을 "2026년 8월 분류별이익현황"처럼 바꿔 주세요.`, 'err');
-  } else if (undatedSales.length) {
-    setStatus(`⚠️ 매출 파일 ${undatedSales.length}개는 파일명에 연월이 없습니다 — 파일명을 "2026년 8월 분류별이익현황"처럼 바꾸거나, 왼쪽 '업로드 연월'을 선택한 뒤 동기화하세요`, 'err');
-  } else if (valid.length) {
-    setStatus(`✔ ${valid.length}개 파일 확인됨 (${valid.map(c => TYPE_LABEL[c.type]).join(', ')}) — [동기화]를 누르세요`, 'ok');
-  }
-
-  syncBtn.disabled = pendingFiles.length === 0;
+  // 한 종류만 올리는 경우: 짝이 되는 파일이 이미 DB에 있으면 정상, 없으면 참고 안내
+  const months = sSet.length ? sSet : wSet;
+  const other = sSet.length ? '폐기 파일' : '매출 파일';
+  const has = sSet.length ? m => GM.wasteMonths.has(m) : m => GM.salesMonths.has(m);
+  if (months.every(has)) return { level: 'ok', msg: `${months.join(', ')} ${other}은 이미 올라와 있어요 · 같은 달끼리 맞아요` };
+  return { level: 'info', msg: `${months.filter(m => !has(m)).join(', ')} ${other}이 아직 없어요. 같이 올리면 폐기율과 판매 대비 폐기가 계산돼요.` };
+}
+function renderUploadCheck() {
+  const box = byId('up-check'), sync = byId('sync-btn'), re = byId('reselect-btn');
+  uploadCheck = uploadCheckState();
+  const st = uploadCheck;
+  if (!st) { box.style.display = 'none'; re.style.display = 'none'; sync.disabled = true; sync.textContent = '동기화'; sync.classList.remove('risky'); return; }
+  const ico = { ok: '✓', info: 'ℹ️', warn: '⚠️', danger: '⛔', block: '⛔' }[st.level];
+  box.className = `up-check ${st.level}`;
+  box.style.display = 'flex';
+  box.innerHTML = `<span>${ico}</span><span>${esc(st.msg)}</span>`;
+  const risky = st.level === 'warn' || st.level === 'danger';
+  sync.disabled = st.level === 'block';
+  sync.textContent = st.go || '동기화';
+  sync.classList.toggle('risky', risky);
+  re.style.display = risky || st.level === 'block' ? '' : 'none';
 }
 
 // ── 상태 메시지 ───────────────────────────────────────────────────
+// 업로드 칩 하나의 표시를 바꿉니다. 칩은 data-name(원래 파일 이름)으로 찾고, 넣는 내용은 호출부에서 esc() 처리합니다.
+// v3.5: 예전엔 '📄 파일명'을 정규식으로 찾아 바꿨는데, 찾을 때(이스케이프 전)와 칩(이스케이프 후) 글자가 달라
+// 파일명에 & < > 가 있으면 칩이 안 바뀌었고, 바꿔 넣는 파일명은 이스케이프하지 않아 HTML로 해석될 수 있었음
+// v3.6: 파일 이름 대신 동기화 순번(data-i)으로 찾음 — e-store 기본 이름은 달이 달라도 같아서, 여러 달을 한꺼번에 올리면 이름으로는 구분이 안 됨
+function markChip(idx, html) {
+  const fl = byId('file-list');
+  const chip = fl && [...fl.querySelectorAll('.file-chip')].find(el => el.dataset.i === String(idx));
+  if (chip) chip.innerHTML = html;
+}
+
 function setStatus(msg, cls='ok') {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = 'status '+cls;
@@ -1581,11 +1738,8 @@ function setStatus(msg, cls='ok') {
 function clearFileChips() {
   const fl = document.getElementById('file-list');
   if (fl) fl.innerHTML = '';
-  pendingFiles = [];
-  const syncBtn = document.getElementById('sync-btn');
-  if (syncBtn) syncBtn.disabled = true;
-  const periodBox = document.getElementById('period-box');
-  if (periodBox) periodBox.style.display = 'none';
+  pendingUploads = []; uploadBlocked = [];
+  if (byId('up-check')) renderUploadCheck(); // 확인 줄 닫고 동기화 버튼 초기화
 }
 
 // ── 지원 시트 이름 화이트리스트 ───────────────────────────────────
@@ -1601,7 +1755,6 @@ const EXPECTED_SHEET_NAMES = {
   category_sales: ['분류별이익현황', '분류별이익현황-비교점'],
   waste_detail: ['분류별내역'],
 };
-const TYPE_LABEL = { category_sales: '매출·품목', waste_detail: '폐기' };
 
 // ── 파일 타입 감지 ────────────────────────────────────────────────
 function detectType(wb) {
@@ -1727,13 +1880,13 @@ function parseCategorySales(wb, yearMonth) {
   if (totalIdx < 0) throw new Error('합계 행을 찾을 수 없습니다. 분류별이익현황 원본 파일인지 확인해주세요.');
   const totalRow = rows[totalIdx];
 
-  // 금액 단위 자동 감지: 첫 데이터행에서 수량>0이면 단가 계산
-  // 단가 < 100 → 천원 단위로 판단 → ×1000 보정 (원 단위로 받기로 했으므로 경고도 띄움)
+  // 금액 단위 자동 감지: 합계 행의 평균 단가(금액 ÷ 수량)가 100 미만이면 천원 단위 파일로 보고 ×1000 보정
+  // (원 단위로 받기로 했으므로 경고도 띄움). v3.5: 예전엔 첫 대분류 한 줄로 판단해서, 그 분류 단가가
+  // 100원 미만이면 원 단위 파일을 천원으로 오판해 금액을 1,000배로 저장할 수 있었음.
+  // 매장 전체 평균 단가는 원 단위면 수천 원(8월 2,259원), 천원 단위면 한 자릿수라 경계가 뚜렷함.
   let unitMult = 1;
-  const firstData = rows[totalIdx + 1];
-  if (firstData && (Number(firstData[C.qty])||0) > 0 && (Number(firstData[C.amt])||0) > 0) {
-    if (firstData[C.amt] / firstData[C.qty] < 100) unitMult = 1000;
-  }
+  const tq = Number(totalRow[C.qty]) || 0, ta = Number(totalRow[C.amt]) || 0;
+  if (tq > 0 && ta > 0 && ta / tq < 100) unitMult = 1000;
 
   // 상품 행 = PLU코드가 있는 행. 코드 열이 없는 양식에 대비해 깊이 3(대/중/소분류 아래)도 상품으로 봅니다.
   const isItem = (r, depth) => (C.plu >= 0 && r[C.plu] != null && String(r[C.plu]).trim() !== '') || depth >= 3;
@@ -1777,7 +1930,7 @@ function parseCategorySales(wb, yearMonth) {
     const r = it.row;
     // 수량·금액·이익이 전부 비어 있는 상품 줄은 건너뜀 (8월 파일에 5개 — 판매 없음)
     if (!Number(r[C.qty]) && !Number(r[C.amt]) && !Number(r[C.profit])) continue;
-    const plu = C.plu >= 0 && r[C.plu] != null && String(r[C.plu]).trim() !== '' ? String(r[C.plu]).trim() : `NAME:${it.name}`;
+    const plu = C.plu >= 0 && r[C.plu] != null && String(r[C.plu]).trim() !== '' ? String(r[C.plu]).trim() : nameKey(it.name);
     const cur = byPlu.get(plu);
     const amount = won(r[C.amt]), profit = won(r[C.profit]), qty = Math.round(Number(r[C.qty]) || 0);
     if (cur) { cur.quantity += qty; cur.amount += amount; cur.profit += profit; cur.profit_rate = cur.amount ? Math.round(cur.profit / cur.amount * 1000) / 10 : 0; continue; }
@@ -1794,64 +1947,8 @@ function parseCategorySales(wb, yearMonth) {
   return records;
 }
 
-// ── 시계열-일 파싱 ────────────────────────────────────────────────
-function parseItemDaily(wb) {
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-  const headerRow = rows[3] || [];
-  const dateRow = rows[4] || [];
-  // 연월 헤더(예: '2026-05'). 셀이 날짜 형식이면 시리얼 숫자로 들어오므로 변환
-  const ymRaw = headerRow[6];
-  const yearMonth = typeof ymRaw === 'number'
-    ? (excelToYmd(ymRaw) || '').substring(0,7)
-    : (ymRaw ? String(ymRaw).trim().substring(0,7) : null);
-  if (!yearMonth || !/^\d{4}-\d{2}$/.test(yearMonth)) {
-    throw new Error('시계열 파일에서 연월(예: 2026-05)을 읽지 못했습니다. 시계열-일 원본 파일인지 확인해주세요.');
-  }
-
-  const dates = [];
-  for (let c = 6; c < dateRow.length; c++) {
-    const v = dateRow[c];
-    if (v == null || v === '') continue;
-    // '05-01' 문자열이 정상. 날짜 형식 셀이면 시리얼 숫자 → 'MM-DD'로 변환
-    const mmdd = typeof v === 'number' ? (excelToYmd(v) || '').substring(5) : String(v).trim().slice(-5);
-    if (/^\d{2}-\d{2}$/.test(mmdd)) dates.push({col:c, date: yearMonth.substring(0,5) + mmdd});
-  }
-
-  // 첫 번째 데이터 행이 최상위 카테고리
-  const topCat = rows[5] && rows[5][0] ? String(rows[5][0]).trim() : null;
-
-  // 계층 복원: 대/중/소분류(깊이 0~2) 아래 깊이 3이 상품입니다. 예전에는
-  // 첫 두 줄만 건너뛰어서 '용기면(대)', '봉지면' 같은 소분류 소계 줄까지
-  // 품목으로 저장됐습니다(품목 합이 실제의 2배).
-  const { items, categories } = buildCategoryTree(rows, 5, 0, 2, (r, depth) => depth >= 3);
-  if (!items.length) throw new Error('시계열 파일에서 상품 행을 찾지 못했습니다. 대분류부터 펼쳐진 시계열-일 원본인지 확인해주세요.');
-  const itemSum = items.reduce((s, it) => s + (Number(it.row[2]) || 0), 0);
-  const topSum = categories.filter(c => c.depth === 0).reduce((s, c) => s + (Number(c.row[2]) || 0), 0);
-  assertTotalsMatch('시계열', [['매출 합계', itemSum, topSum]], 0.5);
-
-  const records = [];
-  for (const it of items) {
-    const r = it.row;
-    const name = it.name;
-
-    for (const {col, date} of dates) {
-      const qty = r[col];
-      if (qty && qty > 0) {
-        records.push({
-          year_month: yearMonth,
-          category: it.top || topCat, // 상품이 속한 대분류
-          item_name: name,
-          sale_date: date,
-          quantity: qty,
-        });
-      }
-    }
-  }
-  // 분류 이름 목록 — 동기화 시 예전에 품목으로 잘못 저장된 소계 행을 지우는 데 사용
-  records.categoryNames = categories.map(c => c.name);
-  return records;
-}
+// v3.5: 시계열(parseItemDaily)·폐기 전체전표(parseWaste) 파서와 그 전용 날짜 함수(excelToDateTimeIso) 삭제 —
+// 두 양식은 checkUploadable()에서 막혀 호출될 일이 없었음 (약 110줄)
 
 // ── 엑셀 날짜 → 문자열 변환 ───────────────────────────────────────
 // 예전에는 cellDates:true로 JS Date를 받아 toISOString()으로 잘랐는데,
@@ -1872,249 +1969,179 @@ function excelToYmd(v) {
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   return null;
 }
-// 등록일시처럼 시각까지 있는 값 → 한국 시간 기준 ISO 문자열
-// (Safari는 '2026-07-31 23:42:04' 형식을 new Date()로 못 읽어서 직접 파싱)
-function excelToDateTimeIso(v) {
-  if (v == null || v === '') return null;
-  if (typeof v === 'number') {
-    const p = XLSX.SSF.parse_date_code(v);
-    return p ? `${p.y}-${pad2(p.m)}-${pad2(p.d)}T${pad2(p.H)}:${pad2(p.M)}:${pad2(Math.floor(p.S))}+09:00` : null;
-  }
-  const m = String(v).trim().match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
-  if (!m) return null;
-  return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}T${pad2(m[4]||0)}:${m[5]||'00'}:${m[6]||'00'}+09:00`;
-}
+// 상품 코드가 없는 품목의 대체 키. plu_code 칸(VARCHAR 50)을 넘지 않게 자릅니다.
+// v3.5: 예전엔 이름이 45자를 넘으면 저장이 실패해 그 달 업로드 전체가 거부될 수 있었음 (현재 파일은 전 품목 코드 있음)
+const nameKey = name => `NAME:${name}`.slice(0, 50);
 
-// ── 분류별내역 파싱 (신규 폐기 포맷) ────────────────────────────
+// ── 분류별내역 파싱 (폐기) ─────────────────────────────────────────
 function parseWasteDetail(wb) {
   const ws = wb.Sheets['분류별내역'] || wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
   const records = [];
+  let noDate = 0;
   for (let i = 4; i < rows.length; i++) {
     const r = rows[i];
-    if (!r[5]) continue; // 상품명 없으면 skip
+    if (!r || !r[5]) continue; // 빈 줄, 상품명 없는 줄(합계 등)은 건너뜀. v3.5: 빈 줄(r 없음)에서 멈추지 않게
     const dateStr = excelToYmd(r[7]); // 확정일자
+    // v3.5: 확정일자가 없는 줄은 저장하지 않습니다 — 월별 화면 어디에도 안 나오고, 같은 파일을 다시 올려도
+    // 날짜 범위로 지우는 방식이라 지워지지 않고 계속 쌓이기 때문 (미확정 전표일 수 있음, 개수는 경고로 알림)
+    if (!dateStr) { noDate++; continue; }
     records.push({
-      slip_id:        r[3] ? String(r[3]) : null,
+      slip_id:        r[3] ? String(r[3]).trim() : null,
       category:       r[1] ? String(r[1]).trim() : null,
       type:           r[2] ? String(r[2]).trim() : null,
-      plu_code:       r[4] ? String(r[4]) : null,
-      item_name:      r[5] ? String(r[5]).trim() : null,
+      // v3.5: 매출 파일 쪽과 같게 공백 제거 — 품목 월별 추이는 상품 코드가 정확히 같아야 폐기가 잡힘
+      plu_code:       r[4] != null && String(r[4]).trim() !== '' ? String(r[4]).trim() : null,
+      item_name:      String(r[5]).trim(),
       confirmed_date: dateStr,
-      quantity:       r[8] || 0,
-      amount:         r[9] || 0,
+      quantity:       Math.round(Number(r[8]) || 0), // INTEGER 칸 — 문자열·소수가 와도 저장 오류 없게
+      amount:         Math.round(Number(r[9]) || 0), // BIGINT 칸
       reason:         r[10] ? String(r[10]).trim() : null,
     });
   }
+  records.skippedNoDate = noDate;
   return records;
-}
-
-// ── 폐기 파싱 (구형 전표목록/상품목록 포맷) ──────────────────────
-function parseWaste(wb) {
-  const slips = [], items = [];
-
-  // 전표목록
-  const ws1 = wb.Sheets['전표목록'] || wb.Sheets[wb.SheetNames[0]];
-  const r1 = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
-  for (let i = 4; i < r1.length; i++) {
-    const r = r1[i];
-    if (!r[4]) continue; // 전표번호 없으면 skip
-    slips.push({
-      slip_id: String(r[4]),
-      registered_at: excelToDateTimeIso(r[1]),
-      confirmed_date: excelToYmd(r[2]),
-      type: r[3] ? String(r[3]).trim() : null,
-      item_count: r[5]||0,
-      amount: r[6]||0,
-    });
-  }
-
-  // 상품목록
-  const ws2 = wb.Sheets['상품목록'] || wb.Sheets[wb.SheetNames[1]];
-  if (ws2) {
-    const r2 = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null});
-    for (let i = 4; i < r2.length; i++) {
-      const r = r2[i];
-      if (!r[2]) continue; // 전표번호 없으면 skip
-      items.push({
-        slip_id: String(r[2]),
-        plu_code: r[4] ? String(r[4]) : null,
-        item_name: r[5] ? String(r[5]).trim() : null,
-        purchase_price: r[6]||0,
-        quantity: r[7]||0,
-        amount: r[8]||0,
-        type: r[1] ? String(r[1]).trim() : null,
-      });
-    }
-  }
-
-  return {slips, items};
 }
 
 // ── 동기화 ────────────────────────────────────────────────────────
 async function syncFiles() {
-  if (pendingFiles.length === 0) return;
+  if (!pendingUploads.length) return;
+  // v3.6: 저장 전 확인에서 막힌 상태(같은 달 중복·미래 달)면 진행하지 않음 — 버튼도 꺼져 있지만 한 번 더 확인
+  if (uploadCheck && uploadCheck.level === 'block') { setStatus(`⛔ ${uploadCheck.msg}`, 'err'); return; }
   const btn = document.getElementById('sync-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>처리 중...';
-  setStatus('파일 처리 중...', 'loading');
+  byId('reselect-btn').style.display = 'none';
 
-  const fallbackYearMonth = document.getElementById('period-input').value;
-  const fl = document.getElementById('file-list');
   let totalRecords = 0;
-  const unitWarnings = []; // 천원 단위로 감지된 파일 (원 단위로 통일하기로 했으므로 예외 신호)
-  const fileErrors = []; // 파일별 실패 사유 — 마지막 완료 메시지에 절대 묻히지 않도록 별도 수집
-  // 이번 묶음에서 이미 저장한 매출 월 — 파일명에 연월이 없는 매출 파일 여러 개가 전부
-  // '업로드 연월' 한 달로 들어가 서로 덮어쓰는 사고를 막습니다 (예: 26년1월~8월이 전부 9월로 저장됨)
+  const unitWarnings = []; // 천원 단위로 감지된 파일 (원 단위로 받기로 했으므로 예외 신호)
+  const dataWarnings = []; // 저장은 했지만 일부 줄을 뺀 파일 (예: 확정일자 없는 폐기 줄)
+  const fileErrors = [];   // 파일별 실패 사유 — 마지막 완료 메시지에 묻히지 않도록 따로 모음
+  // 이번 묶음에서 이미 저장한 매출 월 — 같은 달 매출 파일 둘이 서로 덮어쓰지 않게 (저장 전 확인에서도 막음, 여기는 방어)
   const salesMonthsInBatch = new Map();
-  const thisUpload = []; // 되돌리기용: 파일마다 덮어쓰기 직전 데이터를 보관 (이 화면을 새로고침하기 전까지만 유효)
+  // 되돌리기용: 파일마다 '덮어쓰기 직전' 데이터를 보관합니다 (이 화면을 새로고침하기 전까지만 유효).
+  // v3.5: 지우기 '전에' 넣어 두므로 저장 도중 실패한 파일도 되돌릴 수 있습니다.
+  // (예전엔 성공한 파일만 보관해서, 중간에 실패하면 그 달이 비거나 일부만 남은 채 되돌릴 수 없었음.
+  //  Supabase REST는 여러 요청을 한 트랜잭션으로 묶을 수 없어서 지우기→넣기가 원자적이지 않음)
+  const thisUpload = [];
 
-  for (const file of pendingFiles) {
+  const jobs = pendingUploads;
+  for (const [idx, u] of jobs.entries()) {
+    const file = u.file;
+    setStatus(`파일 처리 중 (${idx + 1}/${jobs.length}) — ${file.name}`, 'loading');
     try {
-      // 재업로드 허용 (DELETE 후 INSERT라 중복 없음)
-      const buf = await file.arrayBuffer();
-      // cellDates를 쓰지 않습니다 — 날짜는 시리얼 숫자로 받아 excelToYmd()로 변환 (시간대 오류 방지)
-      const wb = XLSX.read(buf, {type:'array'});
+      const wb = u.wb; // v3.6: 파일을 고를 때 읽어 둔 것을 그대로 씀 (다시 읽지 않음)
       // 파일 선택 단계에서 이미 걸렀지만, DB에 쓰기 직전 한 번 더 확인합니다
       const check = checkUploadable(wb.SheetNames);
       if (!check.ok) {
         fileErrors.push(`${file.name}: ${check.reason}`);
-        setStatus(`${file.name}: ${check.reason}`, 'err');
-        fl.innerHTML = fl.innerHTML.replace(
-          new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
-          `⛔ ${file.name} (올릴 수 없음)`
-        );
+        markChip(idx, `⛔ ${esc(file.name)} (올릴 수 없음)`);
         continue;
       }
       const fileType = check.type;
-
       let count = 0;
-      let verifiedNote = ''; // 파일 자체 합계와 대조를 통과했으면 칩에 표시
+      let note = ''; // 칩에 붙일 확인 내용 (파일 합계와 대조를 통과했으면 표시)
+      let histName = file.name; // v3.6: 이력은 '파일 이름 · 저장한 달(기간)'으로 — e-store 기본 이름이 매달 같아도 덮어써지지 않게
 
       if (fileType === 'category_sales') {
-        // 파일별로 연월 개별 추출 (파일명 우선, 없으면 입력값)
-        const yearMonth = extractYearMonthFromFilename(file.name) || fallbackYearMonth;
-        if (!yearMonth) {
-          const msg = '연월을 알 수 없습니다. 파일명을 "2026년 8월 분류별이익현황"처럼 바꾸거나 업로드 연월을 선택하세요.';
-          fileErrors.push(`${file.name}: ${msg}`);
-          setStatus(`${file.name}: ${msg}`,'err');
-          fl.innerHTML = fl.innerHTML.replace(
-            new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
-            `❌ ${file.name} (연월 불명)`
-          );
-          continue;
-        }
+        const yearMonth = u.ym; // v3.6: 파일 이름에서 읽었거나(없으면 지난달) 화면에서 고른 달
         if (salesMonthsInBatch.has(yearMonth)) {
-          const msg = `"${salesMonthsInBatch.get(yearMonth)}"와 같은 ${yearMonth}로 저장될 파일입니다. 파일명에서 연월을 읽지 못해 '업로드 연월'로 들어가는 경우입니다. 파일명을 "2026년 8월 분류별이익현황"처럼 바꿔 다시 올려주세요. (이 파일은 저장하지 않았습니다)`;
-          fileErrors.push(`${file.name}: ${msg}`);
-          setStatus(`${file.name}: ${msg}`,'err');
-          fl.innerHTML = fl.innerHTML.replace(new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`), `❌ ${file.name} (연월 중복)`);
+          fileErrors.push(`${file.name}: "${salesMonthsInBatch.get(yearMonth)}"와 같은 ${yearMonth}로 저장될 파일입니다. 저장할 달을 바꿔 다시 올려주세요. (이 파일은 저장하지 않았습니다)`);
+          markChip(idx, `❌ ${esc(file.name)} (연월 중복)`);
           continue;
         }
         salesMonthsInBatch.set(yearMonth, file.name);
-        const records = parseCategorySales(wb, yearMonth);
-        // 원 단위로 통일하기로 했는데 천원 단위가 감지되면 POS 내보내기
-        // 설정 확인이 필요하다는 신호 — 값은 자동 보정하되 경고만 남김
+        const records = parseCategorySales(wb, yearMonth); // 파일 합계와 안 맞으면 여기서 예외 → 아무것도 지우지 않음
         if (records.unitMult === 1000) unitWarnings.push(file.name);
-        // 해당 연월의 대분류·품목을 지우고 다시 넣습니다 (같은 달을 다시 올려도 중복 없음)
         const items = records.items || [];
         const tableMissing = msg => /m4_item_sales/.test(msg) && /(does not exist|Could not find|schema cache)/i.test(msg);
-        // 되돌리기를 위해 지우기 전의 그 달 데이터를 보관
+        // ① 되돌리기용으로 그 달의 기존 데이터를 먼저 보관
         const prevCat = await fetchAllRows(() => sb.from('m4_category_sales').select('*').eq('year_month', yearMonth));
         const prevItems = await fetchAllRows(() => sb.from('m4_item_sales').select('*').eq('year_month', yearMonth)).catch(() => []);
+        thisUpload.push({ name:file.name, type:'category_sales', yearMonth, prevCat, prevItems });
+        // ② 그 달 대분류·품목을 지우고 다시 넣음 (같은 달을 다시 올려도 중복 없음)
         const itemDel = await sb.from('m4_item_sales').delete().eq('year_month', yearMonth);
         if (itemDel.error) {
           throw new Error(tableMissing(itemDel.error.message)
             ? '품목 테이블이 아직 없습니다. 관리자가 Supabase에서 "A1_품목테이블_추가.sql"을 먼저 한 번 실행해야 합니다. (이 파일은 저장하지 않았습니다)'
             : `품목 삭제 실패(${yearMonth}): ${itemDel.error.message}`);
         }
-        const delRes = await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
-        if (delRes.error) throw new Error(`삭제 실패(${yearMonth}): ${delRes.error.message}`);
-        for (let i=0; i<records.length; i+=50) {
-          const { error } = await sb.from('m4_category_sales').insert(records.slice(i,i+50));
-          if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+50,records.length)}번째 행): ${error.message}`);
-        }
-        // 품목 저장이 중간에 실패하면 그 달 대분류까지 지워서, 매출 탭과 품목 탭이
-        // 서로 다른 상태로 남지 않게 합니다 (올바른 파일로 다시 올리면 복구)
-        for (let i=0; i<items.length; i+=200) {
-          const { error } = await sb.from('m4_item_sales').insert(items.slice(i,i+200));
-          if (error) {
-            await sb.from('m4_item_sales').delete().eq('year_month', yearMonth);
-            await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
-            throw new Error(`품목 저장 실패(${i+1}~${Math.min(i+200,items.length)}번째) — ${yearMonth} 데이터는 저장하지 않았습니다: ${error.message}`);
-          }
+        const catDel = await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
+        if (catDel.error) throw new Error(`삭제 실패(${yearMonth}): ${catDel.error.message}`);
+        await insertChunks('m4_category_sales', records, 50, '저장');
+        try {
+          await insertChunks('m4_item_sales', items, 200, '품목 저장');
+        } catch (e) {
+          // 품목 저장이 중간에 실패하면 그 달 대분류까지 지워서, 매출 탭과 품목 탭이 서로 다른 상태로 남지 않게 함
+          await sb.from('m4_item_sales').delete().eq('year_month', yearMonth);
+          await sb.from('m4_category_sales').delete().eq('year_month', yearMonth);
+          throw new Error(`${e.message} — ${yearMonth} 데이터는 저장하지 않았습니다`);
         }
         count = records.length + items.length;
-        thisUpload.push({ name:file.name, type:'category_sales', yearMonth, prevCat, prevItems });
-        verifiedNote = `${yearMonth} · 대분류 ${records.length} · 품목 ${fmt(items.length)} · 파일 합계와 일치 ✔`;
+        note = `${yearMonth} · 대분류 ${records.length} · 품목 ${fmt(items.length)} · 파일 합계와 일치 ✔`;
+        histName = `${file.name} · ${yearMonth}`;
 
       } else if (fileType === 'waste_detail') {
         const records = parseWasteDetail(wb);
-        // 파일에 포함된 날짜 범위의 기존 데이터 삭제 후 재삽입 (중복 방지)
-        const dates = records.map(r=>r.confirmed_date).filter(Boolean).sort();
-        const prevWaste = dates.length ? await fetchAllRows(() => sb.from('m4_waste_items').select('*')
-          .gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1])) : [];
+        if (records.skippedNoDate) dataWarnings.push(`${file.name}: 확정일자가 없는 ${records.skippedNoDate}줄은 저장하지 않았습니다(미확정 전표일 수 있음 — 확정된 뒤 다시 받아 올리세요)`);
+        // 파일에 든 날짜 범위의 기존 데이터를 지우고 다시 넣음 (같은 기간을 다시 올려도 중복 없음)
+        const dates = records.map(r => r.confirmed_date).sort(); // 확정일자 없는 줄은 파서에서 이미 뺌
         if (dates.length) {
-          const delRes = await sb.from('m4_waste_items')
-            .delete().gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1]);
-          if (delRes.error) throw new Error(`삭제 실패: ${delRes.error.message}`);
-        }
-        for (let i=0; i<records.length; i+=100) {
-          const { error } = await sb.from('m4_waste_items').insert(records.slice(i,i+100));
-          if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+100,records.length)}번째 행): ${error.message}`);
+          const from = dates[0], to = dates[dates.length - 1];
+          const prevWaste = await fetchAllRows(() => sb.from('m4_waste_items').select('*').gte('confirmed_date', from).lte('confirmed_date', to));
+          thisUpload.push({ name:file.name, type:'waste_detail', from, to, prevWaste });
+          const del = await sb.from('m4_waste_items').delete().gte('confirmed_date', from).lte('confirmed_date', to);
+          if (del.error) throw new Error(`삭제 실패: ${del.error.message}`);
+          await insertChunks('m4_waste_items', records, 100, '저장');
+          note = `${from} ~ ${to} · ${fmt(records.length)}건`;
+          histName = `${file.name} · ${from}~${to}`;
         }
         count = records.length;
-        if (dates.length) thisUpload.push({ name:file.name, type:'waste_detail', from:dates[0], to:dates[dates.length-1], prevWaste });
-        if (dates.length) verifiedNote = `${dates[0]} ~ ${dates[dates.length-1]} · ${fmt(count)}건`;
       }
       // (시계열·전체전표는 checkUploadable에서 차단되어 여기까지 오지 않습니다)
 
       // 이력 저장 (재업로드 시 갱신) — 올린 사람도 기록
-      await saveHistory({ file_name: file.name, file_type: fileType, record_count: count, synced_at: new Date().toISOString() });
-
+      await saveHistory({ file_name: histName, file_type: fileType, record_count: count, synced_at: new Date().toISOString() });
       totalRecords += count;
-      fl.innerHTML = fl.innerHTML.replace(
-        new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
-        `✅ ${file.name} (${verifiedNote || `${fmt(count)}건`})`
-      );
-
-    } catch(e) {
-      console.error(e);
+      markChip(idx, `✅ ${esc(file.name)} (${esc(note || `${fmt(count)}건`)})`);
+    } catch (e) {
+      console.error('[A1] 동기화 실패:', file.name, e);
       fileErrors.push(`${file.name}: ${e.message}`);
-      setStatus(`${file.name} 처리 오류: ${e.message}`, 'err');
-      fl.innerHTML = fl.innerHTML.replace(
-        new RegExp(`📄 ${file.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`),
-        `❌ ${file.name} (실패)`
-      );
+      markChip(idx, `❌ ${esc(file.name)} (실패)`);
     }
   }
 
   btn.innerHTML = '동기화';
-  btn.disabled = false;
-  // 실패한 파일이 하나라도 있으면 '완료' 메시지가 그걸 덮어쓰지 않도록 최우선으로 표시
-  if (fileErrors.length) {
-    setStatus(`⚠️ ${totalRecords}건 저장됨, ${fileErrors.length}개 파일 실패 — ${fileErrors.join(' / ')}`, 'err');
-  } else if (unitWarnings.length) {
-    setStatus(`완료 — 총 ${totalRecords}건 저장됨 (금액은 자동 보정됐지만, ${unitWarnings.join(', ')} 파일이 천원 단위로 감지됐습니다. POS 내보내기 설정에서 금액 단위를 '원'으로 확인해주세요)`, 'err');
-  } else {
-    setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
-  }
-  pendingFiles = [];
+  pendingUploads = []; uploadBlocked = [];
+  renderUploadCheck(); // 확인 줄 닫기 (결과는 파일 칩과 상태 줄에 남음)
   lastUpload = thisUpload.length ? { at: new Date(), files: thisUpload } : null;
   const undoBtn = byId('undo-btn');
   if (undoBtn) undoBtn.style.display = lastUpload ? '' : 'none';
+  // 실패한 파일이 하나라도 있으면 '완료' 메시지가 그걸 덮어쓰지 않도록 최우선으로 표시
+  const warns = [
+    ...(unitWarnings.length ? [`금액은 자동 보정됐지만 ${unitWarnings.join(', ')} 파일이 천원 단위로 감지됐습니다 — e-store 내보내기의 금액 단위를 '원'으로 확인해주세요`] : []),
+    ...dataWarnings,
+  ];
+  if (fileErrors.length) {
+    setStatus(`⚠️ ${totalRecords}건 저장됨, ${fileErrors.length}개 파일 실패 — ${fileErrors.join(' / ')}`
+      + (lastUpload ? ' · [↩ 방금 업로드 되돌리기]로 올리기 전 상태로 돌릴 수 있습니다' : '')
+      + (warns.length ? ` / ${warns.join(' / ')}` : ''), 'err');
+  } else if (warns.length) {
+    setStatus(`완료 — 총 ${totalRecords}건 저장됨 (${warns.join(' / ')})`, 'err');
+  } else {
+    setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
+  }
 
-  // 데이터 새로고침 (관리자 탭의 "삭제할 월" 목록도 여기서 같이 갱신됩니다 —
-  // 예전에는 이게 빠져 있어서 업로드 직후 관리자 탭에서 방금 올린 파일이
-  // 안 보이고 새로고침을 해야만 나타나는 문제가 있었습니다)
+  // 데이터 새로고침 (관리자 탭의 "삭제할 월" 목록도 여기서 같이 갱신됩니다)
+  GM.userChosen = false; // 방금 올린 최신 달이 기준 월로 바로 보이도록
   await refreshAllData();
 }
 
 // ── 공통 데이터 헬퍼 ────────────────────────────────────────────────
 // 전체 행 조회 (1,000행 한도 대응)
 // Supabase(PostgREST)는 기본 설정에서 요청 1번에 최대 1,000행만 돌려주고
-// 넘치는 행은 오류 없이 잘라버립니다. 품목(시계열)은 한 분류·한 달만으로도
-// 744건이라 2개월만 쌓여도 넘기 때문에, 빈 페이지가 나올 때까지 나눠서
+// 넘치는 행은 오류 없이 잘라버립니다. 품목(m4_item_sales)은 한 달만 1,300줄 안팎이라
+// 한 번에 다 오지 않기 때문에, 빈 페이지가 나올 때까지 나눠서
 // 끝까지 불러옵니다. (서버 한도가 1,000이 아니어도 동작하도록 받은 행 수만큼 전진)
 // makeQuery는 호출할 때마다 새 쿼리를 만들어 반환해야 합니다.
 async function fetchAllRows(makeQuery) {
@@ -2154,7 +2181,7 @@ async function fetchMonthlyTrendData() {
   return { months: Object.keys(map).sort(), map };
 }
 
-function renderTrendChart(canvasId, months, map, existingChart) {
+function renderTrendChart(canvasId, months, map, existingChart, selected) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   if (existingChart) existingChart.destroy();
   return new Chart(ctx, {
@@ -2163,9 +2190,9 @@ function renderTrendChart(canvasId, months, map, existingChart) {
       labels: months,
       datasets: [
         {label:'매출', data: months.map(m=>map[m].amount), borderColor:'#4f46e5',
-         backgroundColor:'rgba(79,70,229,.08)', fill:true, tension:.3, pointRadius:5, pointHoverRadius:7},
+         backgroundColor:'rgba(79,70,229,.08)', fill:true, tension:.3, pointRadius: months.map(m => m === selected ? 8 : 4), pointHoverRadius:8},
         {label:'예상이익', data: months.map(m=>map[m].profit), borderColor:'#10b981',
-         backgroundColor:'rgba(16,185,129,.06)', fill:true, tension:.3, pointRadius:5, pointHoverRadius:7}
+         backgroundColor:'rgba(16,185,129,.06)', fill:true, tension:.3, pointRadius: months.map(m => m === selected ? 8 : 4), pointHoverRadius:8}
       ]
     },
     options: {
@@ -2176,48 +2203,10 @@ function renderTrendChart(canvasId, months, map, existingChart) {
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => (v/10000).toFixed(0)+'만' } }
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, callback: v => (v/10000).toFixed(0)+'만' } }
       }
     }
   });
-}
-
-// 최근 7일 폐기 (홈 요약 top3 + 폐기 탭 top5 공용). 데이터의 최신 확정일자
-// 기준 7일이며 오늘 날짜와 무관하게 동작합니다.
-async function fetchRecentWasteData() {
-  const {data: latest} = await sb.from('m4_waste_items')
-    .select('confirmed_date').not('confirmed_date','is',null)
-    .order('confirmed_date',{ascending:false}).limit(1);
-  if (!latest || !latest.length) return null;
-
-  const end = String(latest[0].confirmed_date).substring(0,10);
-  const start = new Date(new Date(end).getTime() - 6*86400000).toISOString().substring(0,10);
-
-  const list = await fetchAllRows(() => sb.from('m4_waste_items')
-    .select('item_name,category,quantity,amount,type')
-    .eq('type','폐기').gte('confirmed_date', start).lte('confirmed_date', end));
-
-  const map = {};
-  let total = 0;
-  for (const r of list) {
-    const k = r.item_name || '—';
-    if (!map[k]) map[k] = {name:r.item_name, cat:r.category, qty:0, amt:0};
-    map[k].qty += r.quantity||0;
-    map[k].amt += r.amount||0;
-    total += r.amount||0;
-  }
-  const ranked = Object.values(map).sort((a,b)=>b.amt-a.amt);
-  return { start, end, total, ranked };
-}
-
-function renderWasteListHTML(listId, ranked, limit, showQty) {
-  const top = ranked.slice(0, limit);
-  document.getElementById(listId).innerHTML = top.length ? top.map((r,i)=>`<li class="act-item">
-    <span class="act-rank">${i+1}</span>
-    <span class="act-name" title="${esc(r.name)}">${esc(r.name)}</span>
-    <span class="act-meta">${esc(r.cat||'')}${showQty ? ' · '+r.qty+'개' : ''}</span>
-    <span class="act-val">${fmt(r.amt)}원</span>
-  </li>`).join('') : '<li class="act-empty">해당 기간 폐기 없음</li>';
 }
 
 // ── 폐기율 ─────────────────────────────────────────────────────────
@@ -2273,7 +2262,7 @@ function renderWasteRateChart(months, rates, selected) {
       plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y == null ? '—' : c.parsed.y.toFixed(2) + '%'}` } } },
       scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v + '%' } } } }
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, callback: v => v + '%' } } } }
   });
 }
 
@@ -2283,18 +2272,15 @@ async function loadMonthlyTrend() {
   const card = document.getElementById('trend-month-card');
   if (months.length < 2) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  monthlyTrendChart = renderTrendChart('monthly-trend-chart', months, map, monthlyTrendChart);
+  monthlyTrendChart = renderTrendChart('monthly-trend-chart', months, map, monthlyTrendChart, GM.month);
 }
 
-// ── 매출 데이터 로드 ──────────────────────────────────────────────
-// 화면의 기준을 여기 한 곳에서 정합니다.
-//  - 처음 열면 업로드된 가장 최근 월을 보여줍니다. 여러 달 합산은 사용자가
-//    '전체 기간 (합산)'을 직접 고를 때만 (예전엔 기본이 전체 기간이라 KPI가 여러 달 합이었음)
+// ── 매출 데이터 로드 ───────────────────────────────────────────────
+// 화면 위 '기준 월' 한 달을 보여줍니다. 그 달 매출 파일이 없으면 다른 달로 바꾸지 않고 비워 둡니다.
 //  - 전월 대비는 대시보드에 저장된 바로 전 달 데이터로 직접 계산합니다.
 //    POS 파일의 '비교기간' 값은 내보내기 설정에 따라 비교 대상이 달라져서 쓰지 않습니다.
-//  - 전체 기간은 대분류별로 합산해 한 줄씩 보여줍니다 (예전엔 같은 분류가 달마다 중복 표시)
-let salesMonthUserChosen = false; // 사용자가 조회 기간을 직접 바꿨는지
-let salesView = { month:'', prevYm:null, hasPrev:false, monthsCount:0, prevTotal:null };
+//  - 여러 달 합산은 홈의 기간 보고서(예: 2026-01 ~ 2026-08)로 봅니다.
+let salesView = { month:'', has:false, prevYm:null, hasPrev:false, prevTotal:null };
 
 function prevMonthOf(ym) {
   const [y, m] = ym.split('-').map(Number);
@@ -2313,24 +2299,18 @@ function aggregateByCategory(rows) {
 }
 
 function salesPeriodLabel() {
-  return salesView.month ? salesView.month : `전체 기간 합산 (${salesView.monthsCount}개월)`;
+  return salesView.month || '—';
 }
 
 async function loadSalesData() {
-  const sel = document.getElementById('month-sel');
+  const month = GM.month;
   const all = await allCatSales();
-  const months = [...new Set(all.map(r => r.year_month))].sort().reverse();
-
-  // 선택값: 사용자가 고른 값이 아직 있으면 유지, 아니면(처음 열었거나 그 달이 삭제됨) 최신 월
-  let month = sel.value;
-  if (!salesMonthUserChosen || (month && !months.includes(month))) month = months[0] || '';
-  sel.innerHTML = '<option value="">전체 기간 (합산)</option>' +
-    months.map(m => `<option value="${m}"${m===month?' selected':''}>${m}</option>`).join('');
-  sel.value = month;
-
-  const curMap = aggregateByCategory(month ? all.filter(r => r.year_month === month) : all);
+  if (month !== GM.month) return; // 그 사이 기준 월이 바뀌었으면 이 결과는 버림
+  const months = new Set(all.map(r => r.year_month));
+  const has = !!month && months.has(month);
+  const curMap = aggregateByCategory(has ? all.filter(r => r.year_month === month) : []);
   const prevYm = month ? prevMonthOf(month) : null;
-  const hasPrev = !!(prevYm && months.includes(prevYm));
+  const hasPrev = has && months.has(prevYm);
   const prevMap = hasPrev ? aggregateByCategory(all.filter(r => r.year_month === prevYm)) : {};
 
   salesData = Object.values(curMap).map(c => {
@@ -2343,7 +2323,7 @@ async function loadSalesData() {
     };
   });
   salesView = {
-    month, prevYm, hasPrev, monthsCount: months.length,
+    month, has, prevYm, hasPrev,
     prevTotal: hasPrev ? Object.values(prevMap).reduce((s, c) => s + c.amount, 0) : null,
   };
 
@@ -2365,6 +2345,7 @@ function renderKPI() {
   if (!salesData.length) {
     ['k-amount','k-profit','k-rate','k-diff'].forEach(id => document.getElementById(id).textContent = '—');
     ['k-amount-c','k-profit-c','k-rate-c','k-diff-c'].forEach(id => setKpiNote(id, ''));
+    if (salesView.month) setKpiNote('k-amount-c', `${salesView.month} 매출 파일(분류별이익현황)이 없습니다`);
     return;
   }
   const total = salesData.reduce((s,r)=>s+r.amount,0);
@@ -2381,10 +2362,7 @@ function renderKPI() {
   setKpiNote('k-rate-c', `${basis} · 예상이익 ÷ 매출`);
 
   const kDiff = document.getElementById('k-diff');
-  if (!salesView.month) {
-    kDiff.textContent = '—';
-    setKpiNote('k-diff-c', '월을 하나 고르면 전월 대비가 표시됩니다');
-  } else if (!salesView.hasPrev) {
+  if (!salesView.hasPrev) { // (v3.5: '전체 기간' 선택이 없어져 월 미선택 분기는 도달 불가라 삭제)
     kDiff.textContent = '—';
     setKpiNote('k-diff-c', `비교할 전월(${salesView.prevYm}) 데이터가 없습니다`);
   } else {
@@ -2409,8 +2387,12 @@ async function ensureSalesDrillData() {
   salesDrill = { key, cur, prev, open: salesDrill.key === key ? salesDrill.open : new Set() };
 }
 async function toggleSalesDrill(pathJson) {
-  const btn = document.activeElement; // 로딩 중 표시용 아님 — 단순 토글
-  await ensureSalesDrillData();
+  try { await ensureSalesDrillData(); }
+  catch (e) { // v3.5: 예전엔 조회 실패가 처리되지 않은 오류로 끝나 화면에 아무 표시가 없었음
+    console.error('[A1] 펼쳐보기 실패:', e);
+    byId('sales-table-sub').textContent = `하위 분류를 불러오지 못했습니다: ${e.message}`;
+    return;
+  }
   if (salesDrill.open.has(pathJson)) {
     // 닫을 때 하위 단계도 같이 닫음
     for (const k of [...salesDrill.open]) if (k === pathJson || k.startsWith(pathJson.slice(0, -1) + ',')) salesDrill.open.delete(k);
@@ -2443,7 +2425,7 @@ function drillRowsHTML(level, parent) {
     const opened = path && salesDrill.open.has(JSON.stringify(path));
     const indent = level === 2 ? 22 : 44;
     const head = level === 2
-      ? `<td class="cat" style="padding-left:${indent}px;cursor:pointer" data-path="${pj}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#94a3b8">${opened ? '▼' : '▶'}</span> ${esc(c.name)}</td>`
+      ? `<td class="cat" style="padding-left:${indent}px;cursor:pointer" data-path="${pj}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#64748b">${opened ? '▼' : '▶'}</span> ${esc(c.name)}</td>`
       : `<td style="padding-left:${indent}px;color:#475569">· ${esc(c.name)}</td>`;
     let html = `<tr style="background:${level === 2 ? '#f8fafc' : '#fcfcfd'};font-size:12.5px">${head}
       <td class="r">${fmt(c.amount)}</td><td class="r">${fmt(c.profit)}</td><td class="r">${rate}%</td>
@@ -2465,11 +2447,11 @@ function renderSalesTable() {
   if (th) th.textContent = salesView.hasPrev ? `${salesView.prevYm} 매출` : '전월 매출';
   const sub = document.getElementById('sales-table-sub');
   if (sub) sub.textContent = `대분류 기준 · ${salesPeriodLabel()}` +
-    (!salesView.month ? ' · 전월 비교는 월을 고르면 표시' : (!salesView.hasPrev ? ` · 전월(${salesView.prevYm}) 데이터 없음` : ''));
+    (!salesView.has ? ' · 매출 파일 없음' : (!salesView.hasPrev ? ` · 전월(${salesView.prevYm}) 데이터 없음` : ''));
 
   const tbody = document.getElementById('sales-tbody');
   if (!sorted.length) {
-    tbody.innerHTML='<tr><td colspan="7" class="empty">데이터가 없습니다. 파일을 업로드하고 동기화하세요.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">${salesView.month ? `${esc(salesView.month)} 매출 파일(분류별이익현황)이 없습니다. 기준 월을 바꾸거나 📂 데이터 올리기에서 올려주세요.` : '데이터가 없습니다. 파일을 업로드하고 동기화하세요.'}</td></tr>`;
     return;
   }
   tbody.innerHTML = sorted.map(r=>{
@@ -2480,7 +2462,7 @@ function renderSalesTable() {
     const pj = JSON.stringify([r.category]);
     const opened = salesDrill.open.has(pj) && salesDrill.key === (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '');
     return `<tr>
-      <td class="cat" style="cursor:pointer" data-path="${esc(pj)}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#94a3b8">${opened ? '▼' : '▶'}</span> ${esc(r.category)}</td>
+      <td class="cat" style="cursor:pointer" data-path="${esc(pj)}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#64748b">${opened ? '▼' : '▶'}</span> ${esc(r.category)}</td>
       <td class="r">${fmt(r.amount)}</td>
       <td class="r">${fmt(r.profit)}</td>
       <td class="r">${r.profit_rate}%</td>
@@ -2494,7 +2476,7 @@ function renderSalesTable() {
 function renderCatChart() {
   const top = [...salesData].sort((a,b)=>b.amount-a.amount).slice(0,8);
   const sub = document.getElementById('cat-chart-sub');
-  if (sub) sub.textContent = !salesView.month ? `전체 기간 합산 (${salesView.monthsCount}개월)`
+  if (sub) sub.textContent = !salesView.has ? `${salesView.month || ''} 매출 파일 없음`
     : (salesView.hasPrev ? `${salesView.month} vs ${salesView.prevYm}` : `${salesView.month} (전월 데이터 없음)`);
   const datasets = [
     {label: salesPeriodLabel(), data:top.map(r=>r.amount), backgroundColor:'#4f46e5', borderRadius:4, barPercentage:.6},
@@ -2512,8 +2494,8 @@ function renderCatChart() {
     },
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>(v/10000).toFixed(0)+'만'}}}}
+      scales:{x:{grid:{display:false},ticks:{font:{size: 11}}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size: 11},callback:v=>(v/10000).toFixed(0)+'만'}}}}
   });
 }
 
@@ -2532,8 +2514,8 @@ function renderProfitChart() {
     },
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:30}},
-              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>v+'%'}}}}
+      scales:{x:{grid:{display:false},ticks:{font:{size: 11},maxRotation:30}},
+              y:{grid:{color:'#f1f5f9'},ticks:{font:{size: 11},callback:v=>v+'%'}}}}
   });
 }
 
@@ -2542,7 +2524,6 @@ function renderProfitChart() {
 //  - 한 파일에 매장 전체 품목(약 1,200~1,300개)과 매출·이익이 다 있고, 이미 매달 올리는 파일
 //  - 상품 코드(PLU)가 있어 폐기 파일(분류별내역)과 정확히 연결됨 (7월 실측: 폐기 50건 중 41건 연결)
 //  - 대신 날짜별 판매가 없어 '결품 의심'은 더 이상 제공하지 않습니다
-let itemMonthUserChosen = false;
 let itemView = { month:'', prevYm:null, hasPrev:false, hasWaste:false, rows:[] };
 
 // 매출 파일이 올라온 월 목록 (대분류 테이블이 가벼워서 여기서 뽑음 — 품목과 같은 파일에서 함께 저장됨)
@@ -2551,53 +2532,13 @@ async function fetchSalesMonths() {
   return [...new Set(rows.map(r => r.year_month))].sort().reverse();
 }
 
-// 한 달치 품목 판매 + 전월 판매 + 폐기를 상품 코드로 합친 결과 (품목 탭·홈 공용)
-async function fetchItemMonthData(month, months, opts = {}) {
-  const cur = await fetchAllRows(() => sb.from('m4_item_sales')
-    .select('plu_code,item_name,cat1,cat2,cat3,quantity,amount,profit,profit_rate').eq('year_month', month));
-  const prevYm = prevMonthOf(month);
-  const hasPrev = !opts.skipPrev && months.includes(prevYm);
-  const prev = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('plu_code,quantity').eq('year_month', prevYm)) : [];
-  const [ws, we] = monthRange(month);
-  const wasteAll = await fetchAllRows(() => sb.from('m4_waste_items')
-    .select('plu_code,item_name,category,quantity,amount,type').gte('confirmed_date', ws).lt('confirmed_date', we));
-  const hasWaste = wasteAll.length > 0;
-
-  const prevQty = new Map(prev.map(r => [r.plu_code, Number(r.quantity) || 0]));
-  const waste = new Map();
-  for (const w of wasteAll) {
-    if (w.type !== '폐기') continue; // 점내용도(종량제봉투 등)는 판매 대비 폐기와 무관
-    const key = w.plu_code ? String(w.plu_code).trim() : `NAME:${w.item_name}`;
-    const acc = waste.get(key) || { qty:0, amt:0, name:w.item_name, cat3:w.category };
-    acc.qty += Number(w.quantity) || 0;
-    acc.amt += Number(w.amount) || 0;
-    waste.set(key, acc);
-  }
-  // 소분류 → 대/중분류 (판매 0개라 매출 파일에 없는 폐기 품목의 분류를 채우는 용도)
-  const cat3Map = new Map();
-  for (const r of cur) if (r.cat3 && !cat3Map.has(r.cat3)) cat3Map.set(r.cat3, { cat1:r.cat1, cat2:r.cat2 });
-
-  const rows = cur.map(r => {
-    const w = waste.get(r.plu_code);
-    const pq = hasPrev ? (prevQty.has(r.plu_code) ? prevQty.get(r.plu_code) : 0) : null;
-    return { ...r, quantity:Number(r.quantity)||0, amount:Number(r.amount)||0, profit:Number(r.profit)||0,
-      profit_rate: r.profit_rate == null ? null : Number(r.profit_rate),
-      prevQty: pq, diffQty: pq == null ? null : (Number(r.quantity)||0) - pq,
-      isNew: hasPrev && !prevQty.has(r.plu_code),
-      wasteQty: w ? w.qty : 0, wasteAmt: w ? w.amt : 0, soldZero: false };
-  });
-  // 판매가 0개라 매출 파일에 없는데 폐기된 품목 — 그 자체로 발주 점검 신호
-  const soldPlus = new Set(cur.map(r => r.plu_code));
-  for (const [key, w] of waste) {
-    if (soldPlus.has(key)) continue;
-    const c = cat3Map.get(w.cat3) || {};
-    const pq = hasPrev ? (prevQty.get(key) ?? 0) : null;
-    rows.push({ plu_code:key, item_name:w.name, cat1:c.cat1||null, cat2:c.cat2||null, cat3:w.cat3||null,
-      quantity:0, amount:0, profit:0, profit_rate:null, prevQty:pq, diffQty: pq == null ? null : -pq,
-      isNew:false, wasteQty:w.qty, wasteAmt:w.amt, soldZero:true });
-  }
-  for (const r of rows) r.wasteRatio = r.wasteQty > 0 ? r.wasteQty / (r.quantity + r.wasteQty) : null;
-  return { month, prevYm, hasPrev, hasWaste, rows };
+// 한 달치 품목 판매 + 전월 판매 + 폐기를 상품 코드로 합친 결과 (품목 탭)
+// v3.5: 기간 버전(fetchItemPeriodData)과 거의 같은 코드가 두 벌이던 것을 하나로 — 한 달 = 기간 [month].
+// (이익율은 판매·이익 합계로 계산: 8월 1,307개·7월 1,211개 품목 모두 파일 값과 같음을 확인)
+async function fetchItemMonthData(month, months) {
+  const prevYm = prevMonthOf(month), hasPrev = months.includes(prevYm);
+  const d = await fetchItemPeriodData([month], hasPrev ? [prevYm] : [], hasPrev);
+  return { month, prevYm, hasPrev, hasWaste: d.hasWaste, rows: d.rows };
 }
 
 // 판매 대비 폐기 상위: 폐기가 판매 이상(비율 50% 이상)인 품목을 먼저, 그 안에서는 폐기 원가 큰 순.
@@ -2622,18 +2563,15 @@ function renderWasteVsSalesList(listId, top, hasWaste, hasSales = true) {
 }
 
 async function loadItemData() {
-  const sel = byId('item-month-sel');
+  const month = GM.month;
   const months = await fetchSalesMonths();
-  let month = sel.value;
-  if (!itemMonthUserChosen || !months.includes(month)) month = months[0] || '';
-  sel.innerHTML = months.length
-    ? months.map(m => `<option value="${m}"${m===month?' selected':''}>${m}</option>`).join('')
-    : '<option value="">월 선택</option>';
-  sel.value = month;
-
+  if (month !== GM.month) return;
   if (itemView.month !== month) itemCat3Filter = '';
-  itemView = month ? await fetchItemMonthData(month, months)
-                   : { month:'', prevYm:null, hasPrev:false, hasWaste:false, rows:[] };
+  const view = (month && months.includes(month))
+    ? await fetchItemMonthData(month, months)
+    : { month, prevYm:null, hasPrev:false, hasWaste:false, rows:[], noSales: !!month };
+  if (month !== GM.month) return;
+  itemView = view;
   fillItemCatOptions();
   renderItemTable();
 }
@@ -2662,6 +2600,13 @@ function itemWasteByCat3(rows) {
 }
 
 function renderItemWasteCard(rows) {
+  if (itemView.noSales) { // 기준 월 매출 파일이 없으면 판매 대비 폐기를 계산할 수 없음
+    byId('item-waste-sub').textContent = `${itemView.month} · 매출 파일이 없어 판매 대비 폐기를 계산할 수 없습니다`;
+    byId('iw-cat-tbody').innerHTML = '<tr><td colspan="8" class="empty">매출 파일(분류별이익현황)이 있어야 계산됩니다</td></tr>';
+    byId('item-waste-list').innerHTML = '<li class="act-empty">매출 파일(분류별이익현황)이 있어야 계산됩니다</li>';
+    byId('iw-more').innerHTML = '';
+    return;
+  }
   const c1 = byId('item-cat1-sel').value, c2 = byId('item-cat2-sel').value;
   const q = byId('item-search').value.trim();
   const scope = [c1, c2, itemCat3Filter].filter(Boolean).join(' › ') || '전체 분류';
@@ -2700,9 +2645,9 @@ function renderItemWasteCard(rows) {
       const ratio = a.wq / (a.sq + a.wq);
       const col = ratio >= 0.5 ? '#b91c1c' : ratio >= 0.2 ? '#c2410c' : '#475569';
       return `<tr style="cursor:pointer" data-c="${esc(a.cat3)}" onclick="setItemCat3(this.dataset.c)">
-        <td style="color:#94a3b8;font-size:11px">${i+1}</td>
+        <td style="color:#64748b;font-size:12px">${i+1}</td>
         <td class="cat">${esc(a.cat3)}</td>
-        <td style="font-size:11px;color:#64748b">${esc([a.cat1, a.cat2].filter(Boolean).join(' › ') || '—')}</td>
+        <td style="font-size:12px;color:#64748b">${esc([a.cat1, a.cat2].filter(Boolean).join(' › ') || '—')}</td>
         <td class="r">${fmt(a.sq)}</td><td class="r">${fmt(a.wq)}</td><td class="r">${fmt(a.wa)}원</td>
         <td class="r" style="color:${col};font-weight:600">${(ratio*100).toFixed(1)}%</td><td class="r">${fmt(a.n)}개</td></tr>`;
     }).join('');
@@ -2738,39 +2683,49 @@ function fillItemCat2Options() {
 function onItemCat1Change() { itemCat3Filter = ''; fillItemCat2Options(); renderItemTable(); }
 
 // 품목을 누르면 올라와 있는 모든 달의 판매수량·폐기수량을 나란히 보여줍니다
+// v3.5: 빠르게 여러 품목을 누르면 늦게 끝난 앞 요청이 뒤 품목 제목 아래 그래프를 덮어쓰던 문제 방지(순번 확인),
+//       서로 무관한 조회 3개를 동시에 실행, 실패 시 '불러오는 중'에 멈추지 않고 이유 표시
+let itemTrendSeq = 0;
 async function showItemMonthlyTrend(plu, name) {
+  const seq = ++itemTrendSeq;
   const card = byId('item-trend-card');
   card.style.display = 'block';
   byId('item-trend-title').textContent = `${name} — 월별 판매 · 폐기`;
   byId('item-trend-sub').textContent = '불러오는 중...';
-  const months = (await fetchSalesMonths()).slice().reverse();
   const byCode = !String(plu).startsWith('NAME:');
-  const sales = await fetchAllRows(() => byCode
-    ? sb.from('m4_item_sales').select('year_month,quantity,amount').eq('plu_code', plu)
-    : sb.from('m4_item_sales').select('year_month,quantity,amount').eq('item_name', name));
-  const waste = await fetchAllRows(() => (byCode
-    ? sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('plu_code', plu)
-    : sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('item_name', name)).eq('type', '폐기'));
-  const wasteMonthsSet = new Set();
-  const sq = {}, wq = {};
-  for (const r of sales) sq[r.year_month] = (sq[r.year_month] || 0) + (Number(r.quantity) || 0);
-  for (const w of waste) { const ym = String(w.confirmed_date || '').substring(0,7); if (!ym) continue; wasteMonthsSet.add(ym); wq[ym] = (wq[ym] || 0) + (Number(w.quantity) || 0); }
-  const labels = [...new Set([...months, ...wasteMonthsSet])].sort();
-  const totS = labels.reduce((a,m) => a + (sq[m] || 0), 0), totW = labels.reduce((a,m) => a + (wq[m] || 0), 0);
-  byId('item-trend-sub').textContent = `${labels[0] || ''} ~ ${labels[labels.length-1] || ''} · 판매 ${fmt(totS)}개 · 폐기 ${fmt(totW)}개 · 매출 파일이 없는 달은 판매가 0으로 보일 수 있습니다`;
-  const ctx = byId('item-trend-chart').getContext('2d');
-  if (itemTrendChart) itemTrendChart.destroy();
-  itemTrendChart = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [
-      { label: '판매수량', data: labels.map(m => sq[m] || 0), backgroundColor: '#4f46e5', borderRadius: 4, barPercentage: .7 },
-      { label: '폐기수량', data: labels.map(m => wq[m] || 0), backgroundColor: '#ef4444', borderRadius: 4, barPercentage: .7 },
-    ]},
-    options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
-      scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, precision: 0 } } } }
-  });
-  card.scrollIntoView && card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const [monthsDesc, sales, waste] = await Promise.all([
+      fetchSalesMonths(),
+      fetchAllRows(() => byCode
+        ? sb.from('m4_item_sales').select('year_month,quantity,amount').eq('plu_code', plu)
+        : sb.from('m4_item_sales').select('year_month,quantity,amount').eq('item_name', name)),
+      fetchAllRows(() => (byCode
+        ? sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('plu_code', plu)
+        : sb.from('m4_waste_items').select('confirmed_date,quantity,amount,type').eq('item_name', name)).eq('type', '폐기')),
+    ]);
+    if (seq !== itemTrendSeq) return; // 그 사이 다른 품목을 눌렀으면 이 결과는 버림
+    const sq = {}, wq = {};
+    for (const r of sales) sq[r.year_month] = (sq[r.year_month] || 0) + (Number(r.quantity) || 0);
+    for (const w of waste) { const ym = String(w.confirmed_date || '').substring(0,7); if (ym) wq[ym] = (wq[ym] || 0) + (Number(w.quantity) || 0); }
+    const labels = [...new Set([...monthsDesc, ...Object.keys(wq)])].sort();
+    const totS = labels.reduce((a,m) => a + (sq[m] || 0), 0), totW = labels.reduce((a,m) => a + (wq[m] || 0), 0);
+    byId('item-trend-sub').textContent = `${labels[0] || ''} ~ ${labels[labels.length-1] || ''} · 판매 ${fmt(totS)}개 · 폐기 ${fmt(totW)}개 · 매출 파일이 없는 달은 판매가 0으로 보일 수 있습니다`;
+    if (itemTrendChart) itemTrendChart.destroy();
+    itemTrendChart = new Chart(byId('item-trend-chart').getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: '판매수량', data: labels.map(m => sq[m] || 0), backgroundColor: '#4f46e5', borderRadius: 4, barPercentage: .7 },
+        { label: '폐기수량', data: labels.map(m => wq[m] || 0), backgroundColor: '#ef4444', borderRadius: 4, barPercentage: .7 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+        scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, precision: 0 } } } }
+    });
+    if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    console.error('[A1] 품목 추이 실패:', e);
+    if (seq === itemTrendSeq) byId('item-trend-sub').textContent = `불러오지 못했습니다: ${e.message}`;
+  }
 }
 
 function renderItemTable() {
@@ -2787,7 +2742,8 @@ function renderItemTable() {
   const LIMIT = 200; // 한 화면에 너무 많으면 느려져서 상위 200개만 (검색·분류로 좁히면 전부 볼 수 있음)
   byId('item-count').textContent = rows.length ? `${fmt(rows.length)}개 품목${rows.length > LIMIT ? ` · 상위 ${LIMIT}개 표시` : ''}` : '';
   byId('items-prev-th').textContent = itemView.hasPrev ? `${itemView.prevYm} 대비 수량` : '전월 대비 수량';
-  byId('items-sub').textContent = itemView.month
+  byId('items-sub').textContent = itemView.noSales ? `${itemView.month} · 매출 파일 없음`
+    : itemView.month
     ? `${itemView.month} · 분류별이익현황 상품 기준`
       + (itemView.hasPrev ? '' : ` · 전월(${itemView.prevYm}) 데이터 없음`)
       + (itemView.hasWaste ? ' · 폐기는 원가 기준' : ' · 이 달 폐기 파일 없음')
@@ -2795,6 +2751,7 @@ function renderItemTable() {
 
   const tbody = byId('items-tbody');
   if (!itemView.month) { tbody.innerHTML = '<tr><td colspan="9" class="empty">매출 파일(분류별이익현황)을 올리면 표시됩니다.</td></tr>'; return; }
+  if (itemView.noSales) { tbody.innerHTML = `<tr><td colspan="9" class="empty">${esc(itemView.month)} 매출 파일(분류별이익현황)이 없습니다. 기준 월을 바꾸거나 📂 데이터 올리기에서 올려주세요.</td></tr>`; return; }
   if (!itemView.rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">이 달 품목 데이터가 없습니다. 이 달 매출 파일을 다시 올리면 품목이 채워집니다.</td></tr>'; return; }
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">조건에 맞는 품목이 없습니다.</td></tr>'; return; }
 
@@ -2805,9 +2762,9 @@ function renderItemTable() {
     const waste = r.wasteQty > 0 ? `<span class="bdg bdg-dn">${fmt(r.wasteQty)}개</span> ${fmt(r.wasteAmt)}원` : (itemView.hasWaste ? '—' : '');
     const cat = [r.cat2, r.cat3].filter(Boolean).join(' › ');
     return `<tr style="cursor:pointer;${r.soldZero ? 'background:#fef2f2' : ''}" data-plu="${esc(r.plu_code)}" data-name="${esc(r.item_name)}" onclick="showItemMonthlyTrend(this.dataset.plu, this.dataset.name)">
-      <td style="color:#94a3b8;font-size:11px">${i+1}</td>
-      <td class="cat">${esc(r.item_name)}${r.soldZero ? ' <span style="font-size:11px;color:#b91c1c">(판매 없음)</span>' : ''}</td>
-      <td style="font-size:11px;color:#64748b">${esc(cat || '—')}</td>
+      <td style="color:#64748b;font-size:12px">${i+1}</td>
+      <td class="cat">${esc(r.item_name)}${r.soldZero ? ' <span style="font-size:12px;color:#b91c1c">(판매 없음)</span>' : ''}</td>
+      <td style="font-size:12px;color:#64748b">${esc(cat || '—')}</td>
       <td class="r">${fmt(r.quantity)}</td>
       <td class="r">${fmt(r.amount)}</td>
       <td class="r">${fmt(r.profit)}</td>
@@ -2818,255 +2775,241 @@ function renderItemTable() {
   }).join('');
 }
 
-// ── 폐기 데이터 ───────────────────────────────────────────────────
-// 매출 탭과 같은 규칙: 처음엔 최신 월, 사용자가 고른 월은 새로고침돼도 유지
-// (예전엔 업로드·삭제 후 목록을 다시 만들면서 선택이 '전체 기간'으로 조용히 풀렸음)
-let wasteMonthUserChosen = false;
-async function loadWasteMonthOptions() {
-  const data = await allWasteLite();
-  const months = [...new Set(data.filter(d=>d.confirmed_date).map(d=>String(d.confirmed_date).substring(0,7)))].sort().reverse();
-  const sel = document.getElementById('waste-month-sel');
-  let month = sel.value;
-  if (!wasteMonthUserChosen || (month && !months.includes(month))) month = months[0] || '';
-  sel.innerHTML = '<option value="">전체 기간 (합산)</option>'+months.map(m=>`<option value="${m}"${m===month?' selected':''}>${m}</option>`).join('');
-  sel.value = month;
-  wasteMonthsCount = months.length;
-  await loadWasteData();
+// ── 폐기 현황 ─────────────────────────────────────────────────────
+// 기준 월 한 달. 위 KPI는 폐기·점내용도를 각각 따로 보여주고,
+// 아래 그래프·표는 [폐기 | 점내용도] 중 고른 한 가지만 보여줍니다.
+// 예전엔 기본 보기가 '폐기 + 점내용도'라서 종량제봉투가 '소분류별 폐기금액'·'폐기 상위 품목'에
+// 폐기처럼 섞였고, '폐기만'을 고르면 점내용도 KPI가 0원, '점내용도만'을 고르면 폐기 KPI가 0원이 됐습니다.
+let wasteView = '폐기';
+let wasteMonthItems = [];
+function setWasteView(v) {
+  wasteView = v;
+  byId('wv-waste').classList.toggle('on', v === '폐기');
+  byId('wv-internal').classList.toggle('on', v !== '폐기');
+  renderWasteLists();
 }
-let wasteMonthsCount = 0;
-
 async function loadWasteData() {
-  const month = document.getElementById('waste-month-sel').value;
-  const type = document.getElementById('waste-type-sel').value;
-  const basis = (month || `전체 기간 합산 (${wasteMonthsCount}개월)`) + ' 기준';
+  const month = GM.month;
+  const hasFile = !!month && GM.wasteMonths.has(month);
+  const [rows, { months: rateMonths, rates }, allW] = await Promise.all([
+    hasFile ? fetchAllRows(() => { const [s, e] = monthRange(month); return sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date').gte('confirmed_date', s).lt('confirmed_date', e); }) : Promise.resolve([]),
+    fetchWasteRates(), allWasteLite()]);
+  if (month !== GM.month) return;
+  wasteMonthItems = rows;
 
-  const items = await fetchAllRows(() => {
-    let q = sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date');
-    if (type) q = q.eq('type', type);
-    if (month) { const [s, e] = monthRange(month); q = q.gte('confirmed_date', s).lt('confirmed_date', e); }
-    return q;
-  });
+  // KPI — 보기 선택과 무관하게 기준 월 전체 (폐기와 점내용도를 각각)
+  const wOnly = rows.filter(r => r.type === '폐기'), wInt = rows.filter(r => r.type !== '폐기');
+  const sumAmt = a => a.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  byId('w-total').textContent = hasFile ? fmt(sumAmt(wOnly)) + '원' : '—';
+  byId('w-count').textContent = hasFile ? fmt(wOnly.length) + '건' : '—';
+  byId('w-internal').textContent = hasFile ? fmt(sumAmt(wInt)) + '원' : '—';
+  setKpiNote('w-total-c', hasFile ? `${month} · 원가 기준 · 점내용도 제외` : month ? `${month} 폐기 파일(분류별내역)이 없습니다` : '폐기 파일(분류별내역)을 올리면 표시됩니다');
+  setKpiNote('w-count-c', hasFile ? `${month} · 폐기로 등록된 줄 수` : '');
+  setKpiNote('w-internal-c', hasFile ? `${month} · 종량제봉투 등 매장 사용분` : '');
 
-  // 집계
-  const map = {};
-  let totalW=0, totalI=0;
-  for (const r of items) {
-    const key = r.item_name||'—';
-    if (!map[key]) map[key]={name:r.item_name,category:r.category,qty:0,amt:0,type:r.type};
-    map[key].qty += r.quantity||0;
-    map[key].amt += r.amount||0;
-    if (r.type==='폐기') totalW+=r.amount||0;
-    else totalI+=r.amount||0;
-  }
-
-  const ranked = Object.values(map).sort((a,b)=>b.amt-a.amt).slice(0,30);
-
-  const hasData = items.length > 0;
-  document.getElementById('w-total').textContent = hasData ? fmt(totalW)+'원' : '—';
-  document.getElementById('w-internal').textContent = hasData ? fmt(totalI)+'원' : '—';
-  // '폐기 건수'는 라벨 그대로 폐기(type==='폐기')만 셈 — 점내용도 포함한
-  // 전체 레코드 수(items.length)를 쓰면 필터가 '전체'일 때 라벨과 값이 안 맞음
-  const wasteCount = items.filter(r=>r.type==='폐기').length;
-  document.getElementById('w-count').textContent = hasData ? fmt(wasteCount)+'건' : '—';
-  // 폐기율 = 폐기 원가 ÷ 매출원가 (같은 달 매출 파일이 있어야 계산)
-  const { months: rateMonths, rates } = await fetchWasteRates();
-  const r = month ? rates[month] : null;
+  // 폐기율 = 폐기 원가 ÷ 매출원가 (같은 달 매출·폐기 파일이 둘 다 있어야 계산)
+  const r = rates[month];
   renderWasteRateChart(rateMonths, rates, month);
-  document.getElementById('w-ratio').textContent = r ? fmtRate(r.rate) : '—';
-  // 폐기 금액은 판매가가 아니라 원가(매입가) 기준입니다 (실제 파일 대조로 확인)
-  setKpiNote('w-total-c', hasData ? `${basis} · 원가 기준` : '');
-  setKpiNote('w-count-c', hasData ? basis : '');
-  setKpiNote('w-internal-c', hasData ? `${basis} · 종량제봉투 등` : '');
-  setKpiNote('w-ratio-c', !month ? '월을 하나 고르면 표시됩니다'
-    : r ? `폐기원가 ${fmt(r.wasteCost)}원 ÷ 매출원가 ${fmt(Math.round(r.cogs))}원${baselineNote(rateMonths, rates, month)}`
-    : `${month} 매출 파일이 없어 계산할 수 없습니다`);
+  byId('w-ratio').textContent = r ? fmtRate(r.rate) : '—';
+  setKpiNote('w-ratio-c', r ? `폐기원가 ${fmt(r.wasteCost)}원 ÷ 매출원가 ${fmt(Math.round(r.cogs))}원${baselineNote(rateMonths, rates, month)}`
+    : !month ? '' : !hasFile ? `${month} 폐기 파일이 없어 계산할 수 없습니다`
+    : !GM.salesMonths.has(month) ? `${month} 매출 파일이 없어 계산할 수 없습니다` : '계산할 수 없습니다');
 
-  document.getElementById('waste-tbody').innerHTML = ranked.length ? ranked.map((r,i)=>`<tr>
-    <td style="color:#94a3b8;font-size:11px">${i+1}</td>
-    <td style="font-size:11px;color:#64748b">${esc(r.category||'—')}</td>
-    <td class="cat">${esc(r.name||'—')}</td>
-    <td class="r">${r.qty}</td>
-    <td class="r">${fmt(r.amt)}</td>
-    <td class="r"><span class="bdg ${r.type==='폐기'?'bdg-dn':'bdg-fl'}">${esc(r.type||'—')}</span></td>
-  </tr>`).join('') : '<tr><td colspan="6" class="empty">데이터가 없습니다.</td></tr>';
+  renderWasteLists();
 
-  renderWasteChart(items);
-  renderWasteCatChart(items);
-  // 요일·주말·공휴일 분석: 선택한 달(전체 기간이면 폐기 데이터가 있는 모든 달)
-  const allW = await allWasteLite();
-  const wMonths = month ? [month] : [...new Set(allW.filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)))].sort();
-  wasteDayCtx = { items, months: wMonths };
+  // 요일·주말·공휴일: 한 달만 보면 요일마다 4~5일뿐이라 흔들림이 커서, 기준 월과 관계없이 올라온 전체 달로 봅니다.
+  wasteDayCtx = { items: allW, months: [...GM.wasteMonths].sort() };
   renderWasteDayAnalysis();
 }
 
-// ── 최근 7일 폐기 상위 (폐기 탭) ──────────────────────────────────
-async function loadRecentWaste() {
-  const result = await fetchRecentWasteData();
-  const card = document.getElementById('recent-waste-card');
-  if (!result) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+// 아래 그래프·표 (보기: 폐기 / 점내용도)
+function renderWasteLists() {
+  const month = GM.month, isW = wasteView === '폐기';
+  const noun = isW ? '폐기' : '점내용도', unit = isW ? '원가' : '금액';
+  const items = wasteMonthItems.filter(r => isW ? r.type === '폐기' : r.type !== '폐기');
+  const hasFile = !!month && GM.wasteMonths.has(month);
+  const empty = !month ? '데이터가 없습니다.' : !hasFile ? `${month} 폐기 파일(분류별내역)이 없습니다.` : `${month}에 ${noun} 내역이 없습니다.`;
 
-  document.getElementById('recent-waste-period').textContent = `${result.start} ~ ${result.end} · 발주 조정 검토 대상`;
-  document.getElementById('recent-waste-total').textContent = fmt(result.total)+'원';
-  renderWasteListHTML('recent-waste-list', result.ranked, 5, true);
+  const map = {};
+  for (const r of items) {
+    const k = r.item_name || '—';
+    const a = map[k] || (map[k] = { name: r.item_name, category: r.category, qty: 0, amt: 0 });
+    a.qty += Number(r.quantity) || 0; a.amt += Number(r.amount) || 0;
+  }
+  const ranked = Object.values(map).sort((a, b) => b.amt - a.amt); // 전부 (표 안에서 스크롤)
+  byId('waste-top-title').textContent = `${noun} 상위 품목`;
+  byId('waste-top-sub').textContent = hasFile ? `${month} · ${unit} 큰 순 · ${ranked.length}개 전부` : '';
+  byId('waste-top-amt-th').textContent = unit;
+  byId('waste-tbody').innerHTML = ranked.length ? ranked.map((r, i) => `<tr>
+    <td style="color:#64748b;font-size:12px">${i+1}</td>
+    <td style="font-size:12px;color:#475569">${esc(r.category || '—')}</td>
+    <td class="cat">${esc(r.name || '—')}</td>
+    <td class="r">${fmt(r.qty)}</td>
+    <td class="r">${fmt(r.amt)}</td>
+  </tr>`).join('') : `<tr><td colspan="5" class="empty">${esc(empty)}</td></tr>`;
+
+  renderWasteCatChart(items, month, hasFile, noun, unit, isW);
+  renderWasteChart(items, month, hasFile, noun, unit, isW);
 }
 
-// 홈의 '판매 대비 폐기' 카드를 누르면 같은 달로 품목 분석 탭을 엽니다
-let homeWvsMonth = '';
-async function goItemsMonth() {
-  if (homeWvsMonth) { itemMonthUserChosen = true; byId('item-month-sel').value = homeWvsMonth; }
+// 홈 '폐기가 늘어난 소분류'를 누르면 품목 분석에서 그 소분류 품목만 펼쳐 보여줍니다
+function goItemsCat3(c3) {
   switchTab('items');
-  await loadItemData();
+  byId('item-cat1-sel').value = ''; fillItemCat2Options(); byId('item-cat2-sel').value = ''; byId('item-search').value = '';
+  setItemCat3(c3);
+  if (window.scrollTo) window.scrollTo(0, 0);
 }
 
-// ── 홈 요약 (매출/폐기/품목 헬퍼를 그대로 재사용, top개수와 렌더만 다름) ──
+// ── 홈 요약: 기준 월 한 장 ─────────────────────────────────────────
+// 월 1회 업로드라 '최근 7일'은 늘 지난달 마지막 주였고, '판매 대비 폐기 품목 3개'는
+// 유통기한이 짧은 FF가 매달 같은 자리를 차지해 새 정보가 없었습니다.
+// 그래서 홈은 기준 월의 매출·이익율·폐기 원가·폐기율(각각 전월 또는 기준선 대비)과
+// '전월보다 폐기가 늘어난 소분류'만 보여줍니다.
 async function loadHomeSummary() {
-  // 세 덩어리(매출 / 최근 7일 폐기 / 폐기율·판매 대비 폐기)를 동시에 불러와 각자 준비되는 대로 그립니다
+  const month = GM.month;
+  const prevYm = month ? prevMonthOf(month) : '';
+
   const salesPart = (async () => {
-    // 최근 월 매출 · 이익율 — "이번 달"이 아니라 업로드된 가장 최근 월입니다 (기준월 표시)
     const { months: salesMonths, map: salesMap } = await fetchMonthlyTrendData();
-    if (salesMonths.length) {
-      const latestYm = salesMonths[salesMonths.length-1];
-      const latest = salesMap[latestYm];
-      const prevYm = prevMonthOf(latestYm);
-      const prev = salesMap[prevYm];
-      byId('h-amount').textContent = fmt(latest.amount)+'원';
+    if (month !== GM.month) return;
+    const cur = month ? salesMap[month] : null, prev = prevYm ? salesMap[prevYm] : null;
+    if (cur) {
+      byId('h-amount').textContent = fmt(cur.amount) + '원';
       if (prev && prev.amount > 0) {
-        const pct = (latest.amount - prev.amount) / prev.amount * 100;
-        setKpiNote('h-amount-c', `${latestYm} 기준 · ${prevYm} 대비 ${pct>=0?'▲ +':'▼ '}${pct.toFixed(1)}%`, pct >= 0 ? 'up' : 'down');
-      } else {
-        setKpiNote('h-amount-c', `${latestYm} 기준 (업로드된 최신 월)`);
-      }
-      byId('h-rate').textContent = (latest.amount>0 ? (latest.profit/latest.amount*100).toFixed(1) : '0.0')+'%';
-      setKpiNote('h-rate-c', `${latestYm} 기준 · 예상이익 ÷ 매출`);
+        const pct = (cur.amount - prev.amount) / prev.amount * 100;
+        setKpiNote('h-amount-c', `${month} · ${prevYm} 대비 ${pct >= 0 ? '▲ +' : '▼ '}${pct.toFixed(1)}%`, pct >= 0 ? 'up' : 'down');
+      } else setKpiNote('h-amount-c', `${month} · 전월(${prevYm}) 매출 데이터 없음`);
+      const rate = cur.amount > 0 ? cur.profit / cur.amount * 100 : 0;
+      byId('h-rate').textContent = rate.toFixed(1) + '%';
+      if (prev && prev.amount > 0) {
+        const pr = prev.profit / prev.amount * 100, d = rate - pr;
+        setKpiNote('h-rate-c', `${month} · ${prevYm} ${pr.toFixed(1)}% → ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%p`, d >= 0 ? 'up' : 'down');
+      } else setKpiNote('h-rate-c', `${month} · 예상이익 ÷ 매출`);
     } else {
       byId('h-amount').textContent = '—';
       byId('h-rate').textContent = '—';
-      setKpiNote('h-amount-c', '매출 파일을 올리면 표시됩니다');
+      setKpiNote('h-amount-c', month ? `${month} 매출 파일이 없습니다` : '매출 파일을 올리면 표시됩니다');
       setKpiNote('h-rate-c', '');
     }
-    // 월별 추이 미니 차트 (2개월 미만이면 숨김)
     const trendCard = byId('home-trend-card');
     if (salesMonths.length >= 2) {
       trendCard.style.display = 'block';
-      homeTrendChart = renderTrendChart('home-trend-chart', salesMonths, salesMap, homeTrendChart);
+      homeTrendChart = renderTrendChart('home-trend-chart', salesMonths, salesMap, homeTrendChart, month);
     } else {
       trendCard.style.display = 'none';
     }
-    return salesMonths;
   })();
 
   const wastePart = (async () => {
-    // 최근 7일 폐기금액 + 상위 3 (기준: 업로드된 폐기 데이터의 마지막 날짜)
-    const waste = await fetchRecentWasteData();
-    if (waste) {
-      byId('h-waste').textContent = fmt(waste.total)+'원';
-      setKpiNote('h-waste-c', `${waste.start.substring(5).replace('-','/')} ~ ${waste.end.substring(5).replace('-','/')} · 원가 기준`);
-      renderWasteListHTML('home-waste-list', waste.ranked, 3, false);
-    } else {
+    // 폐기 원가(폐기만, 점내용도 제외) + 전월 대비, 그리고 전월보다 폐기가 늘어난 소분류
+    const hasCur = !!month && GM.wasteMonths.has(month), hasPrev = !!prevYm && GM.wasteMonths.has(prevYm);
+    const byMonth = ym => fetchAllRows(() => { const [s, e] = monthRange(ym); return sb.from('m4_waste_items').select('category,amount').eq('type', '폐기').gte('confirmed_date', s).lt('confirmed_date', e); });
+    const [cur, prev] = await Promise.all([hasCur ? byMonth(month) : Promise.resolve([]), hasPrev ? byMonth(prevYm) : Promise.resolve([])]);
+    if (month !== GM.month) return;
+    const sumBy = rows => { const m = {}; let t = 0; for (const r of rows) { const k = r.category || '(분류 없음)', a = Number(r.amount) || 0; m[k] = (m[k] || 0) + a; t += a; } return { m, t }; };
+    const c = sumBy(cur), p = sumBy(prev);
+    const list = byId('home-wup-list'), sub = byId('home-wup-sub');
+    if (!hasCur) {
       byId('h-waste').textContent = '—';
-      setKpiNote('h-waste-c', '폐기 파일(분류별내역)을 올리면 표시됩니다');
-      byId('home-waste-list').innerHTML = '<li class="act-empty">데이터 없음</li>';
+      setKpiNote('h-waste-c', month ? `${month} 폐기 파일이 없습니다` : '폐기 파일(분류별내역)을 올리면 표시됩니다');
+      sub.textContent = '폐기 원가 기준';
+      list.innerHTML = `<li class="act-empty">${month ? `${esc(month)} 폐기 파일(분류별내역)이 없습니다` : '데이터 없음'}</li>`;
+      return;
     }
+    byId('h-waste').textContent = fmt(c.t) + '원';
+    if (hasPrev && p.t > 0) {
+      const pct = (c.t - p.t) / p.t * 100;
+      setKpiNote('h-waste-c', `${month} · ${prevYm} 대비 ${pct >= 0 ? '▲ +' : '▼ '}${pct.toFixed(1)}%`, pct > 0 ? 'down' : 'up');
+    } else setKpiNote('h-waste-c', `${month} · 원가 기준 · 점내용도 제외`);
+    if (!hasPrev) {
+      sub.textContent = `${month} · 폐기 원가 기준`;
+      list.innerHTML = `<li class="act-empty">전월(${esc(prevYm)}) 폐기 파일이 없어 비교할 수 없습니다</li>`;
+      return;
+    }
+    const ups = Object.keys({ ...c.m, ...p.m }).map(k => ({ k, cur: c.m[k] || 0, prev: p.m[k] || 0 }))
+      .map(x => ({ ...x, d: x.cur - x.prev })).filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 3);
+    sub.textContent = `${prevYm} → ${month} · 폐기 원가 기준 · 누르면 품목 분석에서 그 소분류 품목이 열립니다`;
+    list.innerHTML = ups.length ? ups.map((x, i) => `<li class="act-item" style="cursor:pointer" data-c="${esc(x.k)}" onclick="goItemsCat3(this.dataset.c)">
+      <span class="act-rank">${i + 1}</span>
+      <span class="act-name" title="${esc(x.k)}">${esc(x.k)}</span>
+      <span class="act-meta">${fmt(x.prev)}원 → ${fmt(x.cur)}원</span>
+      <span class="act-val">+${fmt(x.d)}원</span>
+    </li>`).join('') : '<li class="act-empty">전월보다 폐기가 늘어난 소분류가 없습니다</li>';
   })();
 
   const ratePart = (async () => {
-    // 폐기율 + 판매 대비 폐기 상위 3 — 매출·폐기 파일이 둘 다 있는 가장 최근 월 기준
-    const [{ months: rateMonths, rates }, salesMonthsDesc] = await Promise.all([fetchWasteRates(), fetchSalesMonths()]);
-    if (!rateMonths.length) {
+    const { months: rateMonths, rates } = await fetchWasteRates();
+    if (month !== GM.month) return;
+    const cur = month ? rates[month] : null;
+    if (!cur) {
       byId('h-wrate').textContent = '—';
-      setKpiNote('h-wrate-c', '같은 달 매출·폐기 파일이 모두 있어야 계산됩니다');
-      byId('home-wvs-sub').textContent = '클릭하면 품목 분석으로 이동';
-      renderWasteVsSalesList('home-wvs-list', [], false, salesMonthsDesc.length > 0);
-      homeWvsMonth = '';
+      setKpiNote('h-wrate-c', !month ? '같은 달 매출·폐기 파일이 모두 있어야 계산됩니다'
+        : !GM.salesMonths.has(month) ? `${month} 매출 파일이 없어 계산할 수 없습니다`
+        : !GM.wasteMonths.has(month) ? `${month} 폐기 파일이 없어 계산할 수 없습니다` : '계산할 수 없습니다');
       return;
     }
-    const ym = rateMonths[rateMonths.length - 1];
-    const cur = rates[ym];
-    const prevYm = prevMonthOf(ym);
     byId('h-wrate').textContent = fmtRate(cur.rate);
-    const bl = wasteBaseline(rateMonths, rates, ym);
+    const bl = wasteBaseline(rateMonths, rates, month);
     if (bl) {
       const d = cur.rate - bl.avg;
-      setKpiNote('h-wrate-c', `${ym} · 직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)} 대비 ${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up');
-    } else if (rates[prevYm]) {
-      const d = cur.rate - rates[prevYm].rate;
-      setKpiNote('h-wrate-c', `${ym} · 원가 기준 · ${prevYm} ${fmtRate(rates[prevYm].rate)} → ${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up');
-    } else {
-      setKpiNote('h-wrate-c', `${ym} · 폐기원가 ÷ 매출원가`);
-    }
-    homeWvsMonth = ym;
-    byId('home-wvs-sub').textContent = `${ym} · 클릭하면 품목 분석으로 이동`;
-    const data = await fetchItemMonthData(ym, salesMonthsDesc, { skipPrev: true }); // 홈에선 전월 비교가 필요 없어 한 번 덜 불러옴
-    renderWasteVsSalesList('home-wvs-list', wasteVsSalesTop(data.rows, 3), data.hasWaste);
+      setKpiNote('h-wrate-c', `${month} · 직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)} 대비 ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up');
+    } else setKpiNote('h-wrate-c', `${month} · 폐기원가 ÷ 매출원가`);
   })();
 
   await Promise.all([salesPart, wastePart, ratePart]);
 }
 
-function renderWasteCatChart(items) {
+function renderWasteCatChart(items, month, hasFile, noun, unit, isW) {
   const catMap = {};
-  for (const r of items) {
-    if (!r.category) continue;
-    if (!catMap[r.category]) catMap[r.category] = 0;
-    catMap[r.category] += Number(r.amount) || 0;
-  }
-  const sorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const ctx = document.getElementById('waste-cat-chart').getContext('2d');
-  if (wasteCatChart) wasteCatChart.destroy();
+  for (const r of items) { if (!r.category) continue; catMap[r.category] = (catMap[r.category] || 0) + (Number(r.amount) || 0); }
+  const all = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+  const sorted = all.slice(0, 10);
+  byId('waste-cat-title').textContent = `소분류별 ${noun} ${unit}`;
+  byId('waste-cat-sub').textContent = !hasFile ? (month ? `${month} 폐기 파일 없음` : '')
+    : `${month} · ${all.length > 10 ? `상위 10개 (전체 ${all.length}개 — 판매와 함께 보려면 품목 분석의 '소분류별 한눈에')` : `${all.length}개`}`;
+  if (wasteCatChart) { wasteCatChart.destroy(); wasteCatChart = null; }
   if (!sorted.length) return;
-  wasteCatChart = new Chart(ctx, {
+  const strong = isW ? '#ef4444' : '#475569', light = isW ? '#fca5a5' : '#cbd5e1';
+  wasteCatChart = new Chart(byId('waste-cat-chart').getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: sorted.map(e=>e[0]),
-      datasets: [{
-        label: '폐기금액',
-        data: sorted.map(e=>e[1]),
-        backgroundColor: sorted.map((_,i)=>i===0?'#ef4444':'#fca5a5'),
-        borderRadius: 4, barPercentage: .6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 30 } },
-        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => fmt(v)+'원' } }
-      }
-    }
+    data: { labels: sorted.map(e => e[0]),
+      datasets: [{ label: `${noun} ${unit}`, data: sorted.map(e => e[1]), backgroundColor: sorted.map((_, i) => i === 0 ? strong : light), borderRadius: 4, barPercentage: .6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${noun} ${unit}: ${fmt(c.parsed.y)}원` } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 12 }, maxRotation: 30 } },
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, callback: v => fmt(v) + '원' } } } }
   });
 }
-
-function renderWasteChart(items) {
-  // 월별 주차 집계 (1~7일=1주, 8~14일=2주 …). 예전에는 키에 '월'이 없어서
-  // 전체 기간을 보면 7월 1주와 8월 1주가 한 막대로 합쳐졌습니다.
-  // 날짜 문자열을 직접 잘라 쓰므로 시간대 영향도 없습니다.
-  const weekly = {};
+// 주차별: 1~7일, 8~14일 … 로 나눕니다. 마지막 주는 1~3일뿐이라 다른 주와 길이가 달라
+// (8월이면 29~31일, 3일) 라벨에 날짜와 일수를 적고, 툴팁에 하루 평균을 함께 보여줍니다.
+function renderWasteChart(items, month, hasFile, noun, unit, isW) {
+  if (wasteChart) { wasteChart.destroy(); wasteChart = null; }
+  const sub = byId('waste-week-sub');
+  byId('waste-week-title').textContent = `주차별 ${noun} ${unit}`;
+  if (!month || !hasFile) { sub.textContent = month ? `${month} 폐기 파일 없음` : ''; return; }
+  const [y, mo] = month.split('-').map(Number);
+  const dim = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const weeks = [];
+  for (let d = 1; d <= dim; d += 7) { const e = Math.min(d + 6, dim); weeks.push({ s: d, e, days: e - d + 1, amt: 0 }); }
   for (const r of items) {
-    const ymd = String(r.confirmed_date || '').substring(0,10);
-    const m = ymd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) continue;
-    const key = `${m[1]}-${m[2]}-W${Math.ceil(Number(m[3])/7)}`;
-    weekly[key] = (weekly[key] || 0) + (r.amount || 0);
+    const d = Number(String(r.confirmed_date || '').substring(8, 10));
+    const w = d ? weeks[Math.floor((d - 1) / 7)] : null;
+    if (w) w.amt += Number(r.amount) || 0;
   }
-  const keys = Object.keys(weekly).sort();
-  const labels = keys.map(k => { const [y, mo, w] = k.split('-'); return `${Number(mo)}월 ${w.substring(1)}주`; });
-  const ctx = document.getElementById('waste-chart').getContext('2d');
-  if (wasteChart) wasteChart.destroy();
-  wasteChart = new Chart(ctx, {
-    type:'bar',
-    data:{labels, datasets:[{label:'폐기금액', data:keys.map(k=>weekly[k]),
-      backgroundColor:'#ef4444', borderRadius:4, barPercentage:.6}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-              y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>fmt(v)}}}}
+  const last = weeks[weeks.length - 1];
+  sub.textContent = `${month} · 막대 = 그 주 합계${last.days < 7 ? ` · 마지막 주는 ${last.days}일치` : ''} · 막대에 올리면 하루 평균`;
+  wasteChart = new Chart(byId('waste-chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: weeks.map(w => `${mo}/${w.s}~${w.e}${w.days < 7 ? ` (${w.days}일)` : ''}`),
+      datasets: [{ label: `${noun} ${unit}`, data: weeks.map(w => w.amt), backgroundColor: isW ? '#ef4444' : '#64748b', borderRadius: 4, barPercentage: .6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => { const w = weeks[c.dataIndex]; return ` ${noun} ${unit} ${fmt(w.amt)}원 · ${w.days}일 · 하루 평균 ${fmt(Math.round(w.amt / w.days))}원`; } } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, callback: v => fmt(v) } } } }
   });
 }
-
-// ── 마지막 동기화 ─────────────────────────────────────────────────
 async function updateLastSync() {
-  const {data} = await sb.from('m4_sync_history').select('synced_at').order('synced_at',{ascending:false}).limit(1).single();
+  const {data} = await sb.from('m4_sync_history').select('synced_at').order('synced_at',{ascending:false}).limit(1).maybeSingle(); // v3.5: 기록이 없으면 .single()은 오류(406)
   if (data) {
     const d = new Date(data.synced_at);
     document.getElementById('last-sync').textContent = '마지막 동기화: '+d.toLocaleDateString('ko-KR')+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
