@@ -112,6 +112,29 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .help-a code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11.5px;color:#4f46e5}
 .help-warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:10px 13px;margin:10px 0;font-size:12.5px;color:#78350f;line-height:1.7}
 #reset-confirm-btn:disabled{opacity:.4;cursor:not-allowed}
+.fresh{border-radius:8px;padding:9px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.6}
+.fresh.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.fresh.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+#report-view{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1000;overflow:auto}
+#report-paper{background:#fff;max-width:900px;margin:24px auto;padding:28px 34px;border-radius:10px;font-size:12.5px;color:#1e293b}
+#report-paper h1{font-size:19px;margin:0 0 4px}
+#report-paper h2{font-size:14px;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #4f46e5}
+#report-paper table{width:100%;border-collapse:collapse;margin:6px 0 4px}
+#report-paper th,#report-paper td{border:1px solid #e2e8f0;padding:5px 8px;text-align:left;font-size:12px}
+#report-paper th{background:#f1f5f9}
+#report-paper td.r,#report-paper th.r{text-align:right}
+#report-paper .rp-sum li{margin-bottom:3px}
+#report-paper .rp-note{font-size:11px;color:#64748b}
+.rp-bar{position:sticky;top:0;display:flex;gap:8px;justify-content:flex-end;max-width:900px;margin:0 auto;padding-top:14px}
+.rp-bar button{border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
+@media print{
+  body > *:not(#report-view){display:none !important}
+  #report-view{display:block !important;position:static;background:#fff;overflow:visible}
+  #report-paper{margin:0;max-width:none;padding:0;border-radius:0}
+  .rp-bar{display:none !important}
+  #report-paper h2{break-after:avoid}
+  #report-paper tr{break-inside:avoid}
+}
 .help-info{background:#f5f3ff;border-left:3px solid #4f46e5;border-radius:0 7px 7px 0;padding:10px 13px;margin:10px 0;font-size:12.5px;color:#4c1d95;line-height:1.7}
 
 /* 액션 카드 */
@@ -167,6 +190,13 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 
 <!-- 탭 0: 홈 -->
 <div class="tab-content on main" id="tab-home">
+  <div id="home-fresh" class="fresh" style="display:none"></div>
+  <div class="filter-row">
+    <span style="font-size:12.5px;font-weight:600;color:#475569">📄 월별 리포트</span>
+    <select class="sel" id="report-month-sel"><option value="">월 선택</option></select>
+    <button class="sel" onclick="openMonthlyReport()" style="cursor:pointer;background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600">리포트 만들기</button>
+    <span style="font-size:11.5px;color:#94a3b8">— 한 달 요약을 한 장으로 만들어 인쇄하거나 PDF로 저장합니다</span>
+  </div>
   <div class="kpi-row" id="home-kpi-row">
     <div class="kpi"><div class="kpi-t">최근 월 매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div></div>
     <div class="kpi"><div class="kpi-t">최근 월 이익율</div><div class="kpi-v" id="h-rate">—</div><div class="kpi-c muted" id="h-rate-c"></div></div>
@@ -414,6 +444,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
   <div class="file-list" id="file-list"></div>
   <button class="sync-btn" id="sync-btn" onclick="syncFiles()" disabled>동기화</button>
+  <button id="undo-btn" onclick="undoLastUpload()" style="display:none;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer" title="이 화면에서 방금 동기화한 파일을, 올리기 직전 상태로 되돌립니다">↩ 방금 업로드 되돌리기</button>
 </div>
 
 <div class="status hide" id="status"></div>
@@ -430,8 +461,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="card-h"><div><div class="card-title">🕘 최근 업로드 이력</div><div class="card-sub">최근 20건 · 같은 파일 이름을 다시 올리면 마지막 시각으로 갱신됩니다</div></div></div>
     <div style="overflow-x:auto">
       <table class="tbl">
-        <thead><tr><th>시각</th><th>파일</th><th>종류</th><th class="r">저장 건수</th></tr></thead>
-        <tbody id="upload-history-tbody"><tr><td colspan="4" class="empty">이력이 없습니다.</td></tr></tbody>
+        <thead><tr><th>시각</th><th>파일</th><th>종류</th><th class="r">저장 건수</th><th>올린 사람</th></tr></thead>
+        <tbody id="upload-history-tbody"><tr><td colspan="5" class="empty">이력이 없습니다.</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -501,6 +532,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       </ol>
       <div class="help-info"><b>같은 파일을 여러 번 올려도 안전합니다.</b> 그 달(폐기는 그 날짜 범위)의 기존 데이터를 지우고 새로 넣기 때문에 두 번 쌓이지 않습니다. 잘못 올렸으면 올바른 파일로 다시 올리면 됩니다.</div>
       <p class="src-note">매출 파일은 파일 안의 합계행과 대분류·품목 합계를 원 단위까지 대조합니다. 한 원이라도 맞지 않으면 저장하지 않습니다.</p>
+      <h5>잘못 올렸을 때 — 방금 업로드 되돌리기</h5>
+      <p>동기화 직후 <b>[↩ 방금 업로드 되돌리기]</b> 버튼이 나타납니다. 누르면 방금 올린 파일들을 <b>올리기 직전 상태</b>로 되돌립니다(처음 올린 달이면 그 달이 비워집니다). 이 화면을 새로고침하거나 다른 파일을 다시 동기화하면 이전 업로드는 되돌릴 수 없습니다. 업로드 이력에는 <b>올린 사람</b>과 되돌림 기록이 함께 남습니다.</p>
     </div>
   </div>
 
@@ -521,6 +554,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📊 화면의 숫자는 무슨 뜻인가요?</span><span class="arw">▶</span></div>
     <div class="help-a">
       <p class="src-note">매출·품목·폐기 탭은 처음 열면 <b>올라와 있는 가장 최근 월</b>이 선택됩니다. 홈의 "최근 월"도 오늘 날짜가 아니라 올라와 있는 가장 최근 월이며, 카드 아래에 기준월이 표시됩니다.</p>
+      <h5>홈 — 데이터 신선도 · 월별 리포트</h5>
+      <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. 매월 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다. <b>📄 월별 리포트</b>에서 월을 고르고 [리포트 만들기]를 누르면 요약·핵심 지표·대분류별 매출·변화가 큰 중분류·품목·폐기·발주 점검 대상을 한 장으로 만들고, [인쇄 / PDF로 저장]으로 출력할 수 있습니다. 리포트 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
       <h5>매출 · 이익 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
@@ -669,7 +704,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.6';
+const APP_VERSION = '2026.09.27-v2.7';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -678,6 +713,7 @@ const APP_VERSION = '2026.09.27-v2.6';
 
 // ── 상태 ─────────────────────────────────────────────────────────
 let pendingFiles = [];
+let CURRENT_EMAIL = '';
 let salesData = [];
 let wasteRateChart = null, itemTrendChart = null;
 let catChart = null, profitChart = null, wasteChart = null, wasteCatChart = null, monthlyTrendChart = null, homeTrendChart = null;
@@ -693,6 +729,7 @@ async function initAuth() {
     return false;
   }
   const user = session.user;
+  CURRENT_EMAIL = user.email || '';
   const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email || '';
   document.getElementById('user-name').textContent = name;
 
@@ -856,7 +893,8 @@ async function loadUploadStatus() {
   if (!byId('upload-status-tbody')) return;
   const [cats, waste, hist] = await Promise.all([
     allCatSales(), allWasteLite(),
-    sb.from('m4_sync_history').select('file_name,file_type,record_count,synced_at').order('synced_at', {ascending:false}).limit(20),
+    sb.from('m4_sync_history').select('file_name,file_type,record_count,synced_at,uploaded_by').order('synced_at', {ascending:false}).limit(20)
+      .then(r => r.error ? sb.from('m4_sync_history').select('file_name,file_type,record_count,synced_at').order('synced_at', {ascending:false}).limit(20) : r),
   ]);
   const cnt = {};
   const add = (ym, k) => { if (!ym) return; (cnt[ym] = cnt[ym] || {cat:0, item:0, waste:0})[k]++; };
@@ -878,14 +916,198 @@ async function loadUploadStatus() {
       <td class="r">${hasW ? `${fmt(c.waste)}건` : '—'}</td><td>${state}</td></tr>`;
   }).join('') : '<tr><td colspan="4" class="empty">올라온 데이터가 없습니다.</td></tr>';
 
-  const TYPE_NAME = { category_sales:'매출·품목', waste_detail:'폐기', reset:'전체 초기화', item_daily:'시계열(예전)', waste:'전체전표(예전)' };
+  const TYPE_NAME = { category_sales:'매출·품목', waste_detail:'폐기', reset:'전체 초기화', undo:'업로드 되돌림', item_daily:'시계열(예전)', waste:'전체전표(예전)' };
   const rows = (hist && hist.data) || [];
   byId('upload-history-tbody').innerHTML = rows.length ? rows.map(h => {
     const d = new Date(h.synced_at);
     const when = isNaN(d) ? '—' : `${d.toLocaleDateString('ko-KR')} ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`;
     const name = h.file_type === 'reset' ? String(h.file_name).replace(/^__RESET__ /,'') : h.file_name;
-    return `<tr><td style="white-space:nowrap">${when}</td><td class="cat">${esc(name)}</td><td>${esc(TYPE_NAME[h.file_type] || h.file_type || '—')}</td><td class="r">${h.file_type==='reset' ? '—' : fmt(h.record_count)}</td></tr>`;
-  }).join('') : '<tr><td colspan="4" class="empty">이력이 없습니다.</td></tr>';
+    return `<tr><td style="white-space:nowrap">${when}</td><td class="cat">${esc(name)}</td><td>${esc(TYPE_NAME[h.file_type] || h.file_type || '—')}</td><td class="r">${h.file_type==='reset' || h.file_type==='undo' ? '—' : fmt(h.record_count)}</td><td style="font-size:11.5px;color:#64748b">${esc(h.uploaded_by || '—')}</td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty">이력이 없습니다.</td></tr>';
+}
+
+// ── 업로드 이력 저장 (올린 사람 포함) ───────────────────────────────
+// uploaded_by 컬럼은 "A1_업로더_기록_추가.sql"로 추가합니다. 아직 없으면 빼고 저장합니다.
+async function saveHistory(row) {
+  let r = await sb.from('m4_sync_history').upsert({ ...row, uploaded_by: CURRENT_EMAIL || null }, {onConflict:'file_name'});
+  if (r.error && /uploaded_by/.test(r.error.message)) r = await sb.from('m4_sync_history').upsert(row, {onConflict:'file_name'});
+  if (r.error) console.error('[A1] 업로드 이력 저장 실패:', r.error.message);
+}
+
+// ── 방금 업로드 되돌리기 (staff도 사용) ────────────────────────────
+// 동기화 직전에 보관해 둔 그 달(폐기는 그 날짜 범위) 데이터를 다시 넣습니다.
+// 처음 올린 달이면 되돌린 뒤 그 달은 비게 됩니다. 이 화면을 새로고침하면 되돌릴 수 없습니다.
+let lastUpload = null;
+const stripMeta = rows => rows.map(({ id, created_at, ...rest }) => rest);
+async function insertChunks(table, rows, size) {
+  for (let i = 0; i < rows.length; i += size) {
+    const { error } = await sb.from(table).insert(rows.slice(i, i + size));
+    if (error) throw new Error(`${table} 복구 실패: ${error.message}`);
+  }
+}
+async function undoLastUpload() {
+  if (!lastUpload) return;
+  const names = lastUpload.files.map(f => `• ${f.name}`).join('\n');
+  if (!window.confirm(`방금 동기화한 ${lastUpload.files.length}개 파일을 올리기 직전 상태로 되돌립니다.\n\n${names}\n\n계속합니까?`)) return;
+  const btn = byId('undo-btn'); btn.disabled = true;
+  setStatus('되돌리는 중...', 'loading');
+  try {
+    for (const f of [...lastUpload.files].reverse()) { // 나중에 올린 것부터 되돌려야 겹친 범위도 정확히 복구
+      if (f.type === 'category_sales') {
+        await sb.from('m4_item_sales').delete().eq('year_month', f.yearMonth);
+        const d = await sb.from('m4_category_sales').delete().eq('year_month', f.yearMonth);
+        if (d.error) throw new Error(d.error.message);
+        await insertChunks('m4_category_sales', stripMeta(f.prevCat), 50);
+        await insertChunks('m4_item_sales', stripMeta(f.prevItems), 200);
+      } else {
+        const d = await sb.from('m4_waste_items').delete().gte('confirmed_date', f.from).lte('confirmed_date', f.to);
+        if (d.error) throw new Error(d.error.message);
+        await insertChunks('m4_waste_items', stripMeta(f.prevWaste), 100);
+      }
+      await saveHistory({ file_name: `↩ ${f.name} (${new Date().toLocaleString('ko-KR')})`, file_type: 'undo', record_count: 0, synced_at: new Date().toISOString() });
+    }
+    setStatus(`되돌리기 완료 — ${lastUpload.files.length}개 파일을 올리기 전 상태로 복구했습니다.`, 'ok');
+    lastUpload = null;
+    btn.style.display = 'none';
+    clearFileChips();
+    await refreshAllData();
+  } catch (e) {
+    setStatus(`되돌리기 실패: ${e.message} — 관리자에게 알려주세요. (같은 파일을 다시 올리면 그 파일 기준으로 복구됩니다)`, 'err');
+  } finally { btn.disabled = false; }
+}
+
+// ── 데이터 신선도 (홈 상단) ─────────────────────────────────────────
+// 매월 초에 지난달 파일을 올리므로, 7일까지는 전전월까지 있으면 정상으로 봅니다.
+function expectedLatestMonth(today = new Date()) {
+  let y = today.getFullYear(), m = today.getMonth() + 1 - (today.getDate() <= 7 ? 2 : 1);
+  while (m <= 0) { m += 12; y--; }
+  return `${y}-${pad2(m)}`;
+}
+async function renderFreshness() {
+  const box = byId('home-fresh');
+  const [cats, waste] = await Promise.all([allCatSales(), allWasteLite()]);
+  const salesLast = cats.reduce((a, r) => r.year_month > a ? r.year_month : a, '');
+  const wasteLastDate = waste.reduce((a, r) => r.confirmed_date && String(r.confirmed_date).substring(0,10) > a ? String(r.confirmed_date).substring(0,10) : a, '');
+  const wasteLast = wasteLastDate.substring(0,7);
+  if (!salesLast && !wasteLast) { box.style.display = 'none'; return; }
+  const exp = expectedLatestMonth();
+  const late = [];
+  if (!salesLast || salesLast < exp) late.push(`매출(분류별이익현황)이 <b>${salesLast || '없음'}</b>까지`);
+  if (!wasteLast || wasteLast < exp) late.push(`폐기(분류별내역)가 <b>${wasteLast || '없음'}</b>까지`);
+  box.style.display = 'block';
+  if (late.length) {
+    box.className = 'fresh warn';
+    box.innerHTML = `⚠️ 데이터가 밀려 있습니다 — ${late.join(', ')}만 올라와 있습니다. <b>${exp}</b> 파일을 <b>📂 데이터 올리기</b>에서 올려주세요.`;
+  } else {
+    box.className = 'fresh ok';
+    box.innerHTML = `✓ 데이터 최신 — 매출 ${salesLast} · 폐기 ${wasteLastDate.substring(5).replace('-','/')}까지 올라와 있습니다.`;
+  }
+}
+
+// ── 월별 리포트 ─────────────────────────────────────────────────────
+// 한 달치를 한 장으로 정리합니다. 문장은 숫자에서 자동으로 만들며, 해석·추정은 넣지 않습니다.
+async function fillReportMonths() {
+  const sel = byId('report-month-sel'); if (!sel) return;
+  const months = await fetchSalesMonths();
+  const cur = sel.value;
+  sel.innerHTML = months.length ? months.map(m => `<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('') : '<option value="">매출 데이터 없음</option>';
+  if (!months.includes(cur)) sel.value = months[0] || '';
+}
+async function openMonthlyReport() {
+  const ym = byId('report-month-sel').value;
+  if (!ym) return;
+  const paper = byId('report-paper');
+  byId('report-view').style.display = 'block';
+  paper.innerHTML = '<p>리포트를 만드는 중입니다...</p>';
+  try { paper.innerHTML = await buildMonthlyReport(ym); }
+  catch (e) { paper.innerHTML = `<p style="color:#b91c1c">리포트를 만들지 못했습니다: ${esc(e.message)}</p>`; }
+}
+async function buildMonthlyReport(ym) {
+  const months = await fetchSalesMonths();
+  const cat = await allCatSales();
+  const prevYm = prevMonthOf(ym);
+  const cur = cat.filter(r => r.year_month === ym), prev = cat.filter(r => r.year_month === prevYm);
+  const hasPrev = prev.length > 0;
+  const sum = (a, k) => a.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+  const tot = sum(cur, 'amount'), prof = sum(cur, 'profit'), ptot = sum(prev, 'amount');
+  const diff = hasPrev ? tot - ptot : null, dpct = hasPrev && ptot ? diff / ptot * 100 : null;
+  const [{ months: rateMonths, rates }, itemData] = await Promise.all([fetchWasteRates(), fetchItemMonthData(ym, months)]);
+  const [ws, we] = monthRange(ym);
+  const waste = await fetchAllRows(() => sb.from('m4_waste_items').select('item_name,category,quantity,amount,type').gte('confirmed_date', ws).lt('confirmed_date', we));
+  const prevItems = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('cat1,cat2,amount').eq('year_month', prevYm)) : [];
+  const wOnly = waste.filter(w => w.type === '폐기'), wInt = waste.filter(w => w.type !== '폐기');
+  const wCost = sum(wOnly, 'amount'), rate = rates[ym], bl = wasteBaseline(rateMonths, rates, ym);
+  const sign = v => v > 0 ? '+' : '';
+  const pct = v => v == null ? '—' : `${sign(v)}${v.toFixed(1)}%`;
+  const won = v => v == null ? '—' : `${fmt(Math.round(v))}원`;
+
+  // 중분류 증감
+  const byCat2 = rows => { const m = {}; for (const r of rows) { if (!r.cat2) continue; const k = `${r.cat1} › ${r.cat2}`; m[k] = (m[k] || 0) + (Number(r.amount) || 0); } return m; };
+  const c2cur = byCat2(itemData.rows.filter(r => !r.soldZero)), c2prev = byCat2(prevItems);
+  const c2diff = Object.keys({ ...c2cur, ...c2prev }).map(k => ({ k, d: (c2cur[k] || 0) - (c2prev[k] || 0) }));
+  const up = [...c2diff].sort((a,b) => b.d - a.d).filter(x => x.d > 0).slice(0, 5);
+  const down = [...c2diff].sort((a,b) => a.d - b.d).filter(x => x.d < 0).slice(0, 5);
+
+  const sold = itemData.rows.filter(r => !r.soldZero);
+  const topItems = [...sold].sort((a,b) => b.amount - a.amount).slice(0, 10);
+  const qUp = sold.filter(r => r.diffQty != null && !r.isNew && r.diffQty > 0).sort((a,b) => b.diffQty - a.diffQty).slice(0, 5);
+  const qDown = sold.filter(r => r.diffQty != null && r.diffQty < 0).sort((a,b) => a.diffQty - b.diffQty).slice(0, 5);
+  const wvs = wasteVsSalesTop(itemData.rows, 10);
+  const heavyCnt = itemData.rows.filter(r => r.wasteRatio != null && r.wasteRatio >= 0.5).length;
+  const wByCat = {}; for (const w of wOnly) wByCat[w.category || '—'] = (wByCat[w.category || '—'] || 0) + (Number(w.amount) || 0);
+  const wCatTop = Object.entries(wByCat).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  const wItem = {}; for (const w of wOnly) { const k = w.item_name || '—'; const a = wItem[k] || (wItem[k] = { q:0, a:0, c:w.category }); a.q += Number(w.quantity) || 0; a.a += Number(w.amount) || 0; }
+  const wItemTop = Object.entries(wItem).sort((a,b) => b[1].a - a[1].a).slice(0, 10);
+
+  const catRows = [...cur].sort((a,b) => b.amount - a.amount).map(r => {
+    const p = prev.find(x => x.category === r.category); const pa = hasPrev ? (p ? p.amount : 0) : null;
+    const d = pa == null ? null : r.amount - pa;
+    return `<tr><td>${esc(r.category)}</td><td class="r">${fmt(r.amount)}</td><td class="r">${tot ? (r.amount / tot * 100).toFixed(1) : 0}%</td><td class="r">${r.amount ? (r.profit / r.amount * 100).toFixed(1) : 0}%</td><td class="r">${pa == null ? '—' : fmt(pa)}</td><td class="r">${d == null ? '—' : sign(d) + fmt(d)}</td><td class="r">${d != null && pa > 0 ? pct(d / pa * 100) : '—'}</td></tr>`;
+  }).join('');
+
+  const summary = [
+    `총매출 <b>${won(tot)}</b>${hasPrev ? `, 전월(${prevYm}) 대비 <b>${sign(diff)}${fmt(diff)}원 (${pct(dpct)})</b>` : ` (전월 ${prevYm} 데이터 없음)`}, 예상이익 ${won(prof)} (이익율 ${tot ? (prof / tot * 100).toFixed(1) : 0}%).`,
+    rate ? `폐기율 <b>${fmtRate(rate.rate)}</b> (폐기원가 ${won(rate.wasteCost)} ÷ 매출원가 ${won(rate.cogs)})${bl ? `, 직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)} 대비 <b>${rate.rate - bl.avg >= 0 ? '▲' : '▼'} ${Math.abs(rate.rate - bl.avg).toFixed(2)}%p</b>` : ''}.` : `이 달 폐기 파일이 없어 폐기율을 계산하지 못했습니다.`,
+    hasPrev && up.length ? `전월 대비 매출이 가장 많이 늘어난 중분류는 <b>${esc(up[0].k)}</b>(+${fmt(up[0].d)}원)${down.length ? `, 가장 많이 줄어든 중분류는 <b>${esc(down[0].k)}</b>(${fmt(down[0].d)}원)` : ''}입니다.` : '',
+    itemData.hasWaste ? `폐기가 판매 이상인 품목(발주 점검 대상)은 <b>${heavyCnt}개</b>입니다.` : '',
+  ].filter(Boolean);
+
+  const tbl = (head, rows) => `<table><thead><tr>${head}</tr></thead><tbody>${rows || '<tr><td colspan="9" class="rp-note">해당 없음</td></tr>'}</tbody></table>`;
+  const two = (a, b) => `<table><tr><td style="width:50%;vertical-align:top;border:none;padding:0 6px 0 0">${a}</td><td style="vertical-align:top;border:none;padding:0 0 0 6px">${b}</td></tr></table>`;
+  const now = new Date();
+  const [yy, mm] = ym.split('-');
+  return `
+  <h1>A1 편의점 월별 리포트 · ${yy}년 ${Number(mm)}월</h1>
+  <div class="rp-note">작성 ${now.toLocaleDateString('ko-KR')} ${now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} · 매출 = 분류별이익현황(총매출·원) · 폐기 = 분류별내역(원가 기준) · 대시보드 v${APP_VERSION}</div>
+  <h2>1. 요약</h2><ul class="rp-sum">${summary.map(x => `<li>${x}</li>`).join('')}</ul>
+  <h2>2. 핵심 지표</h2>
+  ${tbl('<th>지표</th><th class="r">값</th><th>비고</th>', [
+    ['총매출', won(tot), hasPrev ? `전월 ${won(ptot)}` : '전월 데이터 없음'],
+    ['전월 대비', hasPrev ? `${sign(diff)}${fmt(diff)}원` : '—', pct(dpct)],
+    ['예상이익', won(prof), `이익율 ${tot ? (prof / tot * 100).toFixed(1) : 0}%`],
+    ['폐기원가', itemData.hasWaste ? won(wCost) : '—', `폐기 ${wOnly.length}건`],
+    ['점내용도', itemData.hasWaste ? won(sum(wInt, 'amount')) : '—', '종량제봉투 등 매장 사용분'],
+    ['폐기율', rate ? fmtRate(rate.rate) : '—', bl ? `직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)}` : '기준선 없음'],
+  ].map(r => `<tr><td>${r[0]}</td><td class="r"><b>${r[1]}</b></td><td class="rp-note">${r[2]}</td></tr>`).join(''))}
+  <h2>3. 대분류별 매출</h2>
+  ${tbl('<th>대분류</th><th class="r">매출</th><th class="r">구성비</th><th class="r">이익율</th><th class="r">전월 매출</th><th class="r">증감</th><th class="r">증감율</th>', catRows)}
+  <h2>4. 전월 대비 변화가 큰 중분류</h2>
+  ${hasPrev ? two(tbl('<th>늘어난 중분류</th><th class="r">증감</th>', up.map(x => `<tr><td>${esc(x.k)}</td><td class="r">+${fmt(x.d)}원</td></tr>`).join('')),
+                  tbl('<th>줄어든 중분류</th><th class="r">증감</th>', down.map(x => `<tr><td>${esc(x.k)}</td><td class="r">${fmt(x.d)}원</td></tr>`).join('')))
+            : `<p class="rp-note">전월(${prevYm}) 데이터가 없어 비교하지 않았습니다.</p>`}
+  <h2>5. 품목</h2>
+  ${tbl('<th>#</th><th>매출 상위 품목</th><th>분류</th><th class="r">수량</th><th class="r">매출</th><th class="r">이익율</th>', topItems.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}</td><td class="rp-note">${esc([r.cat2, r.cat3].filter(Boolean).join(' › '))}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.amount)}</td><td class="r">${r.profit_rate ?? '—'}%</td></tr>`).join(''))}
+  ${itemData.hasPrev ? two(tbl('<th>판매수량 증가</th><th class="r">전월 대비</th>', qUp.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">+${fmt(r.diffQty)}개</td></tr>`).join('')),
+                           tbl('<th>판매수량 감소</th><th class="r">전월 대비</th>', qDown.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">${fmt(r.diffQty)}개</td></tr>`).join(''))) : ''}
+  <h2>6. 폐기</h2>
+  ${itemData.hasWaste ? `
+  ${tbl('<th>소분류</th><th class="r">폐기원가</th><th class="r">비중</th>', wCatTop.map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${fmt(v)}원</td><td class="r">${wCost ? (v / wCost * 100).toFixed(1) : 0}%</td></tr>`).join(''))}
+  ${tbl('<th>#</th><th>폐기 상위 품목</th><th>소분류</th><th class="r">수량</th><th class="r">폐기원가</th>', wItemTop.map(([k,v],i) => `<tr><td>${i+1}</td><td>${esc(k)}</td><td class="rp-note">${esc(v.c || '')}</td><td class="r">${fmt(v.q)}</td><td class="r">${fmt(v.a)}원</td></tr>`).join(''))}
+  <h2>7. 판매 대비 폐기 — 발주 점검 대상</h2>
+  ${tbl('<th>#</th><th>품목</th><th class="r">판매</th><th class="r">폐기</th><th class="r">폐기 비율</th><th class="r">폐기원가</th>', wvs.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}${r.soldZero ? ' <span class="rp-note">(판매 없음)</span>' : ''}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.wasteQty)}</td><td class="r">${Math.round(r.wasteRatio * 100)}%</td><td class="r">${fmt(r.wasteAmt)}원</td></tr>`).join(''))}
+  <p class="rp-note">폐기 비율 = 폐기 수량 ÷ (판매 + 폐기). 재고 데이터가 없어 들여온 수량은 알 수 없으므로, 발주량은 현장 확인 후 정하십시오.</p>`
+  : `<p class="rp-note">이 달 폐기 파일(분류별내역)이 없어 폐기 항목을 만들지 못했습니다.</p>`}
+  <p class="rp-note" style="margin-top:18px">이 리포트는 대시보드에 올라온 파일의 숫자만으로 자동 작성됐습니다. 폐기 금액은 원가(매입가) 기준이며, 폐기율 기준선은 업계 기준이 아니라 우리 매장의 직전 3개월 평균입니다.</p>`;
 }
 
 // ── 공통: 전체 화면 데이터 새로고침 ─────────────────────────────────
@@ -908,6 +1130,8 @@ async function refreshAllData() {
     run('폐기 월 목록', loadWasteMonthOptions),
     run('업로드 현황', loadUploadStatus),
     run('최근 폐기', loadRecentWaste),
+    run('데이터 신선도', renderFreshness),
+    run('리포트 월 목록', fillReportMonths),
     run('마지막 동기화', updateLastSync),
   ];
   if (CURRENT_ROLE === 'admin') rest.push(run('관리자 삭제 옵션', loadAdminDeleteOptions));
@@ -1431,6 +1655,7 @@ async function syncFiles() {
   // 이번 묶음에서 이미 저장한 매출 월 — 파일명에 연월이 없는 매출 파일 여러 개가 전부
   // '업로드 연월' 한 달로 들어가 서로 덮어쓰는 사고를 막습니다 (예: 26년1월~8월이 전부 9월로 저장됨)
   const salesMonthsInBatch = new Map();
+  const thisUpload = []; // 되돌리기용: 파일마다 덮어쓰기 직전 데이터를 보관 (이 화면을 새로고침하기 전까지만 유효)
 
   for (const file of pendingFiles) {
     try {
@@ -1482,6 +1707,9 @@ async function syncFiles() {
         // 해당 연월의 대분류·품목을 지우고 다시 넣습니다 (같은 달을 다시 올려도 중복 없음)
         const items = records.items || [];
         const tableMissing = msg => /m4_item_sales/.test(msg) && /(does not exist|Could not find|schema cache)/i.test(msg);
+        // 되돌리기를 위해 지우기 전의 그 달 데이터를 보관
+        const prevCat = await fetchAllRows(() => sb.from('m4_category_sales').select('*').eq('year_month', yearMonth));
+        const prevItems = await fetchAllRows(() => sb.from('m4_item_sales').select('*').eq('year_month', yearMonth)).catch(() => []);
         const itemDel = await sb.from('m4_item_sales').delete().eq('year_month', yearMonth);
         if (itemDel.error) {
           throw new Error(tableMissing(itemDel.error.message)
@@ -1505,12 +1733,15 @@ async function syncFiles() {
           }
         }
         count = records.length + items.length;
+        thisUpload.push({ name:file.name, type:'category_sales', yearMonth, prevCat, prevItems });
         verifiedNote = `${yearMonth} · 대분류 ${records.length} · 품목 ${fmt(items.length)} · 파일 합계와 일치 ✔`;
 
       } else if (fileType === 'waste_detail') {
         const records = parseWasteDetail(wb);
         // 파일에 포함된 날짜 범위의 기존 데이터 삭제 후 재삽입 (중복 방지)
         const dates = records.map(r=>r.confirmed_date).filter(Boolean).sort();
+        const prevWaste = dates.length ? await fetchAllRows(() => sb.from('m4_waste_items').select('*')
+          .gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1])) : [];
         if (dates.length) {
           const delRes = await sb.from('m4_waste_items')
             .delete().gte('confirmed_date', dates[0]).lte('confirmed_date', dates[dates.length-1]);
@@ -1521,15 +1752,13 @@ async function syncFiles() {
           if (error) throw new Error(`저장 실패(${i+1}~${Math.min(i+100,records.length)}번째 행): ${error.message}`);
         }
         count = records.length;
+        if (dates.length) thisUpload.push({ name:file.name, type:'waste_detail', from:dates[0], to:dates[dates.length-1], prevWaste });
         if (dates.length) verifiedNote = `${dates[0]} ~ ${dates[dates.length-1]} · ${fmt(count)}건`;
       }
       // (시계열·전체전표는 checkUploadable에서 차단되어 여기까지 오지 않습니다)
 
-      // 이력 저장 (재업로드 시 갱신)
-      await sb.from('m4_sync_history').upsert({
-        file_name: file.name, file_type: fileType, record_count: count,
-        synced_at: new Date().toISOString()
-      }, {onConflict:'file_name'});
+      // 이력 저장 (재업로드 시 갱신) — 올린 사람도 기록
+      await saveHistory({ file_name: file.name, file_type: fileType, record_count: count, synced_at: new Date().toISOString() });
 
       totalRecords += count;
       fl.innerHTML = fl.innerHTML.replace(
@@ -1559,6 +1788,9 @@ async function syncFiles() {
     setStatus(`완료 — 총 ${totalRecords}건 저장됨`, 'ok');
   }
   pendingFiles = [];
+  lastUpload = thisUpload.length ? { at: new Date(), files: thisUpload } : null;
+  const undoBtn = byId('undo-btn');
+  if (undoBtn) undoBtn.style.display = lastUpload ? '' : 'none';
 
   // 데이터 새로고침 (관리자 탭의 "삭제할 월" 목록도 여기서 같이 갱신됩니다 —
   // 예전에는 이게 빠져 있어서 업로드 직후 관리자 탭에서 방금 올린 파일이
@@ -2460,5 +2692,13 @@ function monthRange(ym) {
 }
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 </script>
+<!-- 월별 리포트 (홈 → 리포트 만들기). 인쇄 시 이 영역만 출력됩니다 -->
+<div id="report-view">
+  <div class="rp-bar">
+    <button onclick="window.print()" style="background:#4f46e5;color:#fff">🖨 인쇄 / PDF로 저장</button>
+    <button onclick="byId('report-view').style.display='none'" style="background:#fff;color:#334155">닫기</button>
+  </div>
+  <div id="report-paper"></div>
+</div>
 </body>
 </html>
