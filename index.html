@@ -398,6 +398,23 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="card-h"><div><div class="card-title">📈 월별 폐기율 추이</div><div class="card-sub" id="waste-rate-sub">점선 = 직전 3개월 평균(우리 매장 기준선). 조회 기간과 무관하게 전체 달을 보여줍니다</div></div></div>
     <div class="card-b"><div class="chart-wrap"><canvas id="waste-rate-chart"></canvas></div></div>
   </div>
+  <div class="card" style="margin-bottom:16px;display:none" id="waste-day-card">
+    <div class="card-h">
+      <div><div class="card-title">📅 요일 · 주말 · 공휴일별 폐기</div><div class="card-sub" id="waste-day-sub"></div></div>
+      <select class="sel" id="waste-day-mode" onchange="renderWasteDayAnalysis()">
+        <option value="shift">팔지 못한 날 기준 (폐기일 하루 전)</option>
+        <option value="raw">폐기한 날 기준</option>
+      </select>
+    </div>
+    <div class="card-b"><div class="chart-wrap" style="height:220px"><canvas id="waste-day-chart"></canvas></div></div>
+    <div style="overflow-x:auto;padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>구분</th><th class="r">날 수</th><th class="r">폐기원가 합계</th><th class="r">건수</th><th class="r">하루 평균</th><th class="r">평일 대비</th></tr></thead>
+        <tbody id="waste-day-tbody"></tbody>
+      </table>
+    </div>
+    <div class="note" id="waste-day-note" style="margin:10px 16px 14px"></div>
+  </div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-h"><div class="card-title">소분류별 폐기금액</div></div>
     <div class="card-b"><div style="height:220px;position:relative"><canvas id="waste-cat-chart"></canvas></div></div>
@@ -581,6 +598,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td>폐기 건수</td><td>폐기로 처리된 건수 (점내용도 제외)</td></tr>
         <tr><td>점내용도 금액</td><td>매장 자체 사용분 (종량제봉투 등)</td></tr>
         <tr><td>폐기율 (매출원가 대비)</td><td>그 달 폐기 원가 ÷ 그 달 매출원가(매출 − 예상이익). 폐기 금액이 원가라서 분모도 원가로 맞췄습니다. 같은 달 매출 파일이 있어야 계산됩니다.</td></tr>
+        <tr><td>요일 · 주말 · 공휴일별 폐기</td><td>요일마다, 그리고 평일·주말·공휴일로 나눠 <b>하루 평균 폐기원가</b>를 비교합니다(폐기가 없던 날도 하루로 셈). 기본은 <b>팔지 못한 날 기준</b>(폐기일 하루 전)으로, 도시락·김밥처럼 다음 날 버리는 상품의 실제 판매 부진일을 봅니다. 공휴일은 2026년 공식 목록(대체공휴일·선거일 포함)을 씁니다.</td></tr>
         <tr><td>월별 폐기율 추이 · 기준선</td><td>월별 폐기율 그래프와 <b>직전 3개월 평균</b>(점선)을 함께 보여줍니다. 카드와 홈에는 "직전 3개월 평균 대비 ▲/▼ %p"로 표시됩니다. 업계 기준치 대신 <b>우리 매장 추세</b>를 기준선으로 씁니다.</td></tr>
       </table>
     </div>
@@ -704,7 +722,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.27-v2.7';
+const APP_VERSION = '2026.09.28-v2.8';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -1108,6 +1126,92 @@ async function buildMonthlyReport(ym) {
   <p class="rp-note">폐기 비율 = 폐기 수량 ÷ (판매 + 폐기). 재고 데이터가 없어 들여온 수량은 알 수 없으므로, 발주량은 현장 확인 후 정하십시오.</p>`
   : `<p class="rp-note">이 달 폐기 파일(분류별내역)이 없어 폐기 항목을 만들지 못했습니다.</p>`}
   <p class="rp-note" style="margin-top:18px">이 리포트는 대시보드에 올라온 파일의 숫자만으로 자동 작성됐습니다. 폐기 금액은 원가(매입가) 기준이며, 폐기율 기준선은 업계 기준이 아니라 우리 매장의 직전 3개월 평균입니다.</p>`;
+}
+
+// ── 요일 · 주말 · 공휴일별 폐기 ──────────────────────────────────────
+// 공휴일 목록: 공공데이터포털 한국천문연구원 특일정보(2026년, 대체공휴일·선거일 포함)에서 받은 값.
+// 매년 초 다음 해 목록을 여기에 추가해야 합니다. 목록이 없는 해는 주말·평일만 구분합니다.
+const KR_HOLIDAYS = {
+  '2026-01-01':'1월1일', '2026-02-16':'설날', '2026-02-17':'설날', '2026-02-18':'설날',
+  '2026-03-01':'삼일절', '2026-03-02':'대체공휴일(삼일절)', '2026-05-01':'노동절', '2026-05-05':'어린이날',
+  '2026-05-24':'부처님오신날', '2026-05-25':'대체공휴일(부처님오신날)', '2026-06-03':'전국동시지방선거',
+  '2026-06-06':'현충일', '2026-07-17':'제헌절', '2026-08-15':'광복절', '2026-08-17':'대체공휴일(광복절)',
+  '2026-09-24':'추석', '2026-09-25':'추석', '2026-09-26':'추석', '2026-10-03':'개천절',
+  '2026-10-05':'대체공휴일(개천절)', '2026-10-09':'한글날', '2026-12-25':'기독탄신일',
+};
+const HOLIDAY_YEARS = new Set(['2026']);
+const DOW = ['일','월','화','수','목','금','토'];
+let wasteDayChart = null;
+let wasteDayCtx = { items: [], months: [] };
+
+function ymdAdd(ymd, days) { // 시간대 영향 없이 날짜 더하기
+  const [y, m, d] = ymd.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + days));
+  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
+}
+function dowOf(ymd) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); }
+// 그룹: 공휴일(평일·주말 상관없이 공휴일이면) → 'hol', 아니면 요일 번호
+function dayGroup(ymd) { return KR_HOLIDAYS[ymd] ? 'hol' : dowOf(ymd); }
+
+function renderWasteDayAnalysis() {
+  const card = byId('waste-day-card');
+  const { items, months } = wasteDayCtx;
+  const waste = items.filter(r => r.type === '폐기' && r.confirmed_date);
+  if (!waste.length || !months.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const shift = byId('waste-day-mode').value === 'shift' ? -1 : 0;
+
+  // 분석 기간의 달력 날짜 전부 (폐기가 없던 날도 하루로 셉니다 — 그래야 '하루 평균'이 공정)
+  const days = [];
+  for (const ym of months) {
+    const [s, e] = monthRange(ym);
+    for (let d = s; d < e; d = ymdAdd(d, 1)) days.push(ymdAdd(d, shift));
+  }
+  const g = {}; const init = k => g[k] || (g[k] = { days: 0, cost: 0, qty: 0, n: 0 });
+  for (const d of days) init(dayGroup(d)).days++;
+  const daySet = new Set(days);
+  for (const w of waste) {
+    const d = ymdAdd(String(w.confirmed_date).substring(0,10), shift);
+    if (!daySet.has(d)) continue;
+    const a = init(dayGroup(d)); a.cost += Number(w.amount) || 0; a.qty += Number(w.quantity) || 0; a.n++;
+  }
+  const avg = k => g[k] && g[k].days ? g[k].cost / g[k].days : 0;
+  const order = [1, 2, 3, 4, 5, 6, 0, 'hol'];
+  const labels = order.map(k => k === 'hol' ? '공휴일' : DOW[k]);
+  const ctx = byId('waste-day-chart').getContext('2d');
+  if (wasteDayChart) wasteDayChart.destroy();
+  wasteDayChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '하루 평균 폐기원가', data: order.map(k => Math.round(avg(k))),
+      backgroundColor: order.map(k => k === 'hol' ? '#dc2626' : (k === 0 || k === 6) ? '#f59e0b' : '#6366f1'), borderRadius: 4, barPercentage: .6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => {
+        const k = order[c.dataIndex]; const a = g[k] || { days: 0, cost: 0, n: 0 };
+        return ` 하루 평균 ${fmt(Math.round(avg(k)))}원 · ${a.days}일 · 합계 ${fmt(a.cost)}원 (${a.n}건)`; } } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => fmt(v) + '원' } } } }
+  });
+
+  // 평일 / 주말 / 공휴일 묶음
+  const sumOf = keys => keys.reduce((a, k) => { const x = g[k] || {}; a.days += x.days || 0; a.cost += x.cost || 0; a.n += x.n || 0; return a; }, { days: 0, cost: 0, n: 0 });
+  const wk = sumOf([1,2,3,4,5]), we = sumOf([0,6]), ho = sumOf(['hol']);
+  const wkAvg = wk.days ? wk.cost / wk.days : 0;
+  const row = (name, x, color) => {
+    const a = x.days ? x.cost / x.days : 0;
+    const ratio = wkAvg && name !== '평일 (월~금)' ? `평일의 ${(a / wkAvg).toFixed(2)}배` : '—';
+    return `<tr><td><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${color};margin-right:6px"></span>${name}</td>
+      <td class="r">${x.days}일</td><td class="r">${fmt(x.cost)}원</td><td class="r">${x.n}건</td><td class="r"><b>${fmt(Math.round(a))}원</b></td><td class="r">${ratio}</td></tr>`;
+  };
+  byId('waste-day-tbody').innerHTML = row('평일 (월~금)', wk, '#6366f1') + row('주말 (토·일)', we, '#f59e0b') + row('공휴일', ho, '#dc2626');
+
+  const years = [...new Set(months.map(m => m.substring(0,4)))];
+  const noHol = years.filter(y => !HOLIDAY_YEARS.has(y));
+  const holInRange = [...daySet].filter(d => KR_HOLIDAYS[d]).sort().map(d => `${d.substring(5).replace('-','/')} ${KR_HOLIDAYS[d]}`);
+  byId('waste-day-sub').textContent = `${months.length === 1 ? months[0] : `${months[0]} ~ ${months[months.length-1]}`} · 폐기만(점내용도 제외) · 원가 기준 · ${shift ? '팔지 못한 날(폐기일 하루 전) 기준' : '폐기한 날 기준'}`;
+  byId('waste-day-note').innerHTML =
+    `하루 평균 = 그 요일(또는 공휴일)의 폐기원가 합 ÷ 기간 안의 그 날 수. 폐기가 없던 날도 하루로 셉니다. ` +
+    `폐기일은 '안 팔린 날'이 아니라 유통기한이 지나 처리한 날이어서, 도시락·김밥처럼 하루 뒤에 버리는 상품은 <b>팔지 못한 날 기준</b>으로 보는 게 발주 판단에 맞습니다. ` +
+    (holInRange.length ? `기간 안 공휴일: ${holInRange.join(', ')}.` : '기간 안에 공휴일이 없습니다.') +
+    (noHol.length ? ` <span style="color:#b91c1c">${noHol.join('·')}년 공휴일 목록이 없어 그 해는 주말·평일만 구분했습니다.</span>` : '');
 }
 
 // ── 공통: 전체 화면 데이터 새로고침 ─────────────────────────────────
@@ -2502,6 +2606,11 @@ async function loadWasteData() {
 
   renderWasteChart(items);
   renderWasteCatChart(items);
+  // 요일·주말·공휴일 분석: 선택한 달(전체 기간이면 폐기 데이터가 있는 모든 달)
+  const allW = await allWasteLite();
+  const wMonths = month ? [month] : [...new Set(allW.filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)))].sort();
+  wasteDayCtx = { items, months: wMonths };
+  renderWasteDayAnalysis();
 }
 
 // ── 최근 7일 폐기 상위 (폐기 탭) ──────────────────────────────────
