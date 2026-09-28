@@ -197,10 +197,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <div class="tab-content on main" id="tab-home">
   <div id="home-fresh" class="fresh" style="display:none"></div>
   <div class="filter-row">
-    <span style="font-size:12.5px;font-weight:600;color:#475569">📄 월별 종합 보고서</span>
-    <select class="sel" id="report-month-sel"><option value="">월 선택</option></select>
+    <span style="font-size:12.5px;font-weight:600;color:#475569">📄 종합 보고서</span>
+    <select class="sel" id="report-from-sel"><option value="">시작 월</option></select>
+    <span style="color:#94a3b8">~</span>
+    <select class="sel" id="report-to-sel"><option value="">끝 월</option></select>
     <button class="sel" onclick="openMonthlyReport()" style="cursor:pointer;background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600">보고서 만들기</button>
-    <span style="font-size:11.5px;color:#94a3b8">— 본사 보고 요약(1쪽) + 매출·품목·폐기 상세. 인쇄 창에서 'PDF로 저장'을 고르면 PDF가 됩니다</span>
+    <span style="font-size:11.5px;color:#94a3b8">— 같은 달을 고르면 월별, 다르게 고르면 기간 보고서. 인쇄 창에서 'PDF로 저장'</span>
   </div>
   <div class="kpi-row" id="home-kpi-row">
     <div class="kpi"><div class="kpi-t">최근 월 매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div></div>
@@ -576,8 +578,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div class="help-q" onclick="this.parentNode.classList.toggle('open')"><span>📊 화면의 숫자는 무슨 뜻인가요?</span><span class="arw">▶</span></div>
     <div class="help-a">
       <p class="src-note">매출·품목·폐기 탭은 처음 열면 <b>올라와 있는 가장 최근 월</b>이 선택됩니다. 홈의 "최근 월"도 오늘 날짜가 아니라 올라와 있는 가장 최근 월이며, 카드 아래에 기준월이 표시됩니다.</p>
-      <h5>홈 — 데이터 신선도 · 월별 종합 보고서</h5>
-      <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. 매월 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다. <b>📄 월별 종합 보고서</b>에서 월을 고르고 [보고서 만들기]를 누르면 <b>1쪽 본사 보고 요약</b>(핵심 지표 4개·요약·매출 추이·폐기율 추이 그래프)과 <b>매출 상세·품목·폐기(요일·주말·공휴일 분석, 발주 점검 대상)·데이터 기준</b>이 이어지는 보고서가 열립니다. [인쇄 / PDF로 저장] → 대상에서 'PDF로 저장'을 고르면 "A1_월별종합보고서_2026-08" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다. 작성 시점의 값이 고정되므로 매달 저장해 두면 보고 기록이 됩니다.</p>
+      <h5>홈 — 데이터 신선도 · 종합 보고서</h5>
+      <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. 매월 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다.</p>
+      <p><b>📄 종합 보고서</b>에서 시작 월과 끝 월을 고르고 [보고서 만들기]를 누릅니다. <b>같은 달을 고르면 월별 보고서, 다르게 고르면 기간 보고서</b>(예: 2026-01 ~ 2026-05, 기간 합산 + 월별 내역 표)가 됩니다. 비교 기준은 바로 앞 같은 길이의 기간(한 달이면 전월, 1~5월이면 전년 8~12월)이며, 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다. 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 계산합니다. [인쇄 / PDF로 저장] → 'PDF로 저장'을 고르면 "A1_종합보고서_2026-01_2026-05" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
       <h5>매출 · 이익 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
@@ -727,7 +730,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.28-v2.9';
+const APP_VERSION = '2026.09.28-v3.0';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -1030,31 +1033,32 @@ async function renderFreshness() {
 // ── 월별 리포트 ─────────────────────────────────────────────────────
 // 한 달치를 한 장으로 정리합니다. 문장은 숫자에서 자동으로 만들며, 해석·추정은 넣지 않습니다.
 async function fillReportMonths() {
-  const sel = byId('report-month-sel'); if (!sel) return;
-  const months = await fetchSalesMonths();
-  const cur = sel.value;
-  sel.innerHTML = months.length ? months.map(m => `<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('') : '<option value="">매출 데이터 없음</option>';
-  if (!months.includes(cur)) sel.value = months[0] || '';
+  const fs = byId('report-from-sel'), ts = byId('report-to-sel'); if (!fs || !ts) return;
+  const months = (await fetchSalesMonths()).slice().reverse(); // 오래된 달 → 최신 달
+  const opt = (sel, def) => { const cur = sel.value; sel.innerHTML = months.length ? months.map(m => `<option value="${m}">${m}</option>`).join('') : '<option value="">매출 데이터 없음</option>'; sel.value = months.includes(cur) ? cur : def; };
+  const last = months[months.length - 1] || '';
+  opt(fs, last); opt(ts, last); // 기본: 가장 최근 한 달
 }
-// PDF로 저장할 때 기본 파일 이름이 "A1_월별종합보고서_2026-08"이 되도록 잠시 문서 제목을 바꿈
+// PDF로 저장할 때 기본 파일 이름이 "A1_종합보고서_2026-08"(기간이면 2026-01_2026-05)이 되도록 잠시 문서 제목을 바꿈
 let reportYm = '';
 function printReport() {
   const t = document.title;
-  document.title = `A1_월별종합보고서_${reportYm}`;
+  document.title = `A1_종합보고서_${reportYm}`;
   const restore = () => { document.title = t; window.removeEventListener('afterprint', restore); };
   window.addEventListener('afterprint', restore);
   window.print();
   setTimeout(restore, 3000);
 }
 async function openMonthlyReport() {
-  const ym = byId('report-month-sel').value;
-  if (!ym) return;
+  let from = byId('report-from-sel').value, to = byId('report-to-sel').value;
+  if (!from || !to) return;
+  if (from > to) [from, to] = [to, from]; // 거꾸로 고르면 자동으로 바로잡음
   const paper = byId('report-paper');
   byId('report-view').style.display = 'block';
-  reportYm = ym;
+  reportYm = from === to ? from : `${from}_${to}`;
   paper.innerHTML = '<p>보고서를 만드는 중입니다...</p>';
-  try { paper.innerHTML = await buildMonthlyReport(ym); }
-  catch (e) { paper.innerHTML = `<p style="color:#b91c1c">리포트를 만들지 못했습니다: ${esc(e.message)}</p>`; }
+  try { paper.innerHTML = await buildReport(from, to); }
+  catch (e) { paper.innerHTML = `<p style="color:#b91c1c">보고서를 만들지 못했습니다: ${esc(e.message)}</p>`; }
 }
 // ── 요일 · 주말 · 공휴일별 폐기 ──────────────────────────────────────
 // 공휴일 목록: 공공데이터포털 한국천문연구원 특일정보(2026년, 대체공휴일·선거일 포함)에서 받은 값.
@@ -1160,126 +1164,206 @@ function chartImage(config, w = 760, h = 250) {
   return `<img src="${url}" style="width:100%;max-width:${w}px;height:auto;display:block;margin:4px 0">`;
 }
 
-// ── 월별 종합 보고서 (본사 보고 + 내부 확인) ─────────────────────────
-// 1쪽: 본사 보고용 요약(핵심 지표·요약·추이 그래프) / 2쪽~: 매출 상세, 품목, 폐기, 요일 분석, 발주 점검 대상 / 끝: 데이터 기준
-// 모든 문장은 올라온 숫자에서 자동으로 만들며, 해석·추정은 넣지 않습니다.
-async function buildMonthlyReport(ym) {
-  const months = await fetchSalesMonths();
+// ── 종합 보고서 (한 달 또는 기간) ───────────────────────────────────
+// from~to 기간을 합산해 보고합니다. 한 달이면 from = to.
+// 비교 대상은 '바로 앞 같은 길이의 기간'(예: 1~5월 → 전년 8~12월, 8월 → 7월)이며,
+// 그 기간의 매출 파일이 한 달이라도 없으면 비교하지 않습니다(일부만 비교하면 숫자가 왜곡되므로).
+function monthsBetween(from, to) {
+  const out = []; let m = from;
+  while (m <= to && out.length < 120) { out.push(m); const [y, mo] = m.split('-').map(Number); m = mo === 12 ? `${y+1}-01` : `${y}-${pad2(mo+1)}`; }
+  return out;
+}
+function periodLabel(ms) {
+  if (!ms.length) return '';
+  const f = ms[0].split('-'), t = ms[ms.length-1].split('-');
+  if (ms.length === 1) return `${f[0]}년 ${Number(f[1])}월`;
+  return f[0] === t[0] ? `${f[0]}년 ${Number(f[1])}월 ~ ${Number(t[1])}월` : `${f[0]}년 ${Number(f[1])}월 ~ ${t[0]}년 ${Number(t[1])}월`;
+}
+
+// 기간 품목 판매 + 비교기간 판매 + 기간 폐기를 상품 코드로 합친 결과 (fetchItemMonthData의 기간 버전)
+async function fetchItemPeriodData(pMonths, prevMonths, hasPrev) {
+  const sel = 'plu_code,item_name,cat1,cat2,cat3,quantity,amount,profit';
+  const cur = await fetchAllRows(() => sb.from('m4_item_sales').select(sel).in('year_month', pMonths));
+  const prev = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('plu_code,quantity').in('year_month', prevMonths)) : [];
+  const [ws] = monthRange(pMonths[0]); const [, we] = monthRange(pMonths[pMonths.length-1]);
+  const wasteAll = await fetchAllRows(() => sb.from('m4_waste_items')
+    .select('plu_code,item_name,category,quantity,amount,type,confirmed_date').gte('confirmed_date', ws).lt('confirmed_date', we));
+  const agg = new Map();
+  for (const r of cur) {
+    const a = agg.get(r.plu_code) || { plu_code:r.plu_code, item_name:r.item_name, cat1:r.cat1, cat2:r.cat2, cat3:r.cat3, quantity:0, amount:0, profit:0 };
+    a.quantity += Number(r.quantity) || 0; a.amount += Number(r.amount) || 0; a.profit += Number(r.profit) || 0;
+    agg.set(r.plu_code, a);
+  }
+  const prevQty = new Map(); for (const r of prev) prevQty.set(r.plu_code, (prevQty.get(r.plu_code) || 0) + (Number(r.quantity) || 0));
+  const waste = new Map();
+  for (const w of wasteAll) {
+    if (w.type !== '폐기') continue;
+    const key = w.plu_code ? String(w.plu_code).trim() : `NAME:${w.item_name}`;
+    const acc = waste.get(key) || { qty:0, amt:0, name:w.item_name, cat3:w.category };
+    acc.qty += Number(w.quantity) || 0; acc.amt += Number(w.amount) || 0; waste.set(key, acc);
+  }
+  const cat3Map = new Map(); for (const r of agg.values()) if (r.cat3 && !cat3Map.has(r.cat3)) cat3Map.set(r.cat3, { cat1:r.cat1, cat2:r.cat2 });
+  const rows = [...agg.values()].map(r => {
+    const w = waste.get(r.plu_code); const pq = hasPrev ? (prevQty.get(r.plu_code) || 0) : null;
+    return { ...r, profit_rate: r.amount ? Math.round(r.profit / r.amount * 1000) / 10 : 0, prevQty: pq, diffQty: pq == null ? null : r.quantity - pq,
+      isNew: hasPrev && !prevQty.has(r.plu_code), wasteQty: w ? w.qty : 0, wasteAmt: w ? w.amt : 0, soldZero: false };
+  });
+  for (const [key, w] of waste) {
+    if (agg.has(key)) continue;
+    const c = cat3Map.get(w.cat3) || {};
+    rows.push({ plu_code:key, item_name:w.name, cat1:c.cat1||null, cat2:c.cat2||null, cat3:w.cat3||null, quantity:0, amount:0, profit:0, profit_rate:null,
+      prevQty: hasPrev ? (prevQty.get(key) || 0) : null, diffQty: hasPrev ? -(prevQty.get(key) || 0) : null, isNew:false, wasteQty:w.qty, wasteAmt:w.amt, soldZero:true });
+  }
+  for (const r of rows) r.wasteRatio = r.wasteQty > 0 ? r.wasteQty / (r.quantity + r.wasteQty) : null;
+  return { rows, hasWaste: wasteAll.length > 0, wasteAll };
+}
+
+async function buildReport(from, to) {
+  const pMonths = monthsBetween(from, to);
+  const N = pMonths.length, single = N === 1;
+  const prevTo = prevMonthOf(from);
+  const prevMonths = []; // 바로 앞 같은 길이의 기간
+  for (let i = 0, m = prevTo; i < N; i++, m = prevMonthOf(m)) prevMonths.unshift(m);
   const cat = await allCatSales();
-  const prevYm = prevMonthOf(ym);
-  const cur = cat.filter(r => r.year_month === ym), prev = cat.filter(r => r.year_month === prevYm);
-  const hasPrev = prev.length > 0;
+  const salesMonthSet = new Set(cat.map(r => r.year_month));
+  const cur = cat.filter(r => pMonths.includes(r.year_month));
+  const prev = cat.filter(r => prevMonths.includes(r.year_month));
+  const hasPrev = prevMonths.every(m => salesMonthSet.has(m));
+  const missingSales = pMonths.filter(m => !salesMonthSet.has(m));
   const sum = (a, k) => a.reduce((s, r) => s + (Number(r[k]) || 0), 0);
-  const tot = sum(cur, 'amount'), prof = sum(cur, 'profit'), ptot = sum(prev, 'amount'), pprof = sum(prev, 'profit');
+  const tot = sum(cur, 'amount'), prof = sum(cur, 'profit'), ptot = hasPrev ? sum(prev, 'amount') : 0, pprof = hasPrev ? sum(prev, 'profit') : 0;
   const diff = hasPrev ? tot - ptot : null, dpct = hasPrev && ptot ? diff / ptot * 100 : null;
-  const [{ months: rateMonths, rates }, itemData, trend] = await Promise.all([fetchWasteRates(), fetchItemMonthData(ym, months), fetchMonthlyTrendData()]);
-  const [ws, we] = monthRange(ym);
-  const waste = await fetchAllRows(() => sb.from('m4_waste_items').select('item_name,category,quantity,amount,type,confirmed_date').gte('confirmed_date', ws).lt('confirmed_date', we));
-  const prevItems = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('cat1,cat2,amount').eq('year_month', prevYm)) : [];
+  const margin = tot ? prof / tot * 100 : 0, pmargin = hasPrev && ptot ? pprof / ptot * 100 : null;
+  const [{ months: rateMonths, rates }, trend, itemData] = await Promise.all([
+    fetchWasteRates(), fetchMonthlyTrendData(), fetchItemPeriodData(pMonths, prevMonths, hasPrev)]);
+  const waste = itemData.wasteAll;
+  const prevItems = hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select('cat1,cat2,amount').in('year_month', prevMonths)) : [];
   const wOnly = waste.filter(w => w.type === '폐기'), wInt = waste.filter(w => w.type !== '폐기');
-  const wCost = sum(wOnly, 'amount'), rate = rates[ym], bl = wasteBaseline(rateMonths, rates, ym);
-  const prate = rates[prevYm];
+  const wCost = sum(wOnly, 'amount');
+  // 기간 폐기율: 매출·폐기 파일이 둘 다 있는 달만 합산
+  const rateIn = pMonths.filter(m => rates[m]);
+  const pRate = rateIn.length ? rateIn.reduce((s, m) => s + rates[m].wasteCost, 0) / rateIn.reduce((s, m) => s + rates[m].cogs, 0) * 100 : null;
+  const prevRateIn = prevMonths.filter(m => rates[m]);
+  const prevRate = prevRateIn.length === N ? prevRateIn.reduce((s, m) => s + rates[m].wasteCost, 0) / prevRateIn.reduce((s, m) => s + rates[m].cogs, 0) * 100 : null;
+  const bl = single ? wasteBaseline(rateMonths, rates, from) : null;
+  const rateRef = single ? (bl ? { v: bl.avg, label: `직전 ${bl.n}개월 평균` } : null) : (prevRate != null ? { v: prevRate, label: '직전 같은 기간' } : null);
   const sign = v => v > 0 ? '+' : '';
   const pct = v => v == null ? '—' : `${sign(v)}${v.toFixed(1)}%`;
   const won = v => v == null ? '—' : `${fmt(Math.round(v))}원`;
-  const margin = tot ? prof / tot * 100 : 0, pmargin = ptot ? pprof / ptot * 100 : null;
+  const prevLabel = single ? prevMonths[0] : `${prevMonths[0]}~${prevMonths[N-1]}`;
+  const cmpName = single ? '전월' : '직전 같은 기간';
 
-  // 중분류 증감
   const byCat2 = rows => { const m = {}; for (const r of rows) { if (!r.cat2) continue; const k = `${r.cat1} › ${r.cat2}`; m[k] = (m[k] || 0) + (Number(r.amount) || 0); } return m; };
   const c2cur = byCat2(itemData.rows.filter(r => !r.soldZero)), c2prev = byCat2(prevItems);
   const c2diff = Object.keys({ ...c2cur, ...c2prev }).map(k => ({ k, d: (c2cur[k] || 0) - (c2prev[k] || 0) }));
   const up = [...c2diff].sort((a,b) => b.d - a.d).filter(x => x.d > 0).slice(0, 5);
   const down = [...c2diff].sort((a,b) => a.d - b.d).filter(x => x.d < 0).slice(0, 5);
-
   const sold = itemData.rows.filter(r => !r.soldZero);
   const topItems = [...sold].sort((a,b) => b.amount - a.amount).slice(0, 10);
   const qUp = sold.filter(r => r.diffQty != null && !r.isNew && r.diffQty > 0).sort((a,b) => b.diffQty - a.diffQty).slice(0, 5);
   const qDown = sold.filter(r => r.diffQty != null && r.diffQty < 0).sort((a,b) => a.diffQty - b.diffQty).slice(0, 5);
-  const wvs = wasteVsSalesTop(itemData.rows, 10);
-  const heavyCnt = itemData.rows.filter(r => r.wasteRatio != null && r.wasteRatio >= 0.5).length;
+  // 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 봅니다.
+  // (예: 7~8월 보고서인데 폐기가 7월만 있으면, 7월 폐기를 7~8월 두 달 판매와 비교하게 되어 비율이 낮게 왜곡됨)
+  const wMonthAll = new Set((await allWasteLite()).filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
+  const matched = pMonths.filter(m => salesMonthSet.has(m) && wMonthAll.has(m));
+  const matchData = matched.length === N ? itemData : (matched.length ? await fetchItemPeriodData(matched, [], false) : null);
+  const matchNote = matched.length && matched.length < N ? ` (매출·폐기 파일이 모두 있는 ${matched.join(', ')} 기준)` : '';
+  const wvs = matchData ? wasteVsSalesTop(matchData.rows, 10) : [];
+  const heavyCnt = matchData ? matchData.rows.filter(r => r.wasteRatio != null && r.wasteRatio >= 0.5).length : 0;
+  const soldZeroCnt = matchData ? matchData.rows.filter(r => r.soldZero).length : 0;
   const wByCat = {}; for (const w of wOnly) wByCat[w.category || '—'] = (wByCat[w.category || '—'] || 0) + (Number(w.amount) || 0);
   const wCatTop = Object.entries(wByCat).sort((a,b) => b[1] - a[1]).slice(0, 5);
-  const wItem = {}; for (const w of wOnly) { const k = w.item_name || '—'; const a = wItem[k] || (wItem[k] = { q:0, a:0, c:w.category }); a.q += Number(w.quantity) || 0; a.a += Number(w.amount) || 0; }
-  const wItemTop = Object.entries(wItem).sort((a,b) => b[1].a - a[1].a).slice(0, 10);
-  const day = computeWasteDay(waste, [ym], -1);
+  const wItem = {}; for (const w of wOnly) { const k = w.item_name || '—'; const a = wItem[k] || (wItem[k] = { q:0, a:0 }); a.q += Number(w.quantity) || 0; a.a += Number(w.amount) || 0; }
+  const wItemTop = Object.entries(wItem).sort((a,b) => b[1].a - a[1].a).slice(0, 5);
+  const wMonthsInPeriod = [...new Set(waste.filter(w => w.confirmed_date).map(w => String(w.confirmed_date).substring(0,7)))].filter(m => pMonths.includes(m)).sort();
+  const day = computeWasteDay(waste, wMonthsInPeriod, -1);
 
-  // 그래프 (선택한 달까지)
-  const tMonths = trend.months.filter(m => m <= ym).slice(-12);
+  // 그래프: 기간 끝 달까지 최근 12개월 (기간에 든 달은 점을 크게)
+  const tMonths = trend.months.filter(m => m <= to).slice(-Math.max(12, N));
+  const inP = m => pMonths.includes(m);
   const trendImg = tMonths.length >= 2 ? chartImage({ type: 'line', data: { labels: tMonths, datasets: [
-      { label: '매출', data: tMonths.map(m => trend.map[m].amount), borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.08)', fill: true, tension: .3, pointRadius: tMonths.map(m => m === ym ? 6 : 3) },
-      { label: '예상이익', data: tMonths.map(m => trend.map[m].profit), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.06)', fill: true, tension: .3, pointRadius: tMonths.map(m => m === ym ? 6 : 3) } ] },
+      { label: '매출', data: tMonths.map(m => trend.map[m].amount), borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.08)', fill: true, tension: .3, pointRadius: tMonths.map(m => inP(m) ? 5 : 2) },
+      { label: '예상이익', data: tMonths.map(m => trend.map[m].profit), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.06)', fill: true, tension: .3, pointRadius: tMonths.map(m => inP(m) ? 5 : 2) } ] },
     options: { plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
       scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => (v/10000).toFixed(0) + '만' } } } } }, 760, 230) : '';
-  const rMonths = rateMonths.filter(m => m <= ym).slice(-12);
+  const rMonths = rateMonths.filter(m => m <= to).slice(-Math.max(12, N));
   const rateImg = rMonths.length >= 2 ? chartImage({ type: 'line', data: { labels: rMonths, datasets: [
-      { label: '폐기율', data: rMonths.map(m => Math.round(rates[m].rate * 100) / 100), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', fill: true, tension: .3, pointRadius: rMonths.map(m => m === ym ? 6 : 3) },
+      { label: '폐기율', data: rMonths.map(m => Math.round(rates[m].rate * 100) / 100), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', fill: true, tension: .3, pointRadius: rMonths.map(m => inP(m) ? 5 : 2) },
       { label: '직전 3개월 평균', data: rMonths.map(m => { const b = wasteBaseline(rateMonths, rates, m); return b ? Math.round(b.avg * 100) / 100 : null; }), borderColor: '#94a3b8', borderDash: [6,4], pointRadius: 0, fill: false, spanGaps: true } ] },
     options: { plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
       scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v + '%' } } } } }, 760, 210) : '';
   const dayImg = day.hasData ? chartImage(wasteDayChartConfig(day), 760, 200) : '';
 
-  const catRows = [...cur].sort((a,b) => b.amount - a.amount).map(r => {
-    const p = prev.find(x => x.category === r.category); const pa = hasPrev ? (p ? p.amount : 0) : null;
-    const d = pa == null ? null : r.amount - pa;
-    return `<tr><td>${esc(r.category)}</td><td class="r">${fmt(r.amount)}</td><td class="r">${tot ? (r.amount / tot * 100).toFixed(1) : 0}%</td><td class="r">${r.amount ? (r.profit / r.amount * 100).toFixed(1) : 0}%</td><td class="r">${pa == null ? '—' : fmt(pa)}</td><td class="r">${d == null ? '—' : sign(d) + fmt(d)}</td><td class="r">${d != null && pa > 0 ? pct(d / pa * 100) : '—'}</td></tr>`;
+  const catMap = {}; for (const r of cur) { const a = catMap[r.category] || (catMap[r.category] = { amount:0, profit:0 }); a.amount += Number(r.amount) || 0; a.profit += Number(r.profit) || 0; }
+  const pCatMap = {}; for (const r of prev) pCatMap[r.category] = (pCatMap[r.category] || 0) + (Number(r.amount) || 0);
+  const catRows = Object.entries(catMap).sort((a,b) => b[1].amount - a[1].amount).map(([k, v]) => {
+    const pa = hasPrev ? (pCatMap[k] || 0) : null; const d = pa == null ? null : v.amount - pa;
+    return `<tr><td>${esc(k)}</td><td class="r">${fmt(v.amount)}</td><td class="r">${tot ? (v.amount / tot * 100).toFixed(1) : 0}%</td><td class="r">${v.amount ? (v.profit / v.amount * 100).toFixed(1) : 0}%</td><td class="r">${pa == null ? '—' : fmt(pa)}</td><td class="r">${d == null ? '—' : sign(d) + fmt(d)}</td><td class="r">${d != null && pa > 0 ? pct(d / pa * 100) : '—'}</td></tr>`;
   }).join('');
 
+  // 기간 보고서: 월별 내역
+  const wasteMonthCost = {}; for (const w of wOnly) { const m = String(w.confirmed_date || '').substring(0,7); wasteMonthCost[m] = (wasteMonthCost[m] || 0) + (Number(w.amount) || 0); }
+  const monthRows = pMonths.map(m => {
+    const t = trend.map[m];
+    return `<tr><td>${m}</td><td class="r">${t ? fmt(t.amount) : '<span style="color:#b91c1c">없음</span>'}</td><td class="r">${t ? fmt(t.profit) : '—'}</td><td class="r">${t && t.amount ? (t.profit / t.amount * 100).toFixed(1) + '%' : '—'}</td><td class="r">${wasteMonthCost[m] != null ? fmt(wasteMonthCost[m]) + '원' : '—'}</td><td class="r">${rates[m] ? fmtRate(rates[m].rate) : '—'}</td></tr>`;
+  }).join('') + `<tr style="font-weight:700;background:#f8fafc"><td>합계</td><td class="r">${fmt(tot)}</td><td class="r">${fmt(prof)}</td><td class="r">${margin.toFixed(1)}%</td><td class="r">${fmt(wCost)}원</td><td class="r">${pRate != null ? fmtRate(pRate) : '—'}</td></tr>`;
+
+  const dayAvg = x => x.days ? x.cost / x.days : 0;
   const summary = [
-    `총매출 <b>${won(tot)}</b>${hasPrev ? `, 전월(${prevYm}) 대비 <b>${sign(diff)}${fmt(diff)}원 (${pct(dpct)})</b>` : ` (전월 ${prevYm} 데이터 없음)`}.`,
-    `예상이익 <b>${won(prof)}</b>, 이익율 <b>${margin.toFixed(1)}%</b>${pmargin != null ? ` (전월 ${pmargin.toFixed(1)}%, ${margin - pmargin >= 0 ? '▲' : '▼'} ${Math.abs(margin - pmargin).toFixed(1)}%p)` : ''}.`,
-    rate ? `폐기율 <b>${fmtRate(rate.rate)}</b> (폐기원가 ${won(rate.wasteCost)} ÷ 매출원가 ${won(rate.cogs)})${bl ? `, 직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)} 대비 <b>${rate.rate - bl.avg >= 0 ? '▲' : '▼'} ${Math.abs(rate.rate - bl.avg).toFixed(2)}%p</b>` : ''}.` : `이 달 폐기 파일이 없어 폐기율을 계산하지 못했습니다.`,
-    hasPrev && up.length ? `전월 대비 매출이 가장 많이 늘어난 중분류는 <b>${esc(up[0].k)}</b>(+${fmt(up[0].d)}원)${down.length ? `, 가장 많이 줄어든 중분류는 <b>${esc(down[0].k)}</b>(${fmt(down[0].d)}원)` : ''}입니다.` : '',
-    day.hasData && day.wk.days && day.we.days ? `팔지 못한 날 기준 하루 평균 폐기원가: 평일 ${won(day.wk.cost / day.wk.days)}, 주말 ${won(day.we.cost / day.we.days)}(평일의 ${((day.we.cost / day.we.days) / (day.wk.cost / day.wk.days || 1)).toFixed(2)}배)${day.ho.days ? `, 공휴일 ${won(day.ho.cost / day.ho.days)}(${day.ho.days}일)` : ''}.` : '',
-    itemData.hasWaste ? `폐기가 판매 이상인 품목(발주 점검 대상)은 <b>${heavyCnt}개</b>입니다.` : '',
+    `${single ? '' : `${N}개월 `}총매출 <b>${won(tot)}</b>${hasPrev ? `, ${cmpName}(${prevLabel}) 대비 <b>${sign(diff)}${fmt(diff)}원 (${pct(dpct)})</b>` : ` (${cmpName} ${prevLabel} 매출 데이터가 모두 있지 않아 비교하지 않음)`}.`,
+    `예상이익 <b>${won(prof)}</b>, 이익율 <b>${margin.toFixed(1)}%</b>${pmargin != null ? ` (${cmpName} ${pmargin.toFixed(1)}%, ${margin - pmargin >= 0 ? '▲' : '▼'} ${Math.abs(margin - pmargin).toFixed(1)}%p)` : ''}.`,
+    !single && N > 1 && trend.map ? (() => { const ms = pMonths.filter(m => trend.map[m]); if (ms.length < 2) return ''; const best = ms.reduce((a,m) => trend.map[m].amount > trend.map[a].amount ? m : a), worst = ms.reduce((a,m) => trend.map[m].amount < trend.map[a].amount ? m : a);
+      return `기간 중 매출이 가장 높은 달은 <b>${best}</b>(${won(trend.map[best].amount)}), 가장 낮은 달은 <b>${worst}</b>(${won(trend.map[worst].amount)})입니다.`; })() : '',
+    pRate != null ? `폐기율 <b>${fmtRate(pRate)}</b>${!single && rateIn.length < N ? ` (폐기 파일이 있는 ${rateIn.length}개월 기준)` : ''}${rateRef ? `, ${rateRef.label} ${fmtRate(rateRef.v)} 대비 <b>${pRate - rateRef.v >= 0 ? '▲' : '▼'} ${Math.abs(pRate - rateRef.v).toFixed(2)}%p</b>` : ''}.` : `기간 안에 매출·폐기 파일이 함께 있는 달이 없어 폐기율을 계산하지 못했습니다.`,
+    hasPrev && up.length ? `${cmpName} 대비 매출이 가장 많이 늘어난 중분류는 <b>${esc(up[0].k)}</b>(+${fmt(up[0].d)}원)${down.length ? `, 가장 많이 줄어든 중분류는 <b>${esc(down[0].k)}</b>(${fmt(down[0].d)}원)` : ''}입니다.` : '',
+    day.hasData && day.wk.days && day.we.days ? `팔지 못한 날 기준 하루 평균 폐기원가: 평일 ${won(dayAvg(day.wk))}, 주말 ${won(dayAvg(day.we))}(평일의 ${(dayAvg(day.we) / (dayAvg(day.wk) || 1)).toFixed(2)}배)${day.ho.days ? `, 공휴일 ${won(dayAvg(day.ho))}(${day.ho.days}일)` : ''}.` : '',
+    matchData ? `폐기가 판매 이상인 품목(발주 점검 대상)은 <b>${heavyCnt}개</b>입니다${matchNote}.` : '',
+    missingSales.length ? `<span style="color:#b91c1c">매출 파일이 없는 달: ${missingSales.join(', ')} — 합계에서 빠져 있습니다.</span>` : '',
   ].filter(Boolean);
 
-  // 데이터 기준: 이 달과 직전 달들의 업로드 상태
   const wasteLite = await allWasteLite();
   const wMonthSet = new Set(wasteLite.filter(r => r.confirmed_date).map(r => String(r.confirmed_date).substring(0,7)));
-  const statusMonths = [...new Set([...trend.months, ...wMonthSet])].filter(m => m <= ym).sort().slice(-6);
-  const statusRows = statusMonths.map(m => {
-    const s = trend.months.includes(m), w = wMonthSet.has(m);
-    return `<tr><td>${m}</td><td>${s ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td><td>${w ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td></tr>`;
-  }).join('');
+  const statusMonths = single ? [...new Set([...trend.months, ...wMonthSet])].filter(m => m <= to).sort().slice(-6) : pMonths;
+  const statusRows = statusMonths.map(m => `<tr><td>${m}</td><td>${salesMonthSet.has(m) ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td><td>${wMonthSet.has(m) ? '있음' : '<b style="color:#b91c1c">없음</b>'}</td></tr>`).join('');
 
   const tbl = (head, rows) => `<table><thead><tr>${head}</tr></thead><tbody>${rows || '<tr><td colspan="9" class="rp-note">해당 없음</td></tr>'}</tbody></table>`;
   const two = (a, b) => `<table><tr><td style="width:50%;vertical-align:top;border:none;padding:0 6px 0 0">${a}</td><td style="vertical-align:top;border:none;padding:0 0 0 6px">${b}</td></tr></table>`;
   const kpi = (t, v, sub, color) => `<td style="width:25%;vertical-align:top;border:1px solid #e2e8f0;padding:10px 12px"><div class="rp-note">${t}</div><div style="font-size:17px;font-weight:700;margin:3px 0;color:${color || '#1e293b'}">${v}</div><div class="rp-note">${sub}</div></td>`;
   const now = new Date();
-  const [yy, mm] = ym.split('-');
 
   return `
   <div style="border-bottom:3px solid #4f46e5;padding-bottom:10px;margin-bottom:6px">
     <div style="font-size:11px;color:#4f46e5;font-weight:700;letter-spacing:1px">HANDYS · A1 편의점</div>
-    <h1 style="font-size:22px;margin:4px 0 2px">월별 종합 보고서 — ${yy}년 ${Number(mm)}월</h1>
-    <div class="rp-note">작성 ${now.toLocaleDateString('ko-KR')} ${now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${CURRENT_EMAIL ? ` · 작성자 ${esc(CURRENT_EMAIL)}` : ''} · 대시보드 v${APP_VERSION}</div>
+    <h1 style="font-size:22px;margin:4px 0 2px">${single ? '월별' : '기간'} 종합 보고서 — ${periodLabel(pMonths)}${single ? '' : ` (${N}개월)`}</h1>
+    <div class="rp-note">작성 ${now.toLocaleDateString('ko-KR')} ${now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${CURRENT_EMAIL ? ` · 작성자 ${esc(CURRENT_EMAIL)}` : ''} · 비교 기준: ${cmpName}(${prevLabel}) · 대시보드 v${APP_VERSION}</div>
   </div>
 
   <h2>I. 본사 보고 요약</h2>
   <table style="margin-bottom:8px"><tr>
-    ${kpi('총매출', won(tot), hasPrev ? `전월 대비 ${pct(dpct)}` : '전월 데이터 없음', dpct == null ? null : dpct >= 0 ? '#047857' : '#b91c1c')}
-    ${kpi('예상이익 · 이익율', won(prof), `이익율 ${margin.toFixed(1)}%${pmargin != null ? ` (전월 ${pmargin.toFixed(1)}%)` : ''}`)}
-    ${kpi('폐기율 (원가 기준)', rate ? fmtRate(rate.rate) : '—', bl ? `직전 ${bl.n}개월 평균 ${fmtRate(bl.avg)}` : (prate ? `전월 ${fmtRate(prate.rate)}` : '기준선 없음'), rate && bl ? (rate.rate > bl.avg ? '#b91c1c' : '#047857') : null)}
-    ${kpi('발주 점검 대상', itemData.hasWaste ? `${heavyCnt}개 품목` : '—', '폐기가 판매 이상인 품목')}
+    ${kpi('총매출', won(tot), hasPrev ? `${cmpName} 대비 ${pct(dpct)}` : `${cmpName} 데이터 없음`, dpct == null ? null : dpct >= 0 ? '#047857' : '#b91c1c')}
+    ${kpi('예상이익 · 이익율', won(prof), `이익율 ${margin.toFixed(1)}%${pmargin != null ? ` (${cmpName} ${pmargin.toFixed(1)}%)` : ''}`)}
+    ${kpi('폐기율 (원가 기준)', pRate != null ? fmtRate(pRate) : '—', rateRef ? `${rateRef.label} ${fmtRate(rateRef.v)}` : '기준선 없음', pRate != null && rateRef ? (pRate > rateRef.v ? '#b91c1c' : '#047857') : null)}
+    ${kpi('발주 점검 대상', matchData ? `${heavyCnt}개 품목` : '—', matchNote ? `폐기가 판매 이상 · ${matched.length}개월 기준` : '폐기가 판매 이상인 품목')}
   </tr></table>
   <ul class="rp-sum">${summary.map(x => `<li>${x}</li>`).join('')}</ul>
-  ${trendImg ? `<div class="rp-note" style="margin-top:8px"><b>월별 매출·예상이익 추이</b> (최근 ${tMonths.length}개월)</div>${trendImg}` : ''}
+  ${!single ? `<h3 class="rp-h3">월별 내역</h3>${tbl('<th>월</th><th class="r">매출</th><th class="r">예상이익</th><th class="r">이익율</th><th class="r">폐기원가</th><th class="r">폐기율</th>', monthRows)}` : ''}
+  ${trendImg ? `<div class="rp-note" style="margin-top:8px"><b>월별 매출·예상이익 추이</b>${single ? '' : ' (보고 기간의 달은 점을 크게 표시)'}</div>${trendImg}` : ''}
   ${rateImg ? `<div class="rp-note" style="margin-top:6px"><b>월별 폐기율 추이</b> — 점선: 직전 3개월 평균(우리 매장 기준선)</div>${rateImg}` : ''}
 
   <div class="rp-pb"></div>
   <h2>II. 매출 상세</h2>
-  <h3 class="rp-h3">대분류별 매출</h3>
-  ${tbl('<th>대분류</th><th class="r">매출</th><th class="r">구성비</th><th class="r">이익율</th><th class="r">전월 매출</th><th class="r">증감</th><th class="r">증감율</th>', catRows)}
-  <h3 class="rp-h3">전월 대비 변화가 큰 중분류</h3>
+  <h3 class="rp-h3">대분류별 매출${single ? '' : ' (기간 합계)'}</h3>
+  ${tbl(`<th>대분류</th><th class="r">매출</th><th class="r">구성비</th><th class="r">이익율</th><th class="r">${cmpName} 매출</th><th class="r">증감</th><th class="r">증감율</th>`, catRows)}
+  <h3 class="rp-h3">${cmpName} 대비 변화가 큰 중분류</h3>
   ${hasPrev ? two(tbl('<th>늘어난 중분류</th><th class="r">증감</th>', up.map(x => `<tr><td>${esc(x.k)}</td><td class="r">+${fmt(x.d)}원</td></tr>`).join('')),
                   tbl('<th>줄어든 중분류</th><th class="r">증감</th>', down.map(x => `<tr><td>${esc(x.k)}</td><td class="r">${fmt(x.d)}원</td></tr>`).join('')))
-            : `<p class="rp-note">전월(${prevYm}) 데이터가 없어 비교하지 않았습니다.</p>`}
+            : `<p class="rp-note">${cmpName}(${prevLabel}) 매출 데이터가 모두 있지 않아 비교하지 않았습니다.</p>`}
 
   <div class="rp-pb"></div>
   <h2>III. 품목</h2>
-  ${tbl('<th>#</th><th>매출 상위 품목</th><th>분류</th><th class="r">수량</th><th class="r">매출</th><th class="r">이익율</th>', topItems.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}</td><td class="rp-note">${esc([r.cat2, r.cat3].filter(Boolean).join(' › '))}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.amount)}</td><td class="r">${r.profit_rate ?? '—'}%</td></tr>`).join(''))}
-  ${itemData.hasPrev ? two(tbl('<th>판매수량 증가</th><th class="r">전월 대비</th>', qUp.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">+${fmt(r.diffQty)}개</td></tr>`).join('')),
-                           tbl('<th>판매수량 감소</th><th class="r">전월 대비</th>', qDown.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">${fmt(r.diffQty)}개</td></tr>`).join(''))) : ''}
+  ${tbl(`<th>#</th><th>매출 상위 품목${single ? '' : ' (기간 합계)'}</th><th>분류</th><th class="r">수량</th><th class="r">매출</th><th class="r">이익율</th>`, topItems.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}</td><td class="rp-note">${esc([r.cat2, r.cat3].filter(Boolean).join(' › '))}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.amount)}</td><td class="r">${r.profit_rate ?? '—'}%</td></tr>`).join(''))}
+  ${hasPrev ? two(tbl(`<th>판매수량 증가</th><th class="r">${cmpName} 대비</th>`, qUp.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">+${fmt(r.diffQty)}개</td></tr>`).join('')),
+                  tbl(`<th>판매수량 감소</th><th class="r">${cmpName} 대비</th>`, qDown.map(r => `<tr><td>${esc(r.item_name)}</td><td class="r">${fmt(r.diffQty)}개</td></tr>`).join(''))) : ''}
 
   <div class="rp-pb"></div>
   <h2>IV. 폐기</h2>
@@ -1287,26 +1371,27 @@ async function buildMonthlyReport(ym) {
   <table style="margin-bottom:8px"><tr>
     ${kpi('폐기원가', won(wCost), `폐기 ${wOnly.length}건`)}
     ${kpi('점내용도', won(sum(wInt, 'amount')), '종량제봉투 등 매장 사용분')}
-    ${kpi('폐기율', rate ? fmtRate(rate.rate) : '—', rate ? `매출원가 ${won(rate.cogs)}` : '')}
-    ${kpi('판매 없이 폐기', `${itemData.rows.filter(r => r.soldZero).length}개 품목`, '그 달 판매 0개')}
+    ${kpi('폐기율', pRate != null ? fmtRate(pRate) : '—', rateIn.length ? `${rateIn.length}개월 기준` : '')}
+    ${kpi('판매 없이 폐기', matchData ? `${soldZeroCnt}개 품목` : '—', matchNote ? `${matched.length}개월 기준 판매 0개` : '기간 중 판매 0개')}
   </tr></table>
   ${two(tbl('<th>소분류</th><th class="r">폐기원가</th><th class="r">비중</th>', wCatTop.map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${fmt(v)}원</td><td class="r">${wCost ? (v / wCost * 100).toFixed(1) : 0}%</td></tr>`).join('')),
-        tbl('<th>폐기 상위 품목</th><th class="r">수량</th><th class="r">원가</th>', wItemTop.slice(0, 5).map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${fmt(v.q)}</td><td class="r">${fmt(v.a)}원</td></tr>`).join('')))}
+        tbl('<th>폐기 상위 품목</th><th class="r">수량</th><th class="r">원가</th>', wItemTop.map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${fmt(v.q)}</td><td class="r">${fmt(v.a)}원</td></tr>`).join('')))}
   <h3 class="rp-h3">요일 · 주말 · 공휴일별 하루 평균 폐기원가 (팔지 못한 날 = 폐기일 하루 전 기준)</h3>
   ${dayImg}
   ${tbl('<th>구분</th><th class="r">날 수</th><th class="r">폐기원가 합계</th><th class="r">건수</th><th class="r">하루 평균</th><th class="r">평일 대비</th>', wasteDayRowsHTML(day))}
-  <p class="rp-note">${day.holInRange.length ? `이 달 공휴일: ${day.holInRange.join(', ')}. ` : '이 달에는 공휴일이 없습니다. '}${day.noHolYears.length ? `${day.noHolYears.join('·')}년 공휴일 목록이 없어 주말·평일만 구분했습니다.` : ''}</p>
-  <h3 class="rp-h3">판매 대비 폐기 — 발주 점검 대상</h3>
-  ${tbl('<th>#</th><th>품목</th><th class="r">판매</th><th class="r">폐기</th><th class="r">폐기 비율</th><th class="r">폐기원가</th>', wvs.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}${r.soldZero ? ' <span class="rp-note">(판매 없음)</span>' : ''}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.wasteQty)}</td><td class="r">${Math.round(r.wasteRatio * 100)}%</td><td class="r">${fmt(r.wasteAmt)}원</td></tr>`).join(''))}
+  <p class="rp-note">${day.holInRange.length ? `기간 안 공휴일: ${day.holInRange.join(', ')}. ` : '기간 안에 공휴일이 없습니다. '}${day.noHolYears.length ? `${day.noHolYears.join('·')}년 공휴일 목록이 없어 주말·평일만 구분했습니다.` : ''}</p>
+  <h3 class="rp-h3">판매 대비 폐기 — 발주 점검 대상${matchNote}</h3>
+  ${!matchData ? '<p class="rp-note">매출·폐기 파일이 같은 달에 함께 있는 달이 없어 비교하지 못했습니다.</p>' : tbl('<th>#</th><th>품목</th><th class="r">판매</th><th class="r">폐기</th><th class="r">폐기 비율</th><th class="r">폐기원가</th>', wvs.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.item_name)}${r.soldZero ? ' <span class="rp-note">(판매 없음)</span>' : ''}</td><td class="r">${fmt(r.quantity)}</td><td class="r">${fmt(r.wasteQty)}</td><td class="r">${Math.round(r.wasteRatio * 100)}%</td><td class="r">${fmt(r.wasteAmt)}원</td></tr>`).join(''))}
   <p class="rp-note">폐기 비율 = 폐기 수량 ÷ (판매 + 폐기). 재고 데이터가 없어 들여온 수량은 알 수 없으므로, 발주량은 현장 확인 후 정합니다.</p>`
-  : `<p class="rp-note">이 달 폐기 파일(분류별내역)이 없어 폐기 항목을 만들지 못했습니다.</p>`}
+  : `<p class="rp-note">기간 안에 폐기 파일(분류별내역)이 없어 폐기 항목을 만들지 못했습니다.</p>`}
 
   <h2>V. 데이터 기준</h2>
   ${two(tbl('<th>월</th><th>매출 파일</th><th>폐기 파일</th>', statusRows),
         `<ul class="rp-note" style="margin:6px 0 0 14px;padding:0">
-          <li>매출: e-store 분류별이익현황(총매출·원 단위), 대분류 23개 합계. 업로드 시 파일 합계행과 원 단위 대조.</li>
+          <li>매출: e-store 분류별이익현황(총매출·원 단위), 대분류 합계. 업로드 시 파일 합계행과 원 단위 대조.</li>
           <li>폐기: e-store 폐기/점내용도 분류별내역. 금액은 원가(매입가) 기준.</li>
-          <li>폐기율 = 폐기원가 ÷ 매출원가(매출 − 예상이익). 기준선은 업계 기준이 아니라 우리 매장 직전 3개월 평균.</li>
+          <li>폐기율 = 폐기원가 ÷ 매출원가(매출 − 예상이익).${single ? ' 기준선은 우리 매장 직전 3개월 평균.' : ' 기간 폐기율은 매출·폐기 파일이 모두 있는 달만 합산.'}</li>
+          <li>비교 기준: ${cmpName}(${prevLabel}). 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다.</li>
           <li>공휴일: 공공데이터포털(한국천문연구원) 2026년 목록.</li>
           <li>이 보고서의 숫자는 작성 시점에 대시보드에 올라와 있던 값입니다.</li>
         </ul>`)}`;
