@@ -228,6 +228,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <!-- 기준 월: 홈·매출·품목·폐기 탭이 모두 이 한 달을 봅니다 (탭마다 따로 고르던 방식 폐지) -->
 <div class="gm-bar" id="gm-bar">
   <span class="gm-label">기준 월</span>
+  <select class="sel" id="gm-year" onchange="onGmYearChange(this.value)"></select>
   <select class="sel" id="gm-sel" onchange="onGlobalMonthChange(this.value)"><option value="">불러오는 중</option></select>
   <span id="gm-status"></span>
   <span class="gm-hint">홈 · 매출 · 품목 · 폐기 탭이 모두 이 달 기준입니다</span>
@@ -777,7 +778,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.29-v3.6.1';
+const APP_VERSION = '2026.09.29-v3.6.3';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -844,6 +845,41 @@ async function initAuth() {
   return true;
 }
 
+// ── 월 선택 칸을 '연도 + 월' 두 칸으로 나눔 ──────────────────────────
+// 원래 <select>는 값 저장용으로 숨겨 두고(.value를 읽는 기존 코드는 그대로 동작), 화면에는 연도·월 두 칸을 보여줍니다.
+// 원래 select의 옵션이나 값을 코드로 바꾼 뒤에는 monthPicker(id)를 다시 불러 화면을 맞춥니다.
+function monthPicker(id) {
+  const sel = byId(id); if (!sel) return;
+  if (!sel._y) {
+    const y = document.createElement('select'), m = document.createElement('select');
+    y.className = m.className = sel.className;
+    y.style.width = m.style.width = 'auto';
+    y.setAttribute('aria-label', '연도'); m.setAttribute('aria-label', '월');
+    sel.parentNode.insertBefore(y, sel); sel.parentNode.insertBefore(m, sel);
+    sel.style.display = 'none'; sel._y = y; sel._m = m;
+    const fire = () => { sel.dispatchEvent(new Event('change')); monthPicker(id); };
+    y.onchange = () => {
+      const list = [...sel.options].map(o => o.value).filter(v => v.startsWith(y.value + '-')).sort();
+      if (!list.length) { sel.value = ''; return fire(); }
+      const same = list.find(v => v.slice(4) === (sel.value || '').slice(4));
+      sel.value = same || list[list.length - 1]; fire();
+    };
+    m.onchange = () => { sel.value = m.value; fire(); };
+  }
+  const y = sel._y, m = sel._m;
+  const vals = [...sel.options].map(o => o.value).filter(v => /^\d{4}-\d{2}/.test(v)).sort().reverse();
+  const ph = sel.querySelector('option[value=""]');
+  const label = ph ? ph.textContent : '';
+  if (!vals.length) { y.innerHTML = ''; m.innerHTML = `<option value="">${esc(label || '데이터 없음')}</option>`; return; }
+  const years = [...new Set(vals.map(v => v.substring(0, 4)))];
+  const cy = sel.value ? sel.value.substring(0, 4) : '';
+  y.innerHTML = (cy ? '' : '<option value="">연도</option>') + years.map(v => `<option value="${v}">${v}년</option>`).join('');
+  y.value = cy;
+  m.innerHTML = cy ? vals.filter(v => v.startsWith(cy + '-')).sort().map(v => `<option value="${v}">${v.substring(5, 7)}월</option>`).join('')
+                   : `<option value="">${esc(label || '월 선택')}</option>`;
+  m.value = sel.value;
+}
+
 // ── 관리자 전용: 특정 월만 삭제 ──────────────────────────────────────
 function loadAdminDeleteOptions() {
   if (CURRENT_ROLE !== 'admin') return;
@@ -858,6 +894,7 @@ function loadAdminDeleteOptions() {
   };
   fill('admin-sales-month-sel', salesMonths);
   fill('admin-waste-month-sel', wasteMonths);
+  monthPicker('admin-sales-month-sel'); monthPicker('admin-waste-month-sel');
 }
 
 async function deletePartial(kind, btn) {
@@ -1101,6 +1138,7 @@ async function fillReportMonths() {
   const opt = (sel, def) => { const cur = sel.value; sel.innerHTML = months.length ? months.map(m => `<option value="${m}">${m}</option>`).join('') : '<option value="">매출 데이터 없음</option>'; sel.value = months.includes(cur) ? cur : def; };
   const def = months.includes(GM.month) ? GM.month : (months[months.length - 1] || '');
   opt(fs, def); opt(ts, def); // 기본: 기준 월 한 달
+  monthPicker('report-from-sel'); monthPicker('report-to-sel');
 }
 // PDF로 저장할 때 기본 파일 이름이 "A1_종합보고서_2026-08"(기간이면 2026-01_2026-05)이 되도록 잠시 문서 제목을 바꿈
 let reportYm = '';
@@ -1479,10 +1517,27 @@ async function loadGlobalMonths() {
   let m = GM.month;
   if (!GM.userChosen || !months.includes(m)) m = latestSales || months[0] || '';
   GM.month = m; GM.salesMonths = sm; GM.wasteMonths = wm;
-  const sel = byId('gm-sel');
-  sel.innerHTML = months.length ? months.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('') : '<option value="">데이터 없음</option>';
-  sel.value = m;
+  GM.all = months;
+  renderGmSelects();
   renderGmStatus();
+}
+// 연도 선택 + 월 선택 두 칸으로 나눠, 데이터가 몇 년치로 늘어도 목록이 12개 이하로 유지되게 합니다.
+function renderGmSelects() {
+  const ysel = byId('gm-year'), sel = byId('gm-sel'), months = GM.all || [];
+  if (!months.length) { ysel.innerHTML = ''; sel.innerHTML = '<option value="">데이터 없음</option>'; return; }
+  const years = [...new Set(months.map(x => x.substring(0, 4)))]; // months는 최신순
+  const y = GM.month ? GM.month.substring(0, 4) : years[0];
+  ysel.innerHTML = years.map(v => `<option value="${esc(v)}">${esc(v)}년</option>`).join('');
+  ysel.value = y;
+  sel.innerHTML = months.filter(x => x.startsWith(y + '-')).map(x => `<option value="${esc(x)}">${esc(x.substring(5))}월</option>`).join('');
+  sel.value = GM.month;
+}
+// 연도를 바꾸면 그 해에서 같은 달(없으면 가장 최근 달)로 이동
+function onGmYearChange(y) {
+  const list = (GM.all || []).filter(x => x.startsWith(y + '-'));
+  if (!list.length) return;
+  const same = GM.month ? y + GM.month.substring(4) : '';
+  onGlobalMonthChange(list.includes(same) ? same : list[0]);
 }
 function renderGmStatus() {
   const m = GM.month, box = byId('gm-status');
@@ -1492,6 +1547,7 @@ function renderGmStatus() {
 }
 async function onGlobalMonthChange(m) {
   GM.userChosen = true; GM.month = m;
+  renderGmSelects();
   renderGmStatus();
   syncReportToGm();
   const run = (label, fn) => Promise.resolve().then(fn).catch(e => console.error(`[A1] 기준 월 변경 실패 (${label}):`, e));
@@ -1502,6 +1558,7 @@ function syncReportToGm() {
   const f = byId('report-from-sel'), t = byId('report-to-sel');
   if (!f || !t || !GM.month || !GM.salesMonths.has(GM.month)) return;
   f.value = GM.month; t.value = GM.month;
+  monthPicker('report-from-sel'); monthPicker('report-to-sel');
 }
 
 async function refreshAllData() {
