@@ -1399,7 +1399,7 @@ async function buildReport(from, to) {
     <div class="rp-note">작성 ${now.toLocaleDateString('ko-KR')} ${now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${CURRENT_EMAIL ? ` · 작성자 ${esc(CURRENT_EMAIL)}` : ''} · 비교 기준: ${cmpName}(${prevLabel}) · 대시보드 v${APP_VERSION}</div>
   </div>
 
-  <h2>I. 본사 보고 요약</h2>
+  <h2>I. 보고 요약</h2>
   <table style="margin-bottom:8px"><tr>
     ${kpi('총매출', won(tot), hasPrev ? `${cmpName} 대비 ${pct(dpct)}` : `${cmpName} 데이터 없음`, dpct == null ? null : dpct >= 0 ? '#047857' : '#b91c1c')}
     ${kpi('예상이익 · 이익율', won(prof), `이익율 ${margin.toFixed(1)}%${pmargin != null ? ` (${cmpName} ${pmargin.toFixed(1)}%)` : ''}`)}
