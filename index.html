@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self';">
 <title>A1 편의점 수익관리 대시보드</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- v3.6.1 보안: 라이브러리 버전 고정 + 무결성 검사(SRI). CDN 파일이 바뀌면 브라우저가 실행을 거부합니다.
+     버전을 올릴 때는 새 파일의 sha384 해시로 integrity 값도 같이 바꾸세요. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px}
@@ -775,7 +777,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.29-v3.6';
+const APP_VERSION = '2026.09.29-v3.6.1';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
