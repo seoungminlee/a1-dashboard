@@ -244,14 +244,18 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <select class="sel" id="report-from-sel"><option value="">시작 월</option></select>
     <span style="color:#64748b">~</span>
     <select class="sel" id="report-to-sel"><option value="">끝 월</option></select>
+    <select class="sel" id="report-basis-sel" aria-label="비교 기준" title="보고서의 비교 대상">
+      <option value="prev">비교: 직전 기간</option>
+      <option value="yoy">비교: 전년 동기</option>
+    </select>
     <button class="sel" onclick="openMonthlyReport()" style="cursor:pointer;background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600">보고서 만들기</button>
-    <span style="font-size:12px;color:#64748b">— 같은 달을 고르면 월별, 다르게 고르면 기간 보고서. 인쇄 창에서 'PDF로 저장'</span>
+    <span style="font-size:12px;color:#64748b">— 같은 달을 고르면 월별, 다르게 고르면 기간 보고서. 비교는 직전 기간 또는 전년 동기. 인쇄 창에서 'PDF로 저장'</span>
   </div>
   <div class="kpi-row" id="home-kpi-row">
-    <div class="kpi"><div class="kpi-t">매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div></div>
-    <div class="kpi"><div class="kpi-t">이익율</div><div class="kpi-v" id="h-rate">—</div><div class="kpi-c muted" id="h-rate-c"></div></div>
-    <div class="kpi"><div class="kpi-t">폐기 원가</div><div class="kpi-v" id="h-waste">—</div><div class="kpi-c muted" id="h-waste-c"></div></div>
-    <div class="kpi"><div class="kpi-t">폐기율</div><div class="kpi-v" id="h-wrate">—</div><div class="kpi-c muted" id="h-wrate-c"></div></div>
+    <div class="kpi"><div class="kpi-t">매출</div><div class="kpi-v" id="h-amount">—</div><div class="kpi-c muted" id="h-amount-c"></div><div class="kpi-c muted" id="h-amount-y" title="전년 같은 달과 비교합니다. 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다"></div></div>
+    <div class="kpi"><div class="kpi-t">이익율</div><div class="kpi-v" id="h-rate">—</div><div class="kpi-c muted" id="h-rate-c"></div><div class="kpi-c muted" id="h-rate-y" title="전년 같은 달과 비교합니다. 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다"></div></div>
+    <div class="kpi"><div class="kpi-t">폐기 원가</div><div class="kpi-v" id="h-waste">—</div><div class="kpi-c muted" id="h-waste-c"></div><div class="kpi-c muted" id="h-waste-y" title="전년 같은 달과 비교합니다. 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다"></div></div>
+    <div class="kpi"><div class="kpi-t">폐기율</div><div class="kpi-v" id="h-wrate">—</div><div class="kpi-c muted" id="h-wrate-c"></div><div class="kpi-c muted" id="h-wrate-y" title="전년 같은 달과 비교합니다. 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다"></div></div>
   </div>
 
   <div class="card" style="margin-bottom:16px; cursor:pointer" id="home-trend-card" onclick="switchTab('sales')">
@@ -311,6 +315,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
           <option value="amount">매출 높은순</option>
           <option value="profit_rate">이익율 높은순</option>
           <option value="diff_amount">전월 대비 증감액 높은순</option>
+          <option value="yoy_pct">전년 동월 대비 증감율 높은순</option>
         </select>
       </div>
     </div>
@@ -324,8 +329,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
           <th class="r" id="sales-comp-th">전월 매출</th>
           <th class="r">증감액</th>
           <th class="r">증감율</th>
+          <th class="r" id="sales-yoy-th" title="전년 같은 달 매출과 비교. 명절 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다">전년 동월 대비</th>
         </tr></thead>
-        <tbody id="sales-tbody"><tr><td colspan="7" class="empty">데이터가 없습니다. 파일을 업로드하고 동기화하세요.</td></tr></tbody>
+        <tbody id="sales-tbody"><tr><td colspan="8" class="empty">데이터가 없습니다. 파일을 업로드하고 동기화하세요.</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -617,14 +623,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <h5>홈 — 기준 월 한 장 요약</h5>
       <table>
         <tr><th style="width:30%">항목</th><th>의미</th></tr>
-        <tr><td>매출 · 이익율</td><td>기준 월 총매출과 이익율. 아래에 전월 대비(%, %p)가 나옵니다.</td></tr>
-        <tr><td>폐기 원가</td><td>기준 월 폐기 원가 합계(점내용도 제외). 아래에 전월 대비가 나오며, 늘면 빨강·줄면 초록입니다.</td></tr>
+        <tr><td>매출 · 이익율</td><td>기준 월 총매출과 이익율. 아래에 전월 대비(%, %p)와 <b>전년 동월 대비</b>가 나옵니다. 전년 같은 달 파일이 없으면 '데이터 없음'.</td></tr>
+        <tr><td>폐기 원가</td><td>기준 월 폐기 원가 합계(점내용도 제외). 아래에 전월 대비와 전년 동월 대비가 나오며, 늘면 빨강·줄면 초록입니다. 폐기율 카드에도 전년 동월 폐기율과의 차이(%p)가 나옵니다.</td></tr>
         <tr><td>폐기율</td><td>폐기 원가 ÷ 매출원가. 아래에 직전 3개월 평균(우리 매장 기준선) 대비가 나옵니다.</td></tr>
         <tr><td>전월보다 폐기가 늘어난 소분류</td><td>전월보다 폐기 원가가 가장 많이 늘어난 소분류 3개(전월 → 이번 달). 누르면 품목 분석에서 그 소분류 품목이 바로 열립니다. 전월 폐기 파일이 없으면 비교하지 않습니다.</td></tr>
       </table>
       <h5>홈 — 데이터 신선도 · 종합 보고서</h5>
       <p>홈 맨 위에 데이터가 어디까지 올라와 있는지 표시됩니다. <b>매월 1~7일</b>에는 업로드 권한자에게 "9월 파일 올릴 기간 · D-4"처럼 남은 날과 빠진 파일(매출·폐기), [데이터 올리기] 버튼이 뜨고, 두 파일이 다 올라오면 "9월 파일 완료"로 바뀝니다. 7일이 지났는데 지난달 파일이 없으면 노란색으로 알려줍니다.</p>
-      <p><b>📄 종합 보고서</b>에서 시작 월과 끝 월을 고르고 [보고서 만들기]를 누릅니다(기본값은 기준 월). <b>같은 달을 고르면 월별 보고서, 다르게 고르면 기간 보고서</b>(예: 2026-01 ~ 2026-05, 기간 합산 + 월별 내역 표)가 됩니다. 비교 기준은 바로 앞 같은 길이의 기간(한 달이면 전월, 1~5월이면 전년 8~12월)이며, 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다. 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 계산합니다. [인쇄 / PDF로 저장] → 'PDF로 저장'을 고르면 "A1_종합보고서_2026-01_2026-05" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
+      <p><b>📄 종합 보고서</b>에서 시작 월과 끝 월을 고르고 [보고서 만들기]를 누릅니다(기본값은 기준 월). <b>같은 달을 고르면 월별 보고서, 다르게 고르면 기간 보고서</b>(예: 2026-01 ~ 2026-05, 기간 합산 + 월별 내역 표)가 됩니다. 비교 기준은 [비교] 칸에서 고릅니다. <b>직전 기간</b>은 바로 앞 같은 길이의 기간(한 달이면 전월, 1~5월이면 전년 8~12월), <b>전년 동기</b>는 1년 전 같은 달들(2026-09 → 2025-09)입니다. 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다. 관광지 매장은 계절 영향이 커서, 추세 판단에는 전년 동기 비교가 더 적합합니다. 다만 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다. 판매 대비 폐기는 매출·폐기 파일이 둘 다 있는 달끼리만 맞춰 계산합니다. [인쇄 / PDF로 저장] → 'PDF로 저장'을 고르면 "A1_종합보고서_2026-01_2026-05" 같은 이름으로 저장됩니다. 문장은 숫자에서 자동으로 만들며 추정은 넣지 않습니다.</p>
       <h5>매출 · 이익 현황</h5>
       <table>
         <tr><th style="width:30%">지표</th><th>의미</th></tr>
@@ -632,6 +638,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
         <tr><td>예상 이익</td><td>매출에서 원가를 뺀 금액 (e-store 산출 기준)</td></tr>
         <tr><td>평균 이익율</td><td>예상이익 ÷ 총매출. 매출 규모를 반영한 가중평균입니다.</td></tr>
         <tr><td>전월 대비 매출</td><td>기준 월과 <b>바로 전 달</b>의 총매출 차이. 대시보드에 저장된 전 달 데이터로 직접 계산합니다. 전 달 파일이 없으면 표시되지 않습니다.</td></tr>
+        <tr><td>전년 동월 대비</td><td>총 매출 카드 아래와 카테고리별 상세 표 맨 오른쪽 열. 1년 전 같은 달 매출과의 증감율이며, 전년에 없던 분류는 <b>신규</b>, 전년 파일이 없으면 '—'. 관광지 매장은 계절 영향이 커서 전월 대비보다 추세 판단에 적합합니다. 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다.</td></tr>
       </table>
       <p class="src-note">월별 추이 그래프는 올라온 전체 달을 보여주며(큰 점 = 기준 월), 데이터가 <b>2개월 이상</b> 있어야 나타납니다.</p>
       <p class="src-note"><b>펼쳐보기</b>: 카테고리별 상세 표에서 대분류(▶)를 누르면 중분류가, 중분류를 누르면 소분류가 펼쳐집니다. 어느 하위 분류 때문에 매출이 늘거나 줄었는지 바로 볼 수 있습니다.</p>
@@ -778,7 +785,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── 버전 표시 ─────────────────────────────────────────────────────
 // 배포할 때마다 이 값을 올립니다. 화면 오른쪽 위와 콘솔에 표시되므로
 // "배포했는데 그대로다" 싶을 때 브라우저가 어떤 코드를 쓰는지 바로 확인할 수 있습니다.
-const APP_VERSION = '2026.09.29-v3.6.3';
+const APP_VERSION = '2026.10.02-v3.7';
 {
   const v = document.getElementById('app-version');
   if (v) v.textContent = 'v' + APP_VERSION;
@@ -1156,9 +1163,10 @@ async function openMonthlyReport() {
   if (from > to) [from, to] = [to, from]; // 거꾸로 고르면 자동으로 바로잡음
   const paper = byId('report-paper');
   byId('report-view').style.display = 'block';
-  reportYm = from === to ? from : `${from}_${to}`;
+  const basis = (byId('report-basis-sel') || {}).value === 'yoy' ? 'yoy' : 'prev';
+  reportYm = (from === to ? from : `${from}_${to}`) + (basis === 'yoy' ? '_전년비교' : '');
   paper.innerHTML = '<p>보고서를 만드는 중입니다...</p>';
-  try { paper.innerHTML = await buildReport(from, to); }
+  try { paper.innerHTML = await buildReport(from, to, basis); }
   catch (e) { paper.innerHTML = `<p style="color:#b91c1c">보고서를 만들지 못했습니다: ${esc(e.message)}</p>`; }
 }
 // ── 요일 · 주말 · 공휴일별 폐기 ──────────────────────────────────────
@@ -1319,12 +1327,13 @@ async function fetchItemPeriodData(pMonths, prevMonths, hasPrev) {
   return { rows, hasWaste: wasteAll.length > 0, wasteAll };
 }
 
-async function buildReport(from, to) {
+async function buildReport(from, to, basis = 'prev') {
   const pMonths = monthsBetween(from, to);
   const N = pMonths.length, single = N === 1;
-  const prevTo = prevMonthOf(from);
-  const prevMonths = []; // 바로 앞 같은 길이의 기간
-  for (let i = 0, m = prevTo; i < N; i++, m = prevMonthOf(m)) prevMonths.unshift(m);
+  const yoy = basis === 'yoy'; // v3.7: 비교 기준 선택 — 'prev' 바로 앞 같은 길이 기간 / 'yoy' 전년 같은 기간
+  let prevMonths = [];
+  if (yoy) prevMonths = pMonths.map(yoyMonthOf);
+  else for (let i = 0, m = prevMonthOf(from); i < N; i++, m = prevMonthOf(m)) prevMonths.unshift(m); // 바로 앞 같은 길이의 기간
   const cat = await allCatSales();
   const salesMonthSet = new Set(cat.map(r => r.year_month));
   const cur = cat.filter(r => pMonths.includes(r.year_month));
@@ -1347,12 +1356,13 @@ async function buildReport(from, to) {
   const prevRateIn = prevMonths.filter(m => rates[m]);
   const prevRate = prevRateIn.length === N ? prevRateIn.reduce((s, m) => s + rates[m].wasteCost, 0) / prevRateIn.reduce((s, m) => s + rates[m].cogs, 0) * 100 : null;
   const bl = single ? wasteBaseline(rateMonths, rates, from) : null;
-  const rateRef = single ? (bl ? { v: bl.avg, label: `직전 ${bl.n}개월 평균` } : null) : (prevRate != null ? { v: prevRate, label: '직전 같은 기간' } : null);
+  const rateRef = single && yoy ? (prevRate != null ? { v: prevRate, label: '전년 동월' } : null)
+    : single ? (bl ? { v: bl.avg, label: `직전 ${bl.n}개월 평균` } : null) : (prevRate != null ? { v: prevRate, label: yoy ? '전년 같은 기간' : '직전 같은 기간' } : null);
   const sign = v => v > 0 ? '+' : '';
   const pct = v => v == null ? '—' : `${sign(v)}${v.toFixed(1)}%`;
   const won = v => v == null ? '—' : `${fmt(Math.round(v))}원`;
   const prevLabel = single ? prevMonths[0] : `${prevMonths[0]}~${prevMonths[N-1]}`;
-  const cmpName = single ? '전월' : '직전 같은 기간';
+  const cmpName = yoy ? (single ? '전년 동월' : '전년 같은 기간') : (single ? '전월' : '직전 같은 기간');
 
   const byCat2 = rows => { const m = {}; for (const r of rows) { if (!r.cat2) continue; const k = `${r.cat1} › ${r.cat2}`; m[k] = (m[k] || 0) + (Number(r.amount) || 0); } return m; };
   const c2cur = byCat2(itemData.rows.filter(r => !r.soldZero)), c2prev = byCat2(prevItems);
@@ -1490,7 +1500,7 @@ async function buildReport(from, to) {
           <li>매출: e-store 분류별이익현황(총매출·원 단위), 대분류 합계. 업로드 시 파일 합계행과 원 단위 대조.</li>
           <li>폐기: e-store 폐기/점내용도 분류별내역. 금액은 원가(매입가) 기준.</li>
           <li>폐기율 = 폐기원가 ÷ 매출원가(매출 − 예상이익).${single ? ' 기준선은 우리 매장 직전 3개월 평균.' : ' 기간 폐기율은 매출·폐기 파일이 모두 있는 달만 합산.'}</li>
-          <li>비교 기준: ${cmpName}(${prevLabel}). 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다.</li>
+          <li>비교 기준: ${cmpName}(${prevLabel}). 그 기간 매출 파일이 한 달이라도 없으면 비교하지 않습니다.${yoy ? ' 명절(설·추석) 위치가 해마다 달라 같은 달끼리도 차이가 날 수 있습니다.' : ''}</li>
           <li>공휴일: 공공데이터포털(한국천문연구원) 2026년 목록.</li>
           <li>이 보고서의 숫자는 작성 시점에 대시보드에 올라와 있던 값입니다.</li>
         </ul>`)}`;
@@ -1517,6 +1527,8 @@ async function loadGlobalMonths() {
   let m = GM.month;
   if (!GM.userChosen || !months.includes(m)) m = latestSales || months[0] || '';
   GM.month = m; GM.salesMonths = sm; GM.wasteMonths = wm;
+  GM.salesTotals = {}; // 월별 저장된 총매출 — 업로드 때 '여러 달 합친 파일' 추정에 씀
+  for (const r of cats) GM.salesTotals[r.year_month] = (GM.salesTotals[r.year_month] || 0) + (Number(r.amount) || 0);
   GM.all = months;
   renderGmSelects();
   renderGmStatus();
@@ -1663,7 +1675,8 @@ function previewFile(file, type, wb) {
     const fromName = extractYearMonthFromFilename(file.name);
     const ym = fromName || defaultUploadMonth();
     const recs = parseCategorySales(wb, ym); // 합계 행과 원 단위 대조까지
-    return { ym, ymFrom: fromName ? 'name' : 'default', catCount: recs.length, itemCount: (recs.items || []).length };
+    const total = recs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+    return { ym, ymFrom: fromName ? 'name' : 'default', catCount: recs.length, itemCount: (recs.items || []).length, total };
   }
   const recs = parseWasteDetail(wb);
   const dates = recs.map(r => r.confirmed_date).sort();
@@ -1744,6 +1757,14 @@ function uploadCheckState() {
   if (dups.length) return { level: 'block', msg: `같은 달(${dups.join(', ')})로 저장될 매출 파일이 여러 개예요. 파일마다 저장할 달을 다르게 골라주세요.` };
   const future = [...new Set([...sSet, ...wSet])].filter(m => m > cur);
   if (future.length) return { level: 'block', msg: `${future.join(', ')}는 아직 오지 않은 달이에요. 저장할 달을 다시 골라주세요.` };
+  // 기간 통합 의심: 매출 파일에는 조회 기간이 적혀 있지 않아 파일 이름·금액 크기로만 추정합니다 (추정이라 '차단'이 아니라 확인 후 저장)
+  // ① 이름에 '1월~12월' 같은 범위  ② 합계가 이미 저장된 달 중 가장 큰 달의 2.5배 초과 (연간 파일이면 대략 12배)
+  const rangeName = /(\d{1,2})\s*월?\s*[~～]\s*(\d{1,2})\s*월/;
+  const maxSaved = Math.max(0, ...Object.entries(GM.salesTotals || {}).map(([, v]) => v));
+  const multi = pendingUploads.filter(u => u.type === 'category_sales' && (
+    rangeName.test(String(u.file.name).normalize('NFC')) || (maxSaved > 0 && u.total > maxSaved * 2.5)));
+  if (multi.length)
+    return { level: 'danger', go: '한 달치가 맞아요, 저장', msg: `${multi.map(u => u.file.name).join(', ')} — 여러 달을 합친 파일일 수 있어요. 매출 파일은 한 달치만 올려야 하고, 여러 달 합계가 한 달로 저장되면 되돌리기 전까지 그래프·전월 대비가 모두 틀어져요. (파일에 조회 기간이 없어 이름·금액으로만 추정합니다)` };
   if (sSet.includes(cur) || wSet.includes(cur))
     return { level: 'danger', go: '그래도 저장', msg: `진행 중인 달(${cur}) 파일이에요. 반쪽 달이 한 달 전체처럼 저장돼 전월 대비·폐기율이 틀어져요. 지난달 파일인지 확인하세요.` };
   if (sSet.length && wSet.length) {
@@ -2345,6 +2366,14 @@ function prevMonthOf(ym) {
   const [y, m] = ym.split('-').map(Number);
   return m === 1 ? `${y-1}-12` : `${y}-${String(m-1).padStart(2,'0')}`;
 }
+// 전년 같은 달 ('2026-09' → '2025-09'). v3.7: 관광지 매장이라 전월 대비는 계절 효과가 섞여 전년 동월 비교를 함께 보여줌
+function yoyMonthOf(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  return `${y-1}-${String(m).padStart(2,'0')}`;
+}
+// 증감률 문구 (기준값이 없거나 0이면 null)
+const pctText = (cur, base) => base > 0 ? (cur - base) / base * 100 : null;
+const signPct = p => `${p >= 0 ? '▲ +' : '▼ '}${p.toFixed(1)}%`;
 
 function aggregateByCategory(rows) {
   const map = {};
@@ -2371,19 +2400,27 @@ async function loadSalesData() {
   const prevYm = month ? prevMonthOf(month) : null;
   const hasPrev = has && months.has(prevYm);
   const prevMap = hasPrev ? aggregateByCategory(all.filter(r => r.year_month === prevYm)) : {};
+  // 전년 동월 (v3.7)
+  const yoyYm = month ? yoyMonthOf(month) : null;
+  const hasYoy = has && months.has(yoyYm);
+  const yoyMap = hasYoy ? aggregateByCategory(all.filter(r => r.year_month === yoyYm)) : {};
 
   salesData = Object.values(curMap).map(c => {
     const comp = hasPrev ? (prevMap[c.category] ? prevMap[c.category].amount : 0) : null;
+    const yoy = hasYoy ? (yoyMap[c.category] ? yoyMap[c.category].amount : 0) : null;
     return {
       ...c,
       profit_rate: c.amount ? Math.round(c.profit / c.amount * 1000) / 10 : 0,
       comp_amount: comp,
       diff_amount: comp == null ? null : c.amount - comp,
+      yoy_amount: yoy,
+      yoy_pct: yoy > 0 ? (c.amount - yoy) / yoy * 100 : null, // 전년에 없던 분류는 비율 없음
     };
   });
   salesView = {
-    month, has, prevYm, hasPrev,
+    month, has, prevYm, hasPrev, yoyYm, hasYoy,
     prevTotal: hasPrev ? Object.values(prevMap).reduce((s, c) => s + c.amount, 0) : null,
+    yoyTotal: hasYoy ? Object.values(yoyMap).reduce((s, c) => s + c.amount, 0) : null,
   };
 
   renderKPI();
@@ -2414,7 +2451,9 @@ function renderKPI() {
   const basis = `${salesPeriodLabel()} 기준`;
 
   document.getElementById('k-amount').textContent = fmt(total)+'원';
-  setKpiNote('k-amount-c', basis);
+  const yp = salesView.hasYoy ? pctText(total, salesView.yoyTotal) : null;
+  if (yp != null) setKpiNote('k-amount-c', `${basis} · 전년 동월(${salesView.yoyYm}) 대비 ${signPct(yp)}`, yp >= 0 ? 'up' : 'down');
+  else setKpiNote('k-amount-c', `${basis} · 전년 동월(${salesView.yoyYm}) 데이터 없음`);
   document.getElementById('k-profit').textContent = fmt(profit)+'원';
   setKpiNote('k-profit-c', basis);
   document.getElementById('k-rate').textContent = avgRate.toFixed(1)+'%';
@@ -2436,14 +2475,16 @@ function renderKPI() {
 // ── 매출 탭 펼쳐보기 (대분류 → 중분류 → 소분류) ──────────────────────
 // 품목 테이블(m4_item_sales)에 대/중/소분류가 함께 저장돼 있어 DB 변경 없이 집계합니다.
 // 처음 펼칠 때 한 번만 불러오고, 조회 월이 바뀌면 다시 불러옵니다.
-let salesDrill = { key:null, cur:[], prev:null, open:new Set() };
+let salesDrill = { key:null, cur:[], prev:null, yoy:null, open:new Set() };
+const drillKey = () => (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '') + '|' + (salesView.hasYoy ? salesView.yoyYm : '');
 async function ensureSalesDrillData() {
-  const key = (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '');
+  const key = drillKey();
   if (salesDrill.key === key) return;
   const sel = 'cat1,cat2,cat3,quantity,amount,profit';
   const cur = await fetchAllRows(() => { let q = sb.from('m4_item_sales').select(sel); if (salesView.month) q = q.eq('year_month', salesView.month); return q; });
   const prev = salesView.hasPrev ? await fetchAllRows(() => sb.from('m4_item_sales').select(sel).eq('year_month', salesView.prevYm)) : null;
-  salesDrill = { key, cur, prev, open: salesDrill.key === key ? salesDrill.open : new Set() };
+  const yoy = salesView.hasYoy ? await fetchAllRows(() => sb.from('m4_item_sales').select(sel).eq('year_month', salesView.yoyYm)) : null;
+  salesDrill = { key, cur, prev, yoy, open: salesDrill.key === key ? salesDrill.open : new Set() };
 }
 async function toggleSalesDrill(pathJson) {
   try { await ensureSalesDrillData(); }
@@ -2472,6 +2513,7 @@ function drillAgg(rows, level, parent) {
 function drillRowsHTML(level, parent) {
   const cur = drillAgg(salesDrill.cur, level, parent);
   const prev = salesDrill.prev ? drillAgg(salesDrill.prev, level, parent) : null;
+  const yoyA = salesDrill.yoy ? drillAgg(salesDrill.yoy, level, parent) : null;
   return Object.values(cur).sort((a,b) => b.amount - a.amount).map(c => {
     const comp = prev ? (prev[c.name] ? prev[c.name].amount : 0) : null;
     const diff = comp == null ? null : c.amount - comp;
@@ -2490,12 +2532,19 @@ function drillRowsHTML(level, parent) {
       <td class="r">${fmt(c.amount)}</td><td class="r">${fmt(c.profit)}</td><td class="r">${rate}%</td>
       <td class="r">${comp == null ? '—' : fmt(comp)}</td>
       <td class="r">${diff == null ? '—' : `<span class="bdg ${bdg}">${sign}${fmt(diff)}</span>`}</td>
-      <td class="r">${pct != null ? `<span class="bdg ${bdg}">${sign}${pct}%</span>` : '—'}</td></tr>`;
+      <td class="r">${pct != null ? `<span class="bdg ${bdg}">${sign}${pct}%</span>` : '—'}</td>
+      <td class="r">${yoyCell(yoyA ? (yoyA[c.name] ? yoyA[c.name].amount : 0) : null, c.amount)}</td></tr>`;
     if (opened) html += drillRowsHTML(3, path);
     return html;
   }).join('');
 }
 
+const yoyCell = (yoy, amount) => { // 전년 동월 대비 칸: 전년 자료 없음 '—', 전년에 없던 분류 '신규'
+  if (yoy == null) return '—';
+  if (!(yoy > 0)) return amount > 0 ? '<span class="bdg bdg-up">신규</span>' : '—';
+  const p = (amount - yoy) / yoy * 100, b = p > 0 ? 'bdg-up' : p < 0 ? 'bdg-dn' : 'bdg-fl';
+  return `<span class="bdg ${b}" title="전년 동월 ${fmt(yoy)}원">${p >= 0 ? '+' : ''}${p.toFixed(1)}%</span>`;
+};
 function renderSalesTable() {
   const sort = document.getElementById('sort-sel').value;
   // 전월 데이터가 없으면 증감이 비어 있으므로 맨 아래로
@@ -2504,13 +2553,16 @@ function renderSalesTable() {
 
   const th = document.getElementById('sales-comp-th');
   if (th) th.textContent = salesView.hasPrev ? `${salesView.prevYm} 매출` : '전월 매출';
+  const yth = document.getElementById('sales-yoy-th');
+  if (yth) yth.textContent = salesView.yoyYm ? `전년 동월(${salesView.yoyYm}) 대비` : '전년 동월 대비';
   const sub = document.getElementById('sales-table-sub');
   if (sub) sub.textContent = `대분류 기준 · ${salesPeriodLabel()}` +
-    (!salesView.has ? ' · 매출 파일 없음' : (!salesView.hasPrev ? ` · 전월(${salesView.prevYm}) 데이터 없음` : ''));
+    (!salesView.has ? ' · 매출 파일 없음' : (!salesView.hasPrev ? ` · 전월(${salesView.prevYm}) 데이터 없음` : '')) +
+    (salesView.has && !salesView.hasYoy ? ` · 전년 동월(${salesView.yoyYm}) 데이터 없음` : '');
 
   const tbody = document.getElementById('sales-tbody');
   if (!sorted.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">${salesView.month ? `${esc(salesView.month)} 매출 파일(분류별이익현황)이 없습니다. 기준 월을 바꾸거나 📂 데이터 올리기에서 올려주세요.` : '데이터가 없습니다. 파일을 업로드하고 동기화하세요.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">${salesView.month ? `${esc(salesView.month)} 매출 파일(분류별이익현황)이 없습니다. 기준 월을 바꾸거나 📂 데이터 올리기에서 올려주세요.` : '데이터가 없습니다. 파일을 업로드하고 동기화하세요.'}</td></tr>`;
     return;
   }
   tbody.innerHTML = sorted.map(r=>{
@@ -2519,7 +2571,7 @@ function renderSalesTable() {
     const bdg = !hasDiff ? 'bdg-fl' : r.diff_amount>0 ? 'bdg-up' : r.diff_amount<0 ? 'bdg-dn' : 'bdg-fl';
     const sign = hasDiff && r.diff_amount>=0 ? '+' : '';
     const pj = JSON.stringify([r.category]);
-    const opened = salesDrill.open.has(pj) && salesDrill.key === (salesView.month || 'ALL') + '|' + (salesView.hasPrev ? salesView.prevYm : '');
+    const opened = salesDrill.open.has(pj) && salesDrill.key === drillKey();
     return `<tr>
       <td class="cat" style="cursor:pointer" data-path="${esc(pj)}" onclick="toggleSalesDrill(this.dataset.path)"><span style="color:#64748b">${opened ? '▼' : '▶'}</span> ${esc(r.category)}</td>
       <td class="r">${fmt(r.amount)}</td>
@@ -2528,6 +2580,7 @@ function renderSalesTable() {
       <td class="r">${r.comp_amount == null ? '—' : fmt(r.comp_amount)}</td>
       <td class="r">${hasDiff ? `<span class="bdg ${bdg}">${sign}${fmt(r.diff_amount)}</span>` : '—'}</td>
       <td class="r">${pct!=null?`<span class="bdg ${bdg}">${sign}${pct}%</span>`:'—'}</td>
+      <td class="r">${yoyCell(r.yoy_amount, r.amount)}</td>
     </tr>` + (opened ? drillRowsHTML(2, [r.category]) : '');
   }).join('');
 }
@@ -2927,11 +2980,23 @@ function goItemsCat3(c3) {
 async function loadHomeSummary() {
   const month = GM.month;
   const prevYm = month ? prevMonthOf(month) : '';
+  const yoyYm = month ? yoyMonthOf(month) : '';
 
   const salesPart = (async () => {
     const { months: salesMonths, map: salesMap } = await fetchMonthlyTrendData();
     if (month !== GM.month) return;
     const cur = month ? salesMap[month] : null, prev = prevYm ? salesMap[prevYm] : null;
+    // 전년 동월 (v3.7)
+    const yo = yoyYm ? salesMap[yoyYm] : null;
+    if (cur && yo && yo.amount > 0) {
+      const p = pctText(cur.amount, yo.amount);
+      setKpiNote('h-amount-y', `전년 동월(${yoyYm}) 대비 ${signPct(p)}`, p >= 0 ? 'up' : 'down');
+      const r = cur.profit / cur.amount * 100, yr = yo.profit / yo.amount * 100, d = r - yr;
+      setKpiNote('h-rate-y', `전년 동월 ${yr.toFixed(1)}% → ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}%p`, d >= 0 ? 'up' : 'down');
+    } else {
+      setKpiNote('h-amount-y', cur ? `전년 동월(${yoyYm}) 매출 데이터 없음` : '');
+      setKpiNote('h-rate-y', '');
+    }
     if (cur) {
       byId('h-amount').textContent = fmt(cur.amount) + '원';
       if (prev && prev.amount > 0) {
@@ -2962,11 +3027,17 @@ async function loadHomeSummary() {
   const wastePart = (async () => {
     // 폐기 원가(폐기만, 점내용도 제외) + 전월 대비, 그리고 전월보다 폐기가 늘어난 소분류
     const hasCur = !!month && GM.wasteMonths.has(month), hasPrev = !!prevYm && GM.wasteMonths.has(prevYm);
+    const hasYoy = !!yoyYm && GM.wasteMonths.has(yoyYm);
     const byMonth = ym => fetchAllRows(() => { const [s, e] = monthRange(ym); return sb.from('m4_waste_items').select('category,amount').eq('type', '폐기').gte('confirmed_date', s).lt('confirmed_date', e); });
-    const [cur, prev] = await Promise.all([hasCur ? byMonth(month) : Promise.resolve([]), hasPrev ? byMonth(prevYm) : Promise.resolve([])]);
+    const [cur, prev, yoyRows] = await Promise.all([hasCur ? byMonth(month) : Promise.resolve([]), hasPrev ? byMonth(prevYm) : Promise.resolve([]),
+                                                     hasCur && hasYoy ? byMonth(yoyYm) : Promise.resolve([])]);
     if (month !== GM.month) return;
     const sumBy = rows => { const m = {}; let t = 0; for (const r of rows) { const k = r.category || '(분류 없음)', a = Number(r.amount) || 0; m[k] = (m[k] || 0) + a; t += a; } return { m, t }; };
-    const c = sumBy(cur), p = sumBy(prev);
+    const c = sumBy(cur), p = sumBy(prev), y = sumBy(yoyRows);
+    // 전년 동월 (v3.7) — 폐기는 늘면 빨강
+    if (!hasCur) setKpiNote('h-waste-y', '');
+    else if (hasYoy && y.t > 0) { const q = pctText(c.t, y.t); setKpiNote('h-waste-y', `전년 동월(${yoyYm}) 대비 ${signPct(q)}`, q > 0 ? 'down' : 'up'); }
+    else setKpiNote('h-waste-y', `전년 동월(${yoyYm}) 폐기 데이터 없음`);
     const list = byId('home-wup-list'), sub = byId('home-wup-sub');
     if (!hasCur) {
       byId('h-waste').textContent = '—';
@@ -3000,6 +3071,9 @@ async function loadHomeSummary() {
     const { months: rateMonths, rates } = await fetchWasteRates();
     if (month !== GM.month) return;
     const cur = month ? rates[month] : null;
+    const yr = yoyYm ? rates[yoyYm] : null; // 전년 동월 폐기율 (v3.7)
+    if (cur && yr) { const d = cur.rate - yr.rate; setKpiNote('h-wrate-y', `전년 동월 ${fmtRate(yr.rate)} → ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)}%p`, d > 0 ? 'down' : 'up'); }
+    else setKpiNote('h-wrate-y', cur ? `전년 동월(${yoyYm}) 폐기율 없음` : '');
     if (!cur) {
       byId('h-wrate').textContent = '—';
       setKpiNote('h-wrate-c', !month ? '같은 달 매출·폐기 파일이 모두 있어야 계산됩니다'
